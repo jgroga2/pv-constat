@@ -4,13 +4,13 @@
 let cadreActif = 'FLAGRANCE';
 let photos = [];
 let sigCanvas, sigCtx, isDrawing = false;
+let signatureBlobData = null;
 let recognition = null;
-let activeRecogId = null;
+let activeVocBtnId = null;
 
-// Initialisation au chargement
 window.addEventListener('DOMContentLoaded', () => {
   chargerProfil();
-  initSignature();
+  initSignaturePleinEcran();
   initServiceWorker();
 });
 
@@ -21,7 +21,7 @@ function initServiceWorker() {
 }
 
 // =============================================================================
-// GESTION DU PROFIL ENQUÊTEUR (PERSISTANT HORS-LIGNE)
+// PROFIL ENQUÊTEUR (STOCKAGE LOCAL)
 // =============================================================================
 function toggleConfig() {
   const card = document.getElementById('config-card');
@@ -69,7 +69,7 @@ function setCadre(type) {
 }
 
 // =============================================================================
-// HORODATAGE, GPS ET LOCALISATION
+// HORODATAGE ET GPS
 // =============================================================================
 function declencherArrivee() {
   const now = new Date();
@@ -100,24 +100,24 @@ async function resoudreAdresse(lat, lon) {
     if (data && data.display_name) {
       document.getElementById('f-adresse').value = data.display_name;
     }
-  } catch (e) {
-    // Mode hors-ligne : l'adresse reste à compléter manuellement ou vocalement
-  }
+  } catch (e) {}
 }
 
 // =============================================================================
-// DICTÉE VOCALE CONTINUE (NE COUPE PLUS LORS DES PAUSES)
+// DICTÉE VOCALE CONTINUE AVEC BOUTON D'ARRÊT DÉDIÉ
 // =============================================================================
-function dicter(targetId) {
+function dicter(targetId, btnId) {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) {
-    alert('La reconnaissance vocale n\'est pas disponible sur ce navigateur.');
+    alert('Reconnaissance vocale non prise en charge sur ce navigateur.');
     return;
   }
 
+  const btn = document.getElementById(btnId);
+
+  // Si on appuie alors que c'est en cours : on arrête
   if (recognition) {
     recognition.stop();
-    recognition = null;
     return;
   }
 
@@ -126,26 +126,37 @@ function dicter(targetId) {
   recognition.continuous = true;
   recognition.interimResults = false;
 
-  activeRecogId = targetId;
+  activeVocBtnId = btnId;
   const el = document.getElementById(targetId);
+
+  recognition.onstart = () => {
+    btn.classList.add('recording');
+    btn.innerText = '⏹️ Arrêter la dictée';
+  };
 
   recognition.onresult = (event) => {
     for (let i = event.resultIndex; i < event.results.length; ++i) {
       if (event.results[i].isFinal) {
-        const texte = event.results[i][0].transcript.trim();
-        el.value = el.value ? `${el.value} ${texte}` : texte;
+        const transcript = event.results[i][0].transcript.trim();
+        el.value = el.value ? `${el.value} ${transcript}` : transcript;
       }
     }
   };
 
-  recognition.onerror = () => { recognition = null; };
-  recognition.onend = () => { recognition = null; };
+  const resetBtn = () => {
+    btn.classList.remove('recording');
+    btn.innerText = '🎤 Dictée vocale';
+    recognition = null;
+  };
+
+  recognition.onerror = resetBtn;
+  recognition.onend = resetBtn;
 
   recognition.start();
 }
 
 // =============================================================================
-// GESTION DES CLICHÉS (COMPRESSION AUTOMATIQUE < 5 Mo)
+// CLICHÉS ET COMPRESSION (< 5 Mo)
 // =============================================================================
 function ajouterPhoto(event) {
   const file = event.target.files[0];
@@ -155,7 +166,6 @@ function ajouterPhoto(event) {
   reader.onload = (e) => {
     const img = new Image();
     img.onload = () => {
-      // Redimensionnement à 1600px max (netteté A4 préservée)
       const maxDim = 1600;
       let width = img.width;
       let height = img.height;
@@ -170,27 +180,24 @@ function ajouterPhoto(event) {
         }
       }
 
-      // Compression via Canvas
       const canvas = document.createElement('canvas');
       canvas.width = width;
       canvas.height = height;
       const ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0, width, height);
 
-      // Qualité 0.82 (~250-350 Ko par photo)
       const compressedData = canvas.toDataURL('image/jpeg', 0.82);
-
       const now = new Date();
       const gpsVal = document.getElementById('f-arrivee-gps').value || 'Coordonnées non relevées';
-      const photoObj = {
+
+      photos.push({
         id: Date.now(),
         data: compressedData,
         date: now.toLocaleDateString('fr-FR'),
         heure: now.toLocaleTimeString('fr-FR'),
         gps: gpsVal,
         legende: ''
-      };
-      photos.push(photoObj);
+      });
       afficherPhotos();
     };
     img.src = e.target.result;
@@ -214,7 +221,7 @@ function afficherPhotos() {
       <label>Légende descriptive :</label>
       <input type="text" id="legende-${p.id}" value="${p.legende}" onchange="majLegende(${p.id}, this.value)" placeholder="Description de la trace, outil, dégradation...">
       <div class="btn-row">
-        <button type="button" class="btn-vocal" onclick="dicter('legende-${p.id}')">🎤 Dictée continue</button>
+        <button type="button" class="btn-vocal" id="btn-voc-ph-${p.id}" onclick="dicter('legende-${p.id}', 'btn-voc-ph-${p.id}')">🎤 Dictée vocale</button>
         <button type="button" class="btn btn-danger" style="padding:4px 8px; font-size:11px;" onclick="supprimerPhoto(${p.id})">Supprimer</button>
       </div>
     `;
@@ -233,16 +240,11 @@ function supprimerPhoto(id) {
 }
 
 // =============================================================================
-// ZONE DE SIGNATURE MANUSCRITE
+// SIGNATURE PLEIN ÉCRAN
 // =============================================================================
-function initSignature() {
-  sigCanvas = document.getElementById('sig-canvas');
+function initSignaturePleinEcran() {
+  sigCanvas = document.getElementById('sig-fullscreen-canvas');
   sigCtx = sigCanvas.getContext('2d');
-  
-  sigCanvas.width = sigCanvas.offsetWidth;
-  sigCanvas.height = sigCanvas.offsetHeight;
-  sigCtx.lineWidth = 2;
-  sigCtx.strokeStyle = '#000';
 
   const getPos = (e) => {
     const rect = sigCanvas.getBoundingClientRect();
@@ -263,12 +265,37 @@ function initSignature() {
   sigCanvas.addEventListener('touchend', end);
 }
 
-function effacerSignature() {
+function ouvrirModalSignature() {
+  const modal = document.getElementById('modal-signature');
+  modal.style.display = 'flex';
+  
+  // Dimensions calées sur le plein écran de l'appareil
+  sigCanvas.width = sigCanvas.offsetWidth;
+  sigCanvas.height = sigCanvas.offsetHeight;
+  sigCtx.lineWidth = 3;
+  sigCtx.strokeStyle = '#000';
+  sigCtx.lineCap = 'round';
+}
+
+function fermerModalSignature() {
+  document.getElementById('modal-signature').style.display = 'none';
+}
+
+function effacerSignaturePleinEcran() {
   sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
 }
 
+function validerSignaturePleinEcran() {
+  signatureBlobData = sigCanvas.toDataURL('image/png');
+  document.getElementById('sig-preview-placeholder').style.display = 'none';
+  const previewImg = document.getElementById('sig-preview-img');
+  previewImg.src = signatureBlobData;
+  previewImg.style.display = 'block';
+  fermerModalSignature();
+}
+
 // =============================================================================
-// CONTRÔLE ET GÉNÉRATION PDF (PARTAGE DIRECT DU FICHIER EN PIÈCE JOINTE)
+// CONTRÔLE ET GÉNÉRATION PDF SANS DOUBLE STOCKAGE
 // =============================================================================
 function ouvrirModalControle() {
   document.getElementById('modal-cotes').style.display = 'flex';
@@ -281,7 +308,6 @@ function fermerModal() {
 async function genererEtEnvoyer() {
   fermerModal();
 
-  // Mise à jour finale des légendes
   photos.forEach(p => {
     const el = document.getElementById(`legende-${p.id}`);
     if (el) p.legende = el.value;
@@ -317,9 +343,8 @@ async function genererEtEnvoyer() {
   const corpsDelit = document.getElementById('f-corps-delit').value || 'Néant.';
   const mesuresDiv = document.getElementById('f-mesures-div').value || 'Néant.';
 
-  const signatureData = sigCanvas.toDataURL('image/png');
+  const sigSrc = signatureBlobData || 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
 
-  // Construction dynamique des photos
   let photosIntegreHtml = '';
   let photosAnnexeHtml = '';
 
@@ -367,7 +392,6 @@ async function genererEtEnvoyer() {
     });
   }
 
-  // Rendu du gabarit officiel
   const renderDiv = document.getElementById('pdf-render');
   renderDiv.innerHTML = `
     <table class="header-table">
@@ -433,7 +457,7 @@ async function genererEtEnvoyer() {
         <div class="signature-box">
           ${qualiteOpj}<br>
           ${nomOpj}<br>
-          <img src="${signatureData}" class="signature-img">
+          <img src="${sigSrc}" class="signature-img">
         </div>
       </div>
     </div>
@@ -441,58 +465,52 @@ async function genererEtEnvoyer() {
     ${photosAnnexeHtml}
   `;
 
-  renderDiv.style.display = 'block';
+  // Attendre que toutes les images soient décodées avant rendu
+  const imgElements = renderDiv.querySelectorAll('img');
+  await Promise.all(Array.from(imgElements).map(img => img.decode().catch(() => {})));
 
   const nomFichier = `PV_Constatations_${now.toISOString().slice(0, 10)}.pdf`;
   const opt = {
     margin: [10, 10, 10, 10],
     filename: nomFichier,
     image: { type: 'jpeg', quality: 0.95 },
-    html2canvas: { scale: 2, useCORS: true },
+    html2canvas: { scale: 2, useCORS: true, logging: false },
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
   };
 
   try {
-    // Génération du PDF sous forme de fichier réel (Blob)
     const pdfBlob = await html2pdf().set(opt).from(renderDiv).outputPdf('blob');
-    renderDiv.style.display = 'none';
-
     const fichierPdf = new File([pdfBlob], nomFichier, { type: 'application/pdf' });
 
-    // Partage direct avec pièce jointe vers l'application courriel
     if (navigator.canShare && navigator.canShare({ files: [fichierPdf] })) {
       await navigator.share({
         title: `PV de Constatations - ${pvNum}`,
-        text: `PV de transport, constatations et mesures prises (${cadreActif}). Destinataire prévu : ${destEmail}`,
+        text: `PV de transport, constatations et mesures prises (${cadreActif}). Destinataire : ${destEmail}`,
         files: [fichierPdf]
       });
     } else {
-      // Solution de secours : téléchargement direct du PDF
-      const url = URL.createObjectURL(pdfBlob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = nomFichier;
-      a.click();
-      URL.revokeObjectURL(url);
-      alert('Le fichier PDF a été téléchargé sur votre appareil.');
+      // Fallback messagerie par défaut si le partage système refuse le fichier
+      const mailto = `mailto:${encodeURIComponent(destEmail)}?subject=${encodeURIComponent(`PV de Constatations - ${pvNum}`)}`;
+      window.location.href = mailto;
     }
 
     setTimeout(() => {
-      if (confirm("Transmission effectuée.\n\nSouhaitez-vous PURGER DÉFINITIVEMENT les clichés et données du terminal ?")) {
+      if (confirm("Transmission terminée.\n\nSouhaitez-vous PURGER DÉFINITIVEMENT les clichés et données du terminal ?")) {
         nettoyerTerminal();
       }
-    }, 1500);
+    }, 1200);
 
   } catch (err) {
-    renderDiv.style.display = 'none';
-    alert('Erreur lors de la génération du document : ' + err.message);
+    alert('Erreur de génération : ' + err.message);
   }
 }
 
 function nettoyerTerminal() {
   photos = [];
+  signatureBlobData = null;
   afficherPhotos();
-  effacerSignature();
+  document.getElementById('sig-preview-placeholder').style.display = 'block';
+  document.getElementById('sig-preview-img').style.display = 'none';
   document.getElementById('f-arrivee-time').value = '';
   document.getElementById('f-arrivee-gps').value = '';
   document.getElementById('f-adresse').value = '';
@@ -502,5 +520,5 @@ function nettoyerTerminal() {
   document.getElementById('f-etat-lieux').value = '';
   document.getElementById('f-corps-delit').value = '';
   document.getElementById('f-mesures-div').value = '';
-  alert('Nettoyage sécurisé effectué. Aucune donnée ne subsiste sur le terminal.');
+  alert('Nettoyage sécurisé effectué. Aucune trace conservée.');
 }
