@@ -24,36 +24,47 @@
     .card-title { font-weight: bold; font-size: 14px; text-transform: uppercase; color: var(--gn-blue); margin-bottom: 10px; border-bottom: 2px solid var(--gn-blue); padding-bottom: 4px; display: flex; justify-content: space-between; align-items: center; }
     
     label { display: block; font-size: 12px; font-weight: 600; margin-top: 8px; margin-bottom: 3px; color: #475569; }
-    input[type="text"], input[type="datetime-local"], textarea, select { width: 100%; padding: 9px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px; background: #fff; }
+    input[type="text"], textarea { width: 100%; padding: 9px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px; background: #fff; }
     textarea { min-height: 70px; resize: vertical; }
     
     .btn-row { display: flex; gap: 8px; margin-top: 8px; }
     .btn { display: inline-flex; align-items: center; justify-content: center; padding: 10px 14px; border: none; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; text-decoration: none; }
     .btn-primary { background: var(--gn-accent); color: white; flex: 1; }
     .btn-secondary { background: #64748b; color: white; }
-    .btn-vocal { background: #0284c7; color: white; padding: 6px 10px; font-size: 11px; margin-top: 4px; border-radius: 4px; border: none; cursor: pointer; }
     .btn-danger { background: #b91c1c; color: white; }
 
-    /* Sélecteur Flagrance / Préliminaire */
+    /* Bouton dictée vocale avec état actif */
+    .btn-vocal { background: #0284c7; color: white; padding: 7px 12px; font-size: 12px; margin-top: 5px; border-radius: 4px; border: none; cursor: pointer; font-weight: 600; }
+    .btn-vocal.recording { background: #dc2626; animation: pulse 1s infinite; }
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+
+    /* Sélecteur de cadre */
     .switch-cadre { display: flex; border: 2px solid var(--gn-blue); border-radius: 6px; overflow: hidden; margin-bottom: 10px; }
     .switch-cadre button { flex: 1; padding: 10px; border: none; background: white; color: var(--gn-blue); font-weight: bold; font-size: 13px; cursor: pointer; }
     .switch-cadre button.active { background: var(--gn-blue); color: white; }
 
-    /* Galerie de clichés sur le terrain */
+    /* Photos */
     .photo-slot { border: 1px dashed var(--gn-accent); border-radius: 6px; padding: 10px; margin-top: 10px; background: #f8fafc; }
     .photo-preview { max-width: 100%; height: 160px; object-fit: contain; background: #000; border-radius: 4px; display: block; margin: 6px auto; }
 
-    /* Zone de signature */
-    #sig-canvas { border: 2px solid #000; background: #fff; border-radius: 4px; touch-action: none; width: 100%; height: 120px; }
+    /* Aperçu signature sur écran principal */
+    #sig-preview { width: 100%; height: 90px; border: 2px dashed #94a3b8; border-radius: 6px; display: flex; align-items: center; justify-content: center; background: #fff; cursor: pointer; }
+    #sig-preview img { max-height: 80px; max-width: 90%; }
 
-    /* Fenêtre modale de contrôle des numéros */
+    /* MODALE SIGNATURE PLEIN ÉCRAN */
+    #modal-signature { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #ffffff; z-index: 200; flex-direction: column; }
+    .sig-header { background: var(--gn-blue); color: white; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; font-weight: bold; }
+    #sig-fullscreen-canvas { flex: 1; width: 100%; touch-action: none; background: #fafafa; }
+    .sig-footer { padding: 12px 16px; display: flex; gap: 10px; background: #f1f5f9; border-top: 1px solid #cbd5e1; }
+
+    /* Modal de contrôle des cotes */
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 100; align-items: center; justify-content: center; }
     .modal-content { background: white; padding: 18px; border-radius: 8px; width: 90%; max-width: 450px; }
 
     /* =========================================================================
-       GABARIT DE RENDU STRICT (Caché sur l'écran, sert à générer le document PDF)
+       GABARIT DE RENDU STRICT (Positionné hors champ sans display:none pour html2canvas)
        ========================================================================= */
-    #pdf-render { display: none; width: 210mm; background: white; padding: 15mm 12mm; font-family: "Times New Roman", Times, serif; font-size: 11pt; line-height: 1.25; color: #000; }
+    #pdf-render { position: fixed; left: -9999px; top: 0; width: 210mm; background: white; padding: 15mm 12mm; font-family: "Times New Roman", Times, serif; font-size: 11pt; line-height: 1.25; color: #000; z-index: -1; }
     .page-break { page-break-before: always; }
     .header-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
     .header-table td { vertical-align: top; padding: 2px 4px; }
@@ -83,7 +94,7 @@
 
   <div class="container">
 
-    <!-- Configuration Profil Enquêteur (Persistant en local) -->
+    <!-- Profil Enquêteur -->
     <div class="card" id="config-card" style="display:none;">
       <div class="card-title">Profil & Unité</div>
       <label>Compagnie</label>
@@ -129,10 +140,10 @@
       </div>
       <label>Adresse constatée / postale</label>
       <input type="text" id="f-adresse" placeholder="Résolution auto ou saisie vocale/manuelle">
-      <button type="button" class="btn-vocal" onclick="dicter('f-adresse')">🎤 Dicter l'adresse</button>
+      <button type="button" class="btn-vocal" id="btn-voc-adresse" onclick="dicter('f-adresse', 'btn-voc-adresse')">🎤 Dicter l'adresse</button>
     </div>
 
-    <!-- 3. Clichés Photographiques Guidés -->
+    <!-- 3. Clichés Photographiques -->
     <div class="card">
       <div class="card-title">
         <span>Clichés photographiques</span>
@@ -149,44 +160,57 @@
     <div class="card">
       <div class="card-title">Saisine</div>
       <textarea id="f-saisine" placeholder="Contexte de l'engagement, appel reçu..."></textarea>
-      <button type="button" class="btn-vocal" onclick="dicter('f-saisine')">🎤 Dictée vocale</button>
+      <button type="button" class="btn-vocal" id="btn-voc-saisine" onclick="dicter('f-saisine', 'btn-voc-saisine')">🎤 Dictée vocale</button>
 
       <div class="card-title" style="margin-top: 14px;">Situation à l'arrivée</div>
       <textarea id="f-situation" placeholder="Personnes présentes, modifications constatées, ambiance..."></textarea>
-      <button type="button" class="btn-vocal" onclick="dicter('f-situation')">🎤 Dictée vocale</button>
+      <button type="button" class="btn-vocal" id="btn-voc-situation" onclick="dicter('f-situation', 'btn-voc-situation')">🎤 Dictée vocale</button>
 
       <div class="card-title" style="margin-top: 14px;">Mesures prises</div>
       <textarea id="f-mesures" placeholder="Préservations des traces, secours, avis parquet, périmètre..."></textarea>
-      <button type="button" class="btn-vocal" onclick="dicter('f-mesures')">🎤 Dictée vocale</button>
+      <button type="button" class="btn-vocal" id="btn-voc-mesures" onclick="dicter('f-mesures', 'btn-voc-mesures')">🎤 Dictée vocale</button>
 
       <div class="card-title" style="margin-top: 14px;">État des lieux</div>
       <textarea id="f-etat-lieux" placeholder="Situation générale, cheminement, points d'accès..."></textarea>
-      <button type="button" class="btn-vocal" onclick="dicter('f-etat-lieux')">🎤 Dictée vocale</button>
+      <button type="button" class="btn-vocal" id="btn-voc-etat" onclick="dicter('f-etat-lieux', 'btn-voc-etat')">🎤 Dictée vocale</button>
 
       <div class="card-title" style="margin-top: 14px;">Corps du délit</div>
       <textarea id="f-corps-delit" placeholder="Objets découverts, traces de pesée, dégradations, fouille..."></textarea>
-      <button type="button" class="btn-vocal" onclick="dicter('f-corps-delit')">🎤 Dictée vocale</button>
+      <button type="button" class="btn-vocal" id="btn-voc-corps" onclick="dicter('f-corps-delit', 'btn-voc-corps')">🎤 Dictée vocale</button>
 
       <div class="card-title" style="margin-top: 14px;">Mesures diverses</div>
       <textarea id="f-mesures-div" placeholder="Opérations complémentaires, concours reçus..."></textarea>
-      <button type="button" class="btn-vocal" onclick="dicter('f-mesures-div')">🎤 Dictée vocale</button>
+      <button type="button" class="btn-vocal" id="btn-voc-div" onclick="dicter('f-mesures-div', 'btn-voc-div')">🎤 Dictée vocale</button>
     </div>
 
     <!-- 5. Clôture et Signature -->
     <div class="card">
-      <div class="card-title">Clôture & Signature de l'OPJ</div>
-      <canvas id="sig-canvas"></canvas>
-      <div class="btn-row">
-        <button type="button" class="btn btn-secondary" onclick="effacerSignature()">Effacer</button>
+      <div class="card-title">Signature de l'OPJ</div>
+      <div id="sig-preview" onclick="ouvrirModalSignature()">
+        <span id="sig-preview-placeholder" style="font-size: 13px; color: #64748b;">✍️ Toucher pour signer en plein écran</span>
+        <img id="sig-preview-img" style="display:none;" alt="Aperçu signature">
       </div>
-      <button type="button" class="btn btn-primary" style="width: 100%; margin-top: 12px; padding: 14px; font-size: 15px;" onclick="ouvrirModalControle()">
+      <button type="button" class="btn btn-primary" style="width: 100%; margin-top: 16px; padding: 14px; font-size: 15px;" onclick="ouvrirModalControle()">
         📄 Finaliser & Transmettre le PV
       </button>
     </div>
 
   </div>
 
-  <!-- Modal de vérification des cotes avant transmission -->
+  <!-- MODALE SIGNATURE PLEIN ÉCRAN -->
+  <div id="modal-signature">
+    <div class="sig-header">
+      <span>Apposer votre signature au doigt</span>
+      <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px;" onclick="fermerModalSignature()">Annuler</button>
+    </div>
+    <canvas id="sig-fullscreen-canvas"></canvas>
+    <div class="sig-footer">
+      <button class="btn btn-secondary" onclick="effacerSignaturePleinEcran()">Effacer</button>
+      <button class="btn btn-primary" onclick="validerSignaturePleinEcran()">Valider la signature</button>
+    </div>
+  </div>
+
+  <!-- Modal de vérification des cotes -->
   <div id="modal-cotes" class="modal">
     <div class="modal-content">
       <h3 style="margin-top:0; color:var(--gn-blue);">Numérotation procédurale</h3>
@@ -204,7 +228,7 @@
     </div>
   </div>
 
-  <!-- Zone invisible de compilation HTML du document officiel -->
+  <!-- Zone de compilation invisible hors champ -->
   <div id="pdf-render"></div>
 
   <script src="app.js"></script>
