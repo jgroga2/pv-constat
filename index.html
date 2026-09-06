@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>PV Constatations Gendarmerie</title>
+  <link rel="manifest" href="manifest.json">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    :root {
+      --gn-blue: #0b2341;
+      --gn-accent: #1e3a8a;
+      --bg-gray: #f3f4f6;
+      --border-color: #cbd5e1;
+    }
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body { margin: 0; background: var(--bg-gray); color: #1e293b; padding-bottom: 70px; }
+    
+    header { background: var(--gn-blue); color: white; padding: 14px 16px; position: sticky; top: 0; z-index: 50; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.15); }
+    header h1 { margin: 0; font-size: 16px; text-transform: uppercase; letter-spacing: 0.5px; }
+    
+    .container { padding: 12px; max-width: 600px; margin: 0 auto; }
+    .card { background: white; border-radius: 8px; padding: 14px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); border: 1px solid var(--border-color); }
+    .card-title { font-weight: bold; font-size: 14px; text-transform: uppercase; color: var(--gn-blue); margin-bottom: 10px; border-bottom: 2px solid var(--gn-blue); padding-bottom: 4px; display: flex; justify-content: space-between; align-items: center; }
+    
+    label { display: block; font-size: 12px; font-weight: 600; margin-top: 8px; margin-bottom: 3px; color: #475569; }
+    input[type="text"], input[type="datetime-local"], textarea, select { width: 100%; padding: 9px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px; background: #fff; }
+    textarea { min-height: 70px; resize: vertical; }
+    
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; padding: 10px 14px; border: none; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; text-decoration: none; }
+    .btn-primary { background: var(--gn-accent); color: white; flex: 1; }
+    .btn-secondary { background: #64748b; color: white; }
+    .btn-vocal { background: #0284c7; color: white; padding: 6px 10px; font-size: 11px; margin-top: 4px; border-radius: 4px; border: none; cursor: pointer; }
+    .btn-danger { background: #b91c1c; color: white; }
+
+    /* Sélecteur Flagrance / Préliminaire */
+    .switch-cadre { display: flex; border: 2px solid var(--gn-blue); border-radius: 6px; overflow: hidden; margin-bottom: 10px; }
+    .switch-cadre button { flex: 1; padding: 10px; border: none; background: white; color: var(--gn-blue); font-weight: bold; font-size: 13px; cursor: pointer; }
+    .switch-cadre button.active { background: var(--gn-blue); color: white; }
+
+    /* Galerie de clichés sur le terrain */
+    .photo-slot { border: 1px dashed var(--gn-accent); border-radius: 6px; padding: 10px; margin-top: 10px; background: #f8fafc; }
+    .photo-preview { max-width: 100%; height: 160px; object-fit: contain; background: #000; border-radius: 4px; display: block; margin: 6px auto; }
+
+    /* Zone de signature */
+    #sig-canvas { border: 2px solid #000; background: #fff; border-radius: 4px; touch-action: none; width: 100%; height: 120px; }
+
+    /* Fenêtre modale de contrôle des numéros */
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 100; align-items: center; justify-content: center; }
+    .modal-content { background: white; padding: 18px; border-radius: 8px; width: 90%; max-width: 450px; }
+
+    /* =========================================================================
+       GABARIT DE RENDU STRICT (Caché sur l'écran, sert à générer le document PDF)
+       ========================================================================= */
+    #pdf-render { display: none; width: 210mm; background: white; padding: 15mm 12mm; font-family: "Times New Roman", Times, serif; font-size: 11pt; line-height: 1.25; color: #000; }
+    .page-break { page-break-before: always; }
+    .header-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+    .header-table td { vertical-align: top; padding: 2px 4px; }
+    .header-unite { width: 48%; font-size: 9pt; font-weight: bold; text-transform: uppercase; line-height: 1.2; }
+    .header-titres { width: 52%; text-align: center; vertical-align: middle !important; }
+    .enquete-type { font-size: 11pt; font-weight: bold; text-decoration: underline; text-transform: uppercase; margin-bottom: 4px; }
+    .pv-nom { font-size: 11pt; font-weight: bold; text-transform: uppercase; }
+    .cartouche-table { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 8.5pt; font-weight: normal; }
+    .cartouche-table td { border: 1px solid #000; padding: 2px 3px; text-align: center; }
+    .intro-block { text-align: justify; margin-top: 8px; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid #000; }
+    .section-title { font-size: 11pt; font-weight: bold; text-decoration: underline; text-transform: uppercase; margin-top: 12px; margin-bottom: 4px; page-break-after: avoid; }
+    .section-content { text-align: justify; margin-bottom: 10px; }
+    .photo-card-pdf { margin: 8px auto; border: 1px solid #000; padding: 4px; text-align: center; background-color: #fafafa; page-break-inside: avoid; width: 92%; }
+    .photo-card-pdf img { max-width: 100%; max-height: 220px; object-fit: contain; display: block; margin: 0 auto 4px auto; }
+    .photo-caption-pdf { font-size: 8.5pt; text-align: left; border-top: 1px solid #999; padding-top: 3px; }
+    .signature-container { text-align: right; margin-top: 15px; page-break-inside: avoid; }
+    .signature-box { display: inline-block; width: 250px; text-align: center; font-size: 10pt; }
+    .signature-img { max-width: 170px; max-height: 65px; margin-top: 4px; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Procédure de Terrain</h1>
+    <button class="btn btn-secondary" onclick="toggleConfig()" style="font-size: 11px; padding: 5px 8px;">Profil</button>
+  </header>
+
+  <div class="container">
+
+    <!-- Configuration Profil Enquêteur (Persistant en local) -->
+    <div class="card" id="config-card" style="display:none;">
+      <div class="card-title">Profil & Unité</div>
+      <label>Compagnie</label>
+      <input type="text" id="cfg-compagnie" value="Compagnie de AMBOISE">
+      <label>COB</label>
+      <input type="text" id="cfg-cob" value="COB de MONTLOUIS SUR LOIRE">
+      <label>Brigade de proximité</label>
+      <input type="text" id="cfg-brigade" value="Brigade de proximité de VOUVRAY">
+      <label>Lieu de résidence de l'unité</label>
+      <input type="text" id="cfg-residence" value="VOUVRAY 37210">
+      <label>Code Unité</label>
+      <input type="text" id="cfg-code-unite" value="14364">
+      <label>Grade et Nom / Prénom</label>
+      <input type="text" id="cfg-nom" value="Jean Groga">
+      <label>Qualité</label>
+      <input type="text" id="cfg-qualite" value="Officier de Police Judiciaire">
+      <label>Courriel de réception</label>
+      <input type="text" id="cfg-email" value="">
+      <button class="btn btn-primary" style="margin-top: 10px; width: 100%;" onclick="sauvegarderProfil()">Enregistrer le profil</button>
+    </div>
+
+    <!-- 1. Cadre d'Enquête -->
+    <div class="switch-cadre">
+      <button type="button" id="btn-flagrance" class="active" onclick="setCadre('FLAGRANCE')">FLAGRANCE</button>
+      <button type="button" id="btn-preliminaire" onclick="setCadre('PRELIMINAIRE')">PRÉLIMINAIRE</button>
+    </div>
+
+    <!-- 2. Arrivée et Localisation -->
+    <div class="card">
+      <div class="card-title">Arrivée sur les lieux</div>
+      <button type="button" class="btn btn-primary" style="width: 100%;" onclick="declencherArrivee()">
+        📍 Enregistrer l'arrivée et le GPS
+      </button>
+      <div style="display: flex; gap: 8px; margin-top: 8px;">
+        <div style="flex: 1;">
+          <label>Date & Heure d'arrivée</label>
+          <input type="text" id="f-arrivee-time" readonly>
+        </div>
+        <div style="flex: 1;">
+          <label>Coordonnées GPS</label>
+          <input type="text" id="f-arrivee-gps" readonly>
+        </div>
+      </div>
+      <label>Adresse constatée / postale</label>
+      <input type="text" id="f-adresse" placeholder="Résolution auto ou saisie vocale/manuelle">
+      <button type="button" class="btn-vocal" onclick="dicter('f-adresse')">🎤 Dicter l'adresse</button>
+    </div>
+
+    <!-- 3. Clichés Photographiques Guidés -->
+    <div class="card">
+      <div class="card-title">
+        <span>Clichés photographiques</span>
+        <span id="photo-compteur" style="font-size: 11px; background: #e2e8f0; padding: 2px 6px; border-radius: 10px;">0 cliché</span>
+      </div>
+      <div class="btn-row">
+        <input type="file" id="camera-input" accept="image/*" capture="environment" style="display:none;" onchange="ajouterPhoto(event)">
+        <button type="button" class="btn btn-primary" onclick="document.getElementById('camera-input').click()">📷 Prendre une photo</button>
+      </div>
+      <div id="galerie-photos"></div>
+    </div>
+
+    <!-- 4. Rubriques du Procès-Verbal -->
+    <div class="card">
+      <div class="card-title">Saisine</div>
+      <textarea id="f-saisine" placeholder="Contexte de l'engagement, appel reçu..."></textarea>
+      <button type="button" class="btn-vocal" onclick="dicter('f-saisine')">🎤 Dictée vocale</button>
+
+      <div class="card-title" style="margin-top: 14px;">Situation à l'arrivée</div>
+      <textarea id="f-situation" placeholder="Personnes présentes, modifications constatées, ambiance..."></textarea>
+      <button type="button" class="btn-vocal" onclick="dicter('f-situation')">🎤 Dictée vocale</button>
+
+      <div class="card-title" style="margin-top: 14px;">Mesures prises</div>
+      <textarea id="f-mesures" placeholder="Préservations des traces, secours, avis parquet, périmètre..."></textarea>
+      <button type="button" class="btn-vocal" onclick="dicter('f-mesures')">🎤 Dictée vocale</button>
+
+      <div class="card-title" style="margin-top: 14px;">État des lieux</div>
+      <textarea id="f-etat-lieux" placeholder="Situation générale, cheminement, points d'accès..."></textarea>
+      <button type="button" class="btn-vocal" onclick="dicter('f-etat-lieux')">🎤 Dictée vocale</button>
+
+      <div class="card-title" style="margin-top: 14px;">Corps du délit</div>
+      <textarea id="f-corps-delit" placeholder="Objets découverts, traces de pesée, dégradations, fouille..."></textarea>
+      <button type="button" class="btn-vocal" onclick="dicter('f-corps-delit')">🎤 Dictée vocale</button>
+
+      <div class="card-title" style="margin-top: 14px;">Mesures diverses</div>
+      <textarea id="f-mesures-div" placeholder="Opérations complémentaires, concours reçus..."></textarea>
+      <button type="button" class="btn-vocal" onclick="dicter('f-mesures-div')">🎤 Dictée vocale</button>
+    </div>
+
+    <!-- 5. Clôture et Signature -->
+    <div class="card">
+      <div class="card-title">Clôture & Signature de l'OPJ</div>
+      <canvas id="sig-canvas"></canvas>
+      <div class="btn-row">
+        <button type="button" class="btn btn-secondary" onclick="effacerSignature()">Effacer</button>
+      </div>
+      <button type="button" class="btn btn-primary" style="width: 100%; margin-top: 12px; padding: 14px; font-size: 15px;" onclick="ouvrirModalControle()">
+        📄 Finaliser & Transmettre le PV
+      </button>
+    </div>
+
+  </div>
+
+  <!-- Modal de vérification des cotes avant transmission -->
+  <div id="modal-cotes" class="modal">
+    <div class="modal-content">
+      <h3 style="margin-top:0; color:var(--gn-blue);">Numérotation procédurale</h3>
+      <p style="font-size:12px; color:#64748b;">Renseignez les numéros ou conservez les valeurs d'attente :</p>
+      <label>P.V. N°</label>
+      <input type="text" id="m-pv-num" value="[ En cours ]">
+      <label>N° Pièce</label>
+      <input type="text" id="m-piece-num" value="[ En cours ]">
+      <label>Nmr Dossier Justice</label>
+      <input type="text" id="m-dossier-num" value="[ En cours ]">
+      <div class="btn-row" style="margin-top: 15px;">
+        <button type="button" class="btn btn-secondary" onclick="fermerModal()">Retour</button>
+        <button type="button" class="btn btn-primary" onclick="genererEtEnvoyer()">Générer le PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Zone invisible de compilation HTML du document officiel -->
+  <div id="pdf-render"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
