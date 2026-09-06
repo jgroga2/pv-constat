@@ -1,0 +1,9 @@
+{
+  "name": "Constatations Gendarmerie",
+  "short_name": "PV Constat",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1a365d",
+  "icons": []
+}
