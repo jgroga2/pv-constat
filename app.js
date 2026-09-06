@@ -4,6 +4,8 @@
 let cadreActif = 'FLAGRANCE';
 let photos = [];
 let sigCanvas, sigCtx, isDrawing = false;
+let recognition = null;
+let activeRecogId = null;
 
 // Initialisation au chargement
 window.addEventListener('DOMContentLoaded', () => {
@@ -104,7 +106,7 @@ async function resoudreAdresse(lat, lon) {
 }
 
 // =============================================================================
-// DICTÉE VOCALE DIRECTE
+// DICTÉE VOCALE CONTINUE (NE COUPE PLUS LORS DES PAUSES)
 // =============================================================================
 function dicter(targetId) {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -112,20 +114,38 @@ function dicter(targetId) {
     alert('La reconnaissance vocale n\'est pas disponible sur ce navigateur.');
     return;
   }
-  const recog = new SpeechRecognition();
-  recog.lang = 'fr-FR';
-  recog.interimResults = false;
-  recog.start();
 
-  recog.onresult = (event) => {
-    const texte = event.results[0][0].transcript;
-    const el = document.getElementById(targetId);
-    el.value = el.value ? `${el.value} ${texte}` : texte;
+  if (recognition) {
+    recognition.stop();
+    recognition = null;
+    return;
+  }
+
+  recognition = new SpeechRecognition();
+  recognition.lang = 'fr-FR';
+  recognition.continuous = true;
+  recognition.interimResults = false;
+
+  activeRecogId = targetId;
+  const el = document.getElementById(targetId);
+
+  recognition.onresult = (event) => {
+    for (let i = event.resultIndex; i < event.results.length; ++i) {
+      if (event.results[i].isFinal) {
+        const texte = event.results[i][0].transcript.trim();
+        el.value = el.value ? `${el.value} ${texte}` : texte;
+      }
+    }
   };
+
+  recognition.onerror = () => { recognition = null; };
+  recognition.onend = () => { recognition = null; };
+
+  recognition.start();
 }
 
 // =============================================================================
-// GESTION DES CLICHÉS PHOTOGRAPHIQUES ET LÉGENDES
+// GESTION DES CLICHÉS (COMPRESSION AUTOMATIQUE < 5 Mo)
 // =============================================================================
 function ajouterPhoto(event) {
   const file = event.target.files[0];
@@ -133,18 +153,47 @@ function ajouterPhoto(event) {
 
   const reader = new FileReader();
   reader.onload = (e) => {
-    const now = new Date();
-    const gpsVal = document.getElementById('f-arrivee-gps').value || 'Non renseigné';
-    const photoObj = {
-      id: Date.now(),
-      data: e.target.result,
-      date: now.toLocaleDateString('fr-FR'),
-      heure: now.toLocaleTimeString('fr-FR'),
-      gps: gpsVal,
-      legende: ''
+    const img = new Image();
+    img.onload = () => {
+      // Redimensionnement à 1600px max (netteté A4 préservée)
+      const maxDim = 1600;
+      let width = img.width;
+      let height = img.height;
+
+      if (width > maxDim || height > maxDim) {
+        if (width > height) {
+          height = Math.round((height * maxDim) / width);
+          width = maxDim;
+        } else {
+          width = Math.round((width * maxDim) / height);
+          height = maxDim;
+        }
+      }
+
+      // Compression via Canvas
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+
+      // Qualité 0.82 (~250-350 Ko par photo)
+      const compressedData = canvas.toDataURL('image/jpeg', 0.82);
+
+      const now = new Date();
+      const gpsVal = document.getElementById('f-arrivee-gps').value || 'Coordonnées non relevées';
+      const photoObj = {
+        id: Date.now(),
+        data: compressedData,
+        date: now.toLocaleDateString('fr-FR'),
+        heure: now.toLocaleTimeString('fr-FR'),
+        gps: gpsVal,
+        legende: ''
+      };
+      photos.push(photoObj);
+      afficherPhotos();
     };
-    photos.push(photoObj);
-    afficherPhotos();
+    img.src = e.target.result;
   };
   reader.readAsDataURL(file);
 }
@@ -165,7 +214,7 @@ function afficherPhotos() {
       <label>Légende descriptive :</label>
       <input type="text" id="legende-${p.id}" value="${p.legende}" onchange="majLegende(${p.id}, this.value)" placeholder="Description de la trace, outil, dégradation...">
       <div class="btn-row">
-        <button type="button" class="btn-vocal" onclick="dicter('legende-${p.id}')">🎤 Dicter légende</button>
+        <button type="button" class="btn-vocal" onclick="dicter('legende-${p.id}')">🎤 Dictée continue</button>
         <button type="button" class="btn btn-danger" style="padding:4px 8px; font-size:11px;" onclick="supprimerPhoto(${p.id})">Supprimer</button>
       </div>
     `;
@@ -190,7 +239,6 @@ function initSignature() {
   sigCanvas = document.getElementById('sig-canvas');
   sigCtx = sigCanvas.getContext('2d');
   
-  // Résolution nette
   sigCanvas.width = sigCanvas.offsetWidth;
   sigCanvas.height = sigCanvas.offsetHeight;
   sigCtx.lineWidth = 2;
@@ -220,7 +268,7 @@ function effacerSignature() {
 }
 
 // =============================================================================
-// MODALE DE CONTRÔLE ET GÉNÉRATION DU PDF PROCÉDURAL
+// CONTRÔLE ET GÉNÉRATION PDF (PARTAGE DIRECT DU FICHIER EN PIÈCE JOINTE)
 // =============================================================================
 function ouvrirModalControle() {
   document.getElementById('modal-cotes').style.display = 'flex';
@@ -230,7 +278,7 @@ function fermerModal() {
   document.getElementById('modal-cotes').style.display = 'none';
 }
 
-function genererEtEnvoyer() {
+async function genererEtEnvoyer() {
   fermerModal();
 
   // Mise à jour finale des légendes
@@ -254,6 +302,7 @@ function genererEtEnvoyer() {
   const nomOpj = document.getElementById('cfg-nom').value;
   const qualiteOpj = document.getElementById('cfg-qualite').value;
   const residenceU = document.getElementById('cfg-residence').value;
+  const destEmail = document.getElementById('cfg-email').value;
 
   const articles = cadreActif === 'FLAGRANCE' ? '53 à 67' : '75 à 78';
 
@@ -270,7 +319,7 @@ function genererEtEnvoyer() {
 
   const signatureData = sigCanvas.toDataURL('image/png');
 
-  // Construction dynamique des photos (≤ 4 photos intégrées dans l'état des lieux, > 4 en annexe)
+  // Construction dynamique des photos
   let photosIntegreHtml = '';
   let photosAnnexeHtml = '';
 
@@ -318,7 +367,7 @@ function genererEtEnvoyer() {
     });
   }
 
-  // Assemblage du gabarit complet
+  // Rendu du gabarit officiel
   const renderDiv = document.getElementById('pdf-render');
   renderDiv.innerHTML = `
     <table class="header-table">
@@ -392,31 +441,52 @@ function genererEtEnvoyer() {
     ${photosAnnexeHtml}
   `;
 
-  // Génération du PDF
   renderDiv.style.display = 'block';
+
+  const nomFichier = `PV_Constatations_${now.toISOString().slice(0, 10)}.pdf`;
   const opt = {
     margin: [10, 10, 10, 10],
-    filename: `PV_Constatations_${now.toISOString().slice(0, 10)}.pdf`,
+    filename: nomFichier,
     image: { type: 'jpeg', quality: 0.95 },
     html2canvas: { scale: 2, useCORS: true },
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
   };
 
-  html2pdf().set(opt).from(renderDiv).save().then(() => {
+  try {
+    // Génération du PDF sous forme de fichier réel (Blob)
+    const pdfBlob = await html2pdf().set(opt).from(renderDiv).outputPdf('blob');
     renderDiv.style.display = 'none';
 
-    // Proposition de transmission par courriel et purge sécurisée
-    const destEmail = document.getElementById('cfg-email').value;
-    const mailto = `mailto:${encodeURIComponent(destEmail)}?subject=${encodeURIComponent(`PV de Constatations - ${pvNum}`)}&body=${encodeURIComponent("Veuillez trouver ci-joint le procès-verbal de transport constatations et mesures prises généré sur le terrain.")}`;
-    
-    window.location.href = mailto;
+    const fichierPdf = new File([pdfBlob], nomFichier, { type: 'application/pdf' });
+
+    // Partage direct avec pièce jointe vers l'application courriel
+    if (navigator.canShare && navigator.canShare({ files: [fichierPdf] })) {
+      await navigator.share({
+        title: `PV de Constatations - ${pvNum}`,
+        text: `PV de transport, constatations et mesures prises (${cadreActif}). Destinataire prévu : ${destEmail}`,
+        files: [fichierPdf]
+      });
+    } else {
+      // Solution de secours : téléchargement direct du PDF
+      const url = URL.createObjectURL(pdfBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = nomFichier;
+      a.click();
+      URL.revokeObjectURL(url);
+      alert('Le fichier PDF a été téléchargé sur votre appareil.');
+    }
 
     setTimeout(() => {
-      if (confirm("Transmission initiée.\n\nSouhaitez-vous PURGER DÉFINITIVEMENT les clichés et données locales du terminal par mesure de confidentialité ?")) {
+      if (confirm("Transmission effectuée.\n\nSouhaitez-vous PURGER DÉFINITIVEMENT les clichés et données du terminal ?")) {
         nettoyerTerminal();
       }
     }, 1500);
-  });
+
+  } catch (err) {
+    renderDiv.style.display = 'none';
+    alert('Erreur lors de la génération du document : ' + err.message);
+  }
 }
 
 function nettoyerTerminal() {
