@@ -6,7 +6,7 @@ let photos = [];
 let sigCanvas, sigCtx, isDrawing = false;
 let signatureBlobData = null;
 let recognition = null;
-let activeVocBtnId = null;
+let shouldKeepListening = false;
 
 window.addEventListener('DOMContentLoaded', () => {
   chargerProfil();
@@ -21,7 +21,7 @@ function initServiceWorker() {
 }
 
 // =============================================================================
-// PROFIL ENQUÊTEUR (STOCKAGE LOCAL)
+// PROFIL ENQUÊTEUR (STOCKAGE LOCAL HORS-LIGNE)
 // =============================================================================
 function toggleConfig() {
   const card = document.getElementById('config-card');
@@ -104,55 +104,70 @@ async function resoudreAdresse(lat, lon) {
 }
 
 // =============================================================================
-// DICTÉE VOCALE CONTINUE AVEC BOUTON D'ARRÊT DÉDIÉ
+// DICTÉE VOCALE CONTINUE AVEC RELANCE SUR SILENCE
 // =============================================================================
 function dicter(targetId, btnId) {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) {
-    alert('Reconnaissance vocale non prise en charge sur ce navigateur.');
+    alert("Reconnaissance vocale non prise en charge sur ce navigateur.");
     return;
   }
 
   const btn = document.getElementById(btnId);
 
-  // Si on appuie alors que c'est en cours : on arrête
-  if (recognition) {
-    recognition.stop();
+  if (shouldKeepListening) {
+    shouldKeepListening = false;
+    if (recognition) recognition.stop();
+    btn.classList.remove('recording');
+    btn.innerText = '🎤 Dictée vocale';
     return;
   }
 
-  recognition = new SpeechRecognition();
-  recognition.lang = 'fr-FR';
-  recognition.continuous = true;
-  recognition.interimResults = false;
+  shouldKeepListening = true;
+  btn.classList.add('recording');
+  btn.innerText = '⏹️ Arrêter la dictée';
 
-  activeVocBtnId = btnId;
-  const el = document.getElementById(targetId);
+  function lancerReconnaissance() {
+    if (!shouldKeepListening) return;
 
-  recognition.onstart = () => {
-    btn.classList.add('recording');
-    btn.innerText = '⏹️ Arrêter la dictée';
-  };
+    recognition = new SpeechRecognition();
+    recognition.lang = 'fr-FR';
+    recognition.continuous = true;
+    recognition.interimResults = false;
 
-  recognition.onresult = (event) => {
-    for (let i = event.resultIndex; i < event.results.length; ++i) {
-      if (event.results[i].isFinal) {
-        const transcript = event.results[i][0].transcript.trim();
-        el.value = el.value ? `${el.value} ${transcript}` : transcript;
+    const el = document.getElementById(targetId);
+
+    recognition.onresult = (event) => {
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i].isFinal) {
+          const transcript = event.results[i][0].transcript.trim();
+          el.value = el.value ? `${el.value} ${transcript}` : transcript;
+        }
       }
-    }
-  };
+    };
 
-  const resetBtn = () => {
-    btn.classList.remove('recording');
-    btn.innerText = '🎤 Dictée vocale';
-    recognition = null;
-  };
+    recognition.onerror = (event) => {
+      if (event.error === 'no-speech' && shouldKeepListening) {
+        return;
+      }
+    };
 
-  recognition.onerror = resetBtn;
-  recognition.onend = resetBtn;
+    recognition.onend = () => {
+      if (shouldKeepListening) {
+        setTimeout(() => {
+          try {
+            lancerReconnaissance();
+          } catch (e) {}
+        }, 150);
+      }
+    };
 
-  recognition.start();
+    try {
+      recognition.start();
+    } catch (e) {}
+  }
+
+  lancerReconnaissance();
 }
 
 // =============================================================================
@@ -268,8 +283,7 @@ function initSignaturePleinEcran() {
 function ouvrirModalSignature() {
   const modal = document.getElementById('modal-signature');
   modal.style.display = 'flex';
-  
-  // Dimensions calées sur le plein écran de l'appareil
+
   sigCanvas.width = sigCanvas.offsetWidth;
   sigCanvas.height = sigCanvas.offsetHeight;
   sigCtx.lineWidth = 3;
@@ -295,7 +309,7 @@ function validerSignaturePleinEcran() {
 }
 
 // =============================================================================
-// CONTRÔLE ET GÉNÉRATION PDF SANS DOUBLE STOCKAGE
+// CONTRÔLE ET GÉNÉRATION PDF
 // =============================================================================
 function ouvrirModalControle() {
   document.getElementById('modal-cotes').style.display = 'flex';
@@ -362,7 +376,7 @@ async function genererEtEnvoyer() {
     });
   } else if (photos.length > 4) {
     photosIntegreHtml = `<p><em>(Se reporter aux clichés photographiques n° 01 à ${photos.length} annexés au présent procès-verbal).</em></p>`;
-    
+
     photosAnnexeHtml = `
       <div class="page-break"></div>
       <table class="header-table">
@@ -465,7 +479,6 @@ async function genererEtEnvoyer() {
     ${photosAnnexeHtml}
   `;
 
-  // Attendre que toutes les images soient décodées avant rendu
   const imgElements = renderDiv.querySelectorAll('img');
   await Promise.all(Array.from(imgElements).map(img => img.decode().catch(() => {})));
 
@@ -489,7 +502,6 @@ async function genererEtEnvoyer() {
         files: [fichierPdf]
       });
     } else {
-      // Fallback messagerie par défaut si le partage système refuse le fichier
       const mailto = `mailto:${encodeURIComponent(destEmail)}?subject=${encodeURIComponent(`PV de Constatations - ${pvNum}`)}`;
       window.location.href = mailto;
     }
