@@ -21,7 +21,7 @@ function initServiceWorker() {
 }
 
 // =============================================================================
-// PROFIL ENQUÊTEUR (STOCKAGE LOCAL HORS-LIGNE)
+// PROFIL ENQUÊTEUR
 // =============================================================================
 function toggleConfig() {
   const card = document.getElementById('config-card');
@@ -104,7 +104,7 @@ async function resoudreAdresse(lat, lon) {
 }
 
 // =============================================================================
-// DICTÉE VOCALE CONTINUE AVEC RELANCE SUR SILENCE
+// DICTÉE VOCALE CONTINUE
 // =============================================================================
 function dicter(targetId, btnId) {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -147,24 +147,18 @@ function dicter(targetId, btnId) {
     };
 
     recognition.onerror = (event) => {
-      if (event.error === 'no-speech' && shouldKeepListening) {
-        return;
-      }
+      if (event.error === 'no-speech' && shouldKeepListening) return;
     };
 
     recognition.onend = () => {
       if (shouldKeepListening) {
         setTimeout(() => {
-          try {
-            lancerReconnaissance();
-          } catch (e) {}
+          try { lancerReconnaissance(); } catch (e) {}
         }, 150);
       }
     };
 
-    try {
-      recognition.start();
-    } catch (e) {}
+    try { recognition.start(); } catch (e) {}
   }
 
   lancerReconnaissance();
@@ -255,7 +249,7 @@ function supprimerPhoto(id) {
 }
 
 // =============================================================================
-// SIGNATURE PLEIN ÉCRAN
+// SIGNATURE PLEIN ÉCRAN (ROTATION LIBRE)
 // =============================================================================
 function initSignaturePleinEcran() {
   sigCanvas = document.getElementById('sig-fullscreen-canvas');
@@ -278,17 +272,38 @@ function initSignaturePleinEcran() {
   sigCanvas.addEventListener('touchstart', (e) => { e.preventDefault(); start(e); });
   sigCanvas.addEventListener('touchmove', (e) => { e.preventDefault(); move(e); });
   sigCanvas.addEventListener('touchend', end);
+
+  // Redimensionnement automatique lors de la rotation paysage/portrait
+  window.addEventListener('resize', ajusterTailleSignature);
+}
+
+function ajusterTailleSignature() {
+  const modal = document.getElementById('modal-signature');
+  if (modal.style.display === 'flex') {
+    // Sauvegarde temporaire du tracé en cas de rotation
+    const temp = sigCanvas.toDataURL();
+    sigCanvas.width = sigCanvas.offsetWidth;
+    sigCanvas.height = sigCanvas.offsetHeight;
+    sigCtx.lineWidth = 3;
+    sigCtx.strokeStyle = '#000';
+    sigCtx.lineCap = 'round';
+    
+    const img = new Image();
+    img.onload = () => sigCtx.drawImage(img, 0, 0);
+    img.src = temp;
+  }
 }
 
 function ouvrirModalSignature() {
   const modal = document.getElementById('modal-signature');
   modal.style.display = 'flex';
-
-  sigCanvas.width = sigCanvas.offsetWidth;
-  sigCanvas.height = sigCanvas.offsetHeight;
-  sigCtx.lineWidth = 3;
-  sigCtx.strokeStyle = '#000';
-  sigCtx.lineCap = 'round';
+  setTimeout(() => {
+    sigCanvas.width = sigCanvas.offsetWidth;
+    sigCanvas.height = sigCanvas.offsetHeight;
+    sigCtx.lineWidth = 3;
+    sigCtx.strokeStyle = '#000';
+    sigCtx.lineCap = 'round';
+  }, 100);
 }
 
 function fermerModalSignature() {
@@ -479,6 +494,9 @@ async function genererEtEnvoyer() {
     ${photosAnnexeHtml}
   `;
 
+  const wrapper = document.getElementById('pdf-wrapper');
+  wrapper.style.display = 'block';
+
   const imgElements = renderDiv.querySelectorAll('img');
   await Promise.all(Array.from(imgElements).map(img => img.decode().catch(() => {})));
 
@@ -493,6 +511,8 @@ async function genererEtEnvoyer() {
 
   try {
     const pdfBlob = await html2pdf().set(opt).from(renderDiv).outputPdf('blob');
+    wrapper.style.display = 'none';
+
     const fichierPdf = new File([pdfBlob], nomFichier, { type: 'application/pdf' });
 
     if (navigator.canShare && navigator.canShare({ files: [fichierPdf] })) {
@@ -513,6 +533,7 @@ async function genererEtEnvoyer() {
     }, 1200);
 
   } catch (err) {
+    wrapper.style.display = 'none';
     alert('Erreur de génération : ' + err.message);
   }
 }
