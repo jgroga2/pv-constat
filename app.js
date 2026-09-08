@@ -249,7 +249,7 @@ function supprimerPhoto(id) {
 }
 
 // =============================================================================
-// SIGNATURE PLEIN ÉCRAN (ROTATION LIBRE)
+// SIGNATURE PLEIN ÉCRAN ROBUSTE
 // =============================================================================
 function initSignaturePleinEcran() {
   sigCanvas = document.getElementById('sig-fullscreen-canvas');
@@ -273,17 +273,16 @@ function initSignaturePleinEcran() {
   sigCanvas.addEventListener('touchmove', (e) => { e.preventDefault(); move(e); });
   sigCanvas.addEventListener('touchend', end);
 
-  // Redimensionnement automatique lors de la rotation paysage/portrait
-  window.addEventListener('resize', ajusterTailleSignature);
+  window.addEventListener('resize', redimensionnerCanvasSignature);
 }
 
-function ajusterTailleSignature() {
+function redimensionnerCanvasSignature() {
   const modal = document.getElementById('modal-signature');
   if (modal.style.display === 'flex') {
-    // Sauvegarde temporaire du tracé en cas de rotation
     const temp = sigCanvas.toDataURL();
-    sigCanvas.width = sigCanvas.offsetWidth;
-    sigCanvas.height = sigCanvas.offsetHeight;
+    const container = sigCanvas.parentElement;
+    sigCanvas.width = container.clientWidth;
+    sigCanvas.height = container.clientHeight;
     sigCtx.lineWidth = 3;
     sigCtx.strokeStyle = '#000';
     sigCtx.lineCap = 'round';
@@ -298,8 +297,9 @@ function ouvrirModalSignature() {
   const modal = document.getElementById('modal-signature');
   modal.style.display = 'flex';
   setTimeout(() => {
-    sigCanvas.width = sigCanvas.offsetWidth;
-    sigCanvas.height = sigCanvas.offsetHeight;
+    const container = sigCanvas.parentElement;
+    sigCanvas.width = container.clientWidth;
+    sigCanvas.height = container.clientHeight;
     sigCtx.lineWidth = 3;
     sigCtx.strokeStyle = '#000';
     sigCtx.lineCap = 'round';
@@ -324,7 +324,7 @@ function validerSignaturePleinEcran() {
 }
 
 // =============================================================================
-// CONTRÔLE ET GÉNÉRATION PDF
+// CONTRÔLE ET GÉNÉRATION DU PDF PAR MOTEUR VECTORIEL DIRECT (SANS BLANC)
 // =============================================================================
 function ouvrirModalControle() {
   document.getElementById('modal-cotes').style.display = 'flex';
@@ -372,147 +372,139 @@ async function genererEtEnvoyer() {
   const corpsDelit = document.getElementById('f-corps-delit').value || 'Néant.';
   const mesuresDiv = document.getElementById('f-mesures-div').value || 'Néant.';
 
-  const sigSrc = signatureBlobData || 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
-
-  let photosIntegreHtml = '';
-  let photosAnnexeHtml = '';
-
-  if (photos.length > 0 && photos.length <= 4) {
-    photos.forEach((p, i) => {
-      photosIntegreHtml += `
-        <div class="photo-card-pdf">
-          <img src="${p.data}">
-          <div class="photo-caption-pdf">
-            <strong>Cliché n° ${i + 1} :</strong> ${p.legende || 'Sans légende'}<br>
-            <em>Pris le ${p.date} à ${p.heure} — GPS : ${p.gps}</em>
-          </div>
-        </div>
-      `;
-    });
-  } else if (photos.length > 4) {
-    photosIntegreHtml = `<p><em>(Se reporter aux clichés photographiques n° 01 à ${photos.length} annexés au présent procès-verbal).</em></p>`;
-
-    photosAnnexeHtml = `
-      <div class="page-break"></div>
-      <table class="header-table">
-        <tr>
-          <td class="header-unite">GENDARMERIE NATIONALE<br>${bde}</td>
-          <td class="header-titres">
-            <div class="pv-nom">ANNEXE PHOTOGRAPHIQUE</div>
-            <div style="font-size:9.5pt; margin-top:4px;">P.V. N° : <strong>${pvNum}</strong></div>
-          </td>
-        </tr>
-      </table>
-      <div style="text-align:center; font-weight:bold; font-size:11pt; text-transform:uppercase; margin-bottom:12px; border-bottom:1px solid #000; padding-bottom:3px;">
-        Planche Photographique Continue
-      </div>
-    `;
-
-    photos.forEach((p, i) => {
-      photosAnnexeHtml += `
-        <div class="photo-card-pdf">
-          <img src="${p.data}">
-          <div class="photo-caption-pdf">
-            <strong>Cliché n° ${i + 1} :</strong> ${p.legende || 'Sans légende'}<br>
-            <em>Pris le ${p.date} à ${p.heure} — GPS : ${p.gps}</em>
-          </div>
-        </div>
-      `;
-    });
-  }
-
-  const renderDiv = document.getElementById('pdf-render');
-  renderDiv.innerHTML = `
-    <table class="header-table">
-      <tr>
-        <td class="header-unite">
-          GENDARMERIE NATIONALE<br>
-          ${comp}<br>
-          ${cob}<br>
-          ${bde}
-          <table class="cartouche-table">
-            <tr>
-              <td>Code Unité<br><strong>${codeU}</strong></td>
-              <td>P.V. N°<br><strong>${pvNum}</strong></td>
-              <td>Année<br><strong>${now.getFullYear()}</strong></td>
-            </tr>
-            <tr>
-              <td colspan="2">Nmr Dossier Justice : <strong>${dossierNum}</strong></td>
-              <td>N° Pièce<br><strong>${pieceNum}</strong></td>
-            </tr>
-          </table>
-        </td>
-        <td class="header-titres">
-          <div class="enquete-type">ENQUÊTE DE ${cadreActif}</div>
-          <div class="pv-nom">PROCÈS-VERBAL DE TRANSPORT CONSTATATIONS ET MESURES PRISES</div>
-        </td>
-      </tr>
-    </table>
-
-    <div class="intro-block">
-      Le <strong>${dateCloture}</strong> à <strong>${heureCloture}</strong>.<br>
-      Nous soussigné, <strong>${nomOpj}</strong>, ${qualiteOpj} en résidence à ${residenceU}.<br>
-      Vu les articles 16 à 19 et ${articles} du Code de Procédure Pénale.<br>
-      Nous trouvant au bureau de notre unité à ${residenceU}, rapportons les opérations suivantes :
-    </div>
-
-    <div class="section-title">SAISINE</div>
-    <div class="section-content">${saisine}</div>
-
-    <div class="section-title">SITUATION A L'ARRIVÉE DES ENQUÊTEURS</div>
-    <div class="section-content">
-      Transport sur les lieux le <strong>${arriveeTime}</strong> sis à <strong>${adr}</strong> (Coordonnées GPS : ${gps}).<br><br>
-      ${situation}
-    </div>
-
-    <div class="section-title">MESURES PRISES</div>
-    <div class="section-content">${mesures}</div>
-
-    <div class="section-title">ETAT DES LIEUX</div>
-    <div class="section-content">
-      ${etatLieux}
-      ${photosIntegreHtml}
-    </div>
-
-    <div class="section-title">CORPS DU DELIT</div>
-    <div class="section-content">${corpsDelit}</div>
-
-    <div class="section-title">MESURES DIVERSES</div>
-    <div class="section-content">${mesuresDiv}</div>
-
-    <div style="margin-top:16px; page-break-inside: avoid;">
-      <p><strong>Dont procès-verbal fait et clos le ${dateCloture} à ${heureCloture}.</strong></p>
-      <div class="signature-container">
-        <div class="signature-box">
-          ${qualiteOpj}<br>
-          ${nomOpj}<br>
-          <img src="${sigSrc}" class="signature-img">
-        </div>
-      </div>
-    </div>
-
-    ${photosAnnexeHtml}
-  `;
-
-  const wrapper = document.getElementById('pdf-wrapper');
-  wrapper.style.display = 'block';
-
-  const imgElements = renderDiv.querySelectorAll('img');
-  await Promise.all(Array.from(imgElements).map(img => img.decode().catch(() => {})));
-
-  const nomFichier = `PV_Constatations_${now.toISOString().slice(0, 10)}.pdf`;
-  const opt = {
-    margin: [10, 10, 10, 10],
-    filename: nomFichier,
-    image: { type: 'jpeg', quality: 0.95 },
-    html2canvas: { scale: 2, useCORS: true, logging: false },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-  };
-
   try {
-    const pdfBlob = await html2pdf().set(opt).from(renderDiv).outputPdf('blob');
-    wrapper.style.display = 'none';
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
 
+    let y = 15;
+    const pageHeight = 280;
+    const leftMargin = 15;
+    const contentWidth = 180;
+
+    // En-tête réglementaire
+    doc.setFont("times", "bold");
+    doc.setFontSize(9);
+    doc.text("GENDARMERIE NATIONALE", leftMargin, y);
+    doc.text(comp.toUpperCase(), leftMargin, y + 4);
+    doc.text(cob.toUpperCase(), leftMargin, y + 8);
+    doc.text(bde.toUpperCase(), leftMargin, y + 12);
+
+    // Titres au centre
+    doc.setFontSize(11);
+    doc.text(`ENQUÊTE DE ${cadreActif}`, 130, y + 4, { align: "center" });
+    doc.setFontSize(10);
+    doc.text("PROCÈS-VERBAL DE TRANSPORT CONSTATATIONS", 130, y + 9, { align: "center" });
+    doc.text("ET MESURES PRISES", 130, y + 13, { align: "center" });
+
+    // Cadre cartouche
+    y += 18;
+    doc.rect(leftMargin, y, 75, 16);
+    doc.setFontSize(8);
+    doc.setFont("times", "normal");
+    doc.text(`Code Unité : ${codeU}  |  Année : ${now.getFullYear()}`, leftMargin + 2, y + 4);
+    doc.text(`P.V. N° : ${pvNum}  |  Pièce : ${pieceNum}`, leftMargin + 2, y + 9);
+    doc.text(`Dossier Justice : ${dossierNum}`, leftMargin + 2, y + 14);
+
+    // Paragraphe introductif
+    y += 22;
+    doc.setFontSize(10.5);
+    doc.setFont("times", "normal");
+    const introTxt = `Le ${dateCloture} à ${heureCloture}. Nous soussigné, ${nomOpj}, ${qualiteOpj} en résidence à ${residenceU}. Vu les articles 16 à 19 et ${articles} du Code de Procédure Pénale. Nous trouvant au bureau de notre unité à ${residenceU}, rapportons les opérations suivantes :`;
+    const introLines = doc.splitTextToSize(introTxt, contentWidth);
+    doc.text(introLines, leftMargin, y);
+    y += introLines.length * 5 + 3;
+
+    doc.line(leftMargin, y, leftMargin + contentWidth, y);
+    y += 5;
+
+    // Fonction d'ajout de section
+    function addSection(title, content) {
+      if (y > pageHeight - 25) { doc.addPage(); y = 15; }
+      doc.setFont("times", "bold");
+      doc.setFontSize(11);
+      doc.text(title, leftMargin, y);
+      y += 5;
+
+      doc.setFont("times", "normal");
+      doc.setFontSize(10);
+      const lines = doc.splitTextToSize(content, contentWidth);
+      lines.forEach(l => {
+        if (y > pageHeight - 15) { doc.addPage(); y = 15; }
+        doc.text(l, leftMargin, y);
+        y += 4.5;
+      });
+      y += 4;
+    }
+
+    addSection("SAISINE", saisine);
+    addSection("SITUATION A L'ARRIVÉE DES ENQUÊTEURS", `Transport sur les lieux le ${arriveeTime} sis à ${adr} (GPS : ${gps}).\n\n${situation}`);
+    addSection("MESURES PRISES", mesures);
+    addSection("ETAT DES LIEUX", etatLieux);
+
+    // Insertion des clichés si <= 4 dans le corps
+    if (photos.length > 0 && photos.length <= 4) {
+      for (let i = 0; i < photos.length; i++) {
+        const p = photos[i];
+        if (y > pageHeight - 70) { doc.addPage(); y = 15; }
+        try {
+          doc.addImage(p.data, 'JPEG', leftMargin + 25, y, 130, 65);
+          y += 68;
+          doc.setFontSize(8.5);
+          doc.setFont("times", "italic");
+          doc.text(`Cliché n° ${i + 1} - ${p.date} à ${p.heure} (GPS : ${p.gps})`, leftMargin + 25, y);
+          y += 4;
+          doc.setFont("times", "normal");
+          doc.text(`Légende : ${p.legende || 'Néant'}`, leftMargin + 25, y);
+          y += 6;
+        } catch (e) {}
+      }
+    } else if (photos.length > 4) {
+      addSection("CLICHÉS PHOTOGRAPHIQUES", `(Se reporter aux clichés n° 01 à ${photos.length} joints en annexe photographique du présent procès-verbal).`);
+    }
+
+    addSection("CORPS DU DELIT", corpsDelit);
+    addSection("MESURES DIVERSES", mesuresDiv);
+
+    // Clôture et Signature
+    if (y > pageHeight - 45) { doc.addPage(); y = 15; }
+    doc.setFont("times", "bold");
+    doc.setFontSize(10.5);
+    doc.text(`Dont procès-verbal fait et clos le ${dateCloture} à ${heureCloture}.`, leftMargin, y);
+    y += 8;
+
+    doc.setFont("times", "normal");
+    doc.text(qualiteOpj, 130, y);
+    doc.text(nomOpj, 130, y + 4);
+    if (signatureBlobData) {
+      doc.addImage(signatureBlobData, 'PNG', 125, y + 6, 55, 25);
+    }
+
+    // Annexe continue si > 4 clichés
+    if (photos.length > 4) {
+      doc.addPage();
+      y = 15;
+      doc.setFont("times", "bold");
+      doc.setFontSize(11);
+      doc.text("ANNEXE PHOTOGRAPHIQUE CONTINUE", 105, y, { align: "center" });
+      y += 10;
+
+      for (let i = 0; i < photos.length; i++) {
+        const p = photos[i];
+        if (y > pageHeight - 90) { doc.addPage(); y = 15; }
+        doc.addImage(p.data, 'JPEG', leftMargin + 20, y, 140, 75);
+        y += 78;
+        doc.setFontSize(9);
+        doc.setFont("times", "italic");
+        doc.text(`Cliché n° ${i + 1} - ${p.date} à ${p.heure} - GPS : ${p.gps}`, leftMargin + 20, y);
+        y += 4;
+        doc.setFont("times", "normal");
+        doc.text(`Légende : ${p.legende || 'Néant'}`, leftMargin + 20, y);
+        y += 8;
+      }
+    }
+
+    const nomFichier = `PV_Constatations_${now.toISOString().slice(0, 10)}.pdf`;
+    const pdfBlob = doc.output('blob');
     const fichierPdf = new File([pdfBlob], nomFichier, { type: 'application/pdf' });
 
     if (navigator.canShare && navigator.canShare({ files: [fichierPdf] })) {
@@ -522,8 +514,13 @@ async function genererEtEnvoyer() {
         files: [fichierPdf]
       });
     } else {
-      const mailto = `mailto:${encodeURIComponent(destEmail)}?subject=${encodeURIComponent(`PV de Constatations - ${pvNum}`)}`;
-      window.location.href = mailto;
+      const url = URL.createObjectURL(pdfBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = nomFichier;
+      a.click();
+      URL.revokeObjectURL(url);
+      alert('Le fichier PDF a été téléchargé.');
     }
 
     setTimeout(() => {
@@ -533,8 +530,7 @@ async function genererEtEnvoyer() {
     }, 1200);
 
   } catch (err) {
-    wrapper.style.display = 'none';
-    alert('Erreur de génération : ' + err.message);
+    alert('Erreur lors de la génération du document : ' + err.message);
   }
 }
 
