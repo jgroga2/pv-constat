@@ -202,6 +202,9 @@ function ajouterPhoto(event) {
       photos.push({
         id: Date.now(),
         data: compressedData,
+        width: width,
+        height: height,
+        aspectRatio: width / height,
         date: now.toLocaleDateString('fr-FR'),
         heure: now.toLocaleTimeString('fr-FR'),
         gps: gpsVal,
@@ -249,7 +252,7 @@ function supprimerPhoto(id) {
 }
 
 // =============================================================================
-// SIGNATURE PLEIN ÉCRAN ROBUSTE
+// SIGNATURE PLEIN ÉCRAN
 // =============================================================================
 function initSignaturePleinEcran() {
   sigCanvas = document.getElementById('sig-fullscreen-canvas');
@@ -278,7 +281,7 @@ function initSignaturePleinEcran() {
 
 function redimensionnerCanvasSignature() {
   const modal = document.getElementById('modal-signature');
-  if (modal.style.display === 'flex') {
+  if (modal && modal.style.display === 'flex') {
     const temp = sigCanvas.toDataURL();
     const container = sigCanvas.parentElement;
     sigCanvas.width = container.clientWidth;
@@ -324,7 +327,7 @@ function validerSignaturePleinEcran() {
 }
 
 // =============================================================================
-// CONTRÔLE ET GÉNÉRATION DU PDF PAR MOTEUR VECTORIEL DIRECT (SANS BLANC)
+// CONTRÔLE ET GÉNÉRATION DU PDF (CONFORME MODÈLE EXACT)
 // =============================================================================
 function ouvrirModalControle() {
   document.getElementById('modal-cotes').style.display = 'flex';
@@ -376,64 +379,103 @@ async function genererEtEnvoyer() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
 
-    let y = 15;
-    const pageHeight = 280;
-    const leftMargin = 15;
-    const contentWidth = 180;
+    let y = 14;
+    const pageBottomLimit = 270;
+    const leftMargin = 14;
+    const contentWidth = 182;
 
-    // En-tête réglementaire
+    // --- EN-TÊTE RÉGLEMENTAIRE (STYLE EXACT DU MODÈLE ODT) ---
     doc.setFont("times", "bold");
-    doc.setFontSize(9);
+    doc.setFontSize(8.5);
     doc.text("GENDARMERIE NATIONALE", leftMargin, y);
-    doc.text(comp.toUpperCase(), leftMargin, y + 4);
-    doc.text(cob.toUpperCase(), leftMargin, y + 8);
-    doc.text(bde.toUpperCase(), leftMargin, y + 12);
+    doc.text(comp.toUpperCase(), leftMargin, y + 3.8);
+    doc.text(cob.toUpperCase(), leftMargin, y + 7.6);
+    doc.text(bde.toUpperCase(), leftMargin, y + 11.4);
 
-    // Titres au centre
-    doc.setFontSize(11);
-    doc.text(`ENQUÊTE DE ${cadreActif}`, 130, y + 4, { align: "center" });
-    doc.setFontSize(10);
-    doc.text("PROCÈS-VERBAL DE TRANSPORT CONSTATATIONS", 130, y + 9, { align: "center" });
-    doc.text("ET MESURES PRISES", 130, y + 13, { align: "center" });
+    // Titres centrés
+    doc.setFontSize(10.5);
+    doc.text(`ENQUÊTE DE ${cadreActif}`, 135, y + 3.8, { align: "center" });
+    doc.setFontSize(9.5);
+    doc.text("PROCÈS-VERBAL DE TRANSPORT CONSTATATIONS", 135, y + 8, { align: "center" });
+    doc.text("ET MESURES PRISES", 135, y + 12, { align: "center" });
 
-    // Cadre cartouche
-    y += 18;
-    doc.rect(leftMargin, y, 75, 16);
-    doc.setFontSize(8);
+    // CARTOUCHE COMPARTIMENTÉ EN 2 BOÎTES CONFORME MODÈLE ODT
+    y += 16;
+    const cartoucheX = leftMargin;
+    const b1W = 55; // Boîte gauche
+    const b2W = 40; // Boîte droite
+    const boxH = 26;
+
+    doc.rect(cartoucheX, y, b1W, boxH);
+    doc.rect(cartoucheX + b1W, y, b2W, boxH);
+
+    doc.setFontSize(7.5);
     doc.setFont("times", "normal");
-    doc.text(`Code Unité : ${codeU}  |  Année : ${now.getFullYear()}`, leftMargin + 2, y + 4);
-    doc.text(`P.V. N° : ${pvNum}  |  Pièce : ${pieceNum}`, leftMargin + 2, y + 9);
-    doc.text(`Dossier Justice : ${dossierNum}`, leftMargin + 2, y + 14);
+    // Boîte 1
+    doc.text("Code Unité", cartoucheX + 2, y + 4);
+    doc.setFont("times", "bold");
+    doc.text(codeU, cartoucheX + 2, y + 7.5);
+
+    doc.setFont("times", "normal");
+    doc.text("P.V.", cartoucheX + 2, y + 11);
+    doc.setFont("times", "bold");
+    doc.text(pvNum, cartoucheX + 2, y + 14.5);
+
+    doc.setFont("times", "normal");
+    doc.text("Année", cartoucheX + 32, y + 11);
+    doc.setFont("times", "bold");
+    doc.text(String(now.getFullYear()), cartoucheX + 32, y + 14.5);
+
+    doc.setFont("times", "normal");
+    doc.text("Nmr Dossier Justice", cartoucheX + 2, y + 18.5);
+    doc.setFont("times", "bold");
+    doc.text(dossierNum, cartoucheX + 2, y + 22.5);
+
+    // Boîte 2
+    doc.setFont("times", "normal");
+    doc.text("N° pièce", cartoucheX + b1W + 2, y + 4);
+    doc.setFont("times", "bold");
+    doc.text(pieceNum, cartoucheX + b1W + 2, y + 8);
+
+    doc.setFont("times", "normal");
+    doc.text("N° feuillet", cartoucheX + b1W + 2, y + 15);
+    doc.setFont("times", "bold");
+    const totalFeuilletsEstime = photos.length > 4 ? Math.ceil(photos.length / 2) + 1 : 1;
+    doc.text(`1/${totalFeuilletsEstime}`, cartoucheX + b1W + 2, y + 20);
 
     // Paragraphe introductif
-    y += 22;
-    doc.setFontSize(10.5);
+    y += boxH + 6;
+    doc.setFontSize(10);
     doc.setFont("times", "normal");
     const introTxt = `Le ${dateCloture} à ${heureCloture}. Nous soussigné, ${nomOpj}, ${qualiteOpj} en résidence à ${residenceU}. Vu les articles 16 à 19 et ${articles} du Code de Procédure Pénale. Nous trouvant au bureau de notre unité à ${residenceU}, rapportons les opérations suivantes :`;
     const introLines = doc.splitTextToSize(introTxt, contentWidth);
     doc.text(introLines, leftMargin, y);
-    y += introLines.length * 5 + 3;
+    y += introLines.length * 4.8 + 2;
 
     doc.line(leftMargin, y, leftMargin + contentWidth, y);
     y += 5;
 
-    // Fonction d'ajout de section
+    // --- FONCTION SECTION AVEC TITRE CENTRÉ ET SOULIGNÉ ---
     function addSection(title, content) {
-      if (y > pageHeight - 25) { doc.addPage(); y = 15; }
+      if (y > pageBottomLimit - 20) { doc.addPage(); y = 14; }
+      
       doc.setFont("times", "bold");
-      doc.setFontSize(11);
-      doc.text(title, leftMargin, y);
-      y += 5;
+      doc.setFontSize(10.5);
+      // Titre centré
+      doc.text(title, 105, y, { align: "center" });
+      const titleW = doc.getTextWidth(title);
+      doc.line(105 - (titleW / 2), y + 0.8, 105 + (titleW / 2), y + 0.8);
+      y += 6;
 
       doc.setFont("times", "normal");
       doc.setFontSize(10);
       const lines = doc.splitTextToSize(content, contentWidth);
       lines.forEach(l => {
-        if (y > pageHeight - 15) { doc.addPage(); y = 15; }
+        if (y > pageBottomLimit - 10) { doc.addPage(); y = 14; }
         doc.text(l, leftMargin, y);
         y += 4.5;
       });
-      y += 4;
+      y += 3;
     }
 
     addSection("SAISINE", saisine);
@@ -441,20 +483,24 @@ async function genererEtEnvoyer() {
     addSection("MESURES PRISES", mesures);
     addSection("ETAT DES LIEUX", etatLieux);
 
-    // Insertion des clichés si <= 4 dans le corps
+    // Intégration directe si <= 4 photos
     if (photos.length > 0 && photos.length <= 4) {
       for (let i = 0; i < photos.length; i++) {
         const p = photos[i];
-        if (y > pageHeight - 70) { doc.addPage(); y = 15; }
+        const ratio = p.aspectRatio || 1.33;
+        const imgW = 125;
+        const imgH = Math.min(Math.round(imgW / ratio), 80);
+
+        if (y + imgH + 18 > pageBottomLimit) { doc.addPage(); y = 14; }
         try {
-          doc.addImage(p.data, 'JPEG', leftMargin + 25, y, 130, 65);
-          y += 68;
+          doc.addImage(p.data, 'JPEG', (210 - imgW) / 2, y, imgW, imgH);
+          y += imgH + 4;
           doc.setFontSize(8.5);
           doc.setFont("times", "italic");
-          doc.text(`Cliché n° ${i + 1} - ${p.date} à ${p.heure} (GPS : ${p.gps})`, leftMargin + 25, y);
+          doc.text(`Cliché n° ${i + 1} - ${p.date} à ${p.heure} (GPS : ${p.gps})`, (210 - imgW) / 2, y);
           y += 4;
           doc.setFont("times", "normal");
-          doc.text(`Légende : ${p.legende || 'Néant'}`, leftMargin + 25, y);
+          doc.text(`Légende : ${p.legende || 'Néant'}`, (210 - imgW) / 2, y);
           y += 6;
         } catch (e) {}
       }
@@ -466,40 +512,57 @@ async function genererEtEnvoyer() {
     addSection("MESURES DIVERSES", mesuresDiv);
 
     // Clôture et Signature
-    if (y > pageHeight - 45) { doc.addPage(); y = 15; }
+    if (y > pageBottomLimit - 38) { doc.addPage(); y = 14; }
     doc.setFont("times", "bold");
-    doc.setFontSize(10.5);
+    doc.setFontSize(10);
     doc.text(`Dont procès-verbal fait et clos le ${dateCloture} à ${heureCloture}.`, leftMargin, y);
-    y += 8;
+    y += 7;
 
     doc.setFont("times", "normal");
     doc.text(qualiteOpj, 130, y);
     doc.text(nomOpj, 130, y + 4);
     if (signatureBlobData) {
-      doc.addImage(signatureBlobData, 'PNG', 125, y + 6, 55, 25);
+      doc.addImage(signatureBlobData, 'PNG', 125, y + 6, 50, 22);
+      y += 28;
+    } else {
+      y += 12;
     }
 
-    // Annexe continue si > 4 clichés
+    // =========================================================================
+    // PLANCHE PHOTOGRAPHIQUE (SI > 4 PHOTOS) : STRICTEMENT 2 PAR PAGE
+    // =========================================================================
     if (photos.length > 4) {
-      doc.addPage();
-      y = 15;
-      doc.setFont("times", "bold");
-      doc.setFontSize(11);
-      doc.text("ANNEXE PHOTOGRAPHIQUE CONTINUE", 105, y, { align: "center" });
-      y += 10;
-
       for (let i = 0; i < photos.length; i++) {
+        if (i % 2 === 0) {
+          doc.addPage();
+          y = 14;
+          const numFeuillet = Math.floor(i / 2) + 2;
+
+          // En-tête annexe
+          doc.setFont("times", "bold");
+          doc.setFontSize(10.5);
+          doc.text("ANNEXE PHOTOGRAPHIQUE CONTINUE", 105, y, { align: "center" });
+          doc.setFontSize(8.5);
+          doc.setFont("times", "normal");
+          doc.text(`P.V. N° : ${pvNum}  —  Feuillet ${numFeuillet}/${totalFeuilletsEstime}`, 105, y + 4.5, { align: "center" });
+          y += 12;
+        }
+
         const p = photos[i];
-        if (y > pageHeight - 90) { doc.addPage(); y = 15; }
-        doc.addImage(p.data, 'JPEG', leftMargin + 20, y, 140, 75);
-        y += 78;
-        doc.setFontSize(9);
+        const ratio = p.aspectRatio || 1.33;
+        const imgW = 140;
+        const imgH = Math.min(Math.round(imgW / ratio), 82); // 82 mm max : garantit l'insertion de 2 photos complètes avec légendes par page A4
+
+        doc.addImage(p.data, 'JPEG', (210 - imgW) / 2, y, imgW, imgH);
+        y += imgH + 4;
+
+        doc.setFontSize(8.5);
         doc.setFont("times", "italic");
-        doc.text(`Cliché n° ${i + 1} - ${p.date} à ${p.heure} - GPS : ${p.gps}`, leftMargin + 20, y);
+        doc.text(`Cliché n° ${i + 1} - ${p.date} à ${p.heure} - GPS : ${p.gps}`, (210 - imgW) / 2, y);
         y += 4;
         doc.setFont("times", "normal");
-        doc.text(`Légende : ${p.legende || 'Néant'}`, leftMargin + 20, y);
-        y += 8;
+        doc.text(`Légende : ${p.legende || 'Néant'}`, (210 - imgW) / 2, y);
+        y += 12;
       }
     }
 
