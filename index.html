@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>PV Constatations Gendarmerie</title>
   <link rel="manifest" href="manifest.json">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <!-- Moteur jsPDF robuste pour mobile -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     :root {
       --gn-blue: #0b2341;
@@ -16,7 +17,7 @@
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
     body { margin: 0; background: var(--bg-gray); color: #1e293b; padding-bottom: 70px; }
     
-    header { background: var(--gn-blue); color: white; padding: 14px 16px; position: sticky; top: 0; z-index: 50; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.15); }
+    header { background: var(--gn-blue); color: white; padding: 14px 16px; position: sticky; top: 0; z-index: 50; display: flex; justify-content: space-between; align-items: center; }
     header h1 { margin: 0; font-size: 16px; text-transform: uppercase; letter-spacing: 0.5px; }
     
     .container { padding: 12px; max-width: 600px; margin: 0 auto; }
@@ -47,35 +48,15 @@
     #sig-preview { width: 100%; height: 90px; border: 2px dashed #94a3b8; border-radius: 6px; display: flex; align-items: center; justify-content: center; background: #fff; cursor: pointer; }
     #sig-preview img { max-height: 80px; max-width: 90%; }
 
-    /* MODALE SIGNATURE AVEC PAYSAGE TOTAL */
+    /* MODALE SIGNATURE AVEC BOUTONS TOUJOURS VISIBLES */
     #modal-signature { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #ffffff; z-index: 200; flex-direction: column; }
-    .sig-header { background: var(--gn-blue); color: white; padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: bold; }
-    #sig-fullscreen-canvas { flex: 1; width: 100%; height: 100%; touch-action: none; background: #ffffff; }
-    .sig-footer { padding: 10px 16px; display: flex; gap: 10px; background: #f1f5f9; border-top: 1px solid #cbd5e1; }
+    .sig-top-bar { background: var(--gn-blue); color: white; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; height: 50px; flex-shrink: 0; }
+    .sig-top-bar span { font-size: 12px; font-weight: bold; }
+    .sig-canvas-container { flex: 1; position: relative; width: 100%; height: calc(100vh - 50px); background: #fafafa; }
+    #sig-fullscreen-canvas { width: 100%; height: 100%; touch-action: none; display: block; }
 
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 100; align-items: center; justify-content: center; }
     .modal-content { background: white; padding: 18px; border-radius: 8px; width: 90%; max-width: 450px; }
-
-    /* ZONE DE COMPILATION VISIBLE POUR LE MOTEUR */
-    #pdf-wrapper { display: none; background: white; width: 800px; padding: 25px; margin: 0 auto; color: #000; }
-    .page-break { page-break-before: always; }
-    .header-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
-    .header-table td { vertical-align: top; padding: 3px 5px; }
-    .header-unite { width: 48%; font-size: 9.5pt; font-weight: bold; text-transform: uppercase; line-height: 1.25; }
-    .header-titres { width: 52%; text-align: center; vertical-align: middle !important; }
-    .enquete-type { font-size: 11pt; font-weight: bold; text-decoration: underline; text-transform: uppercase; margin-bottom: 5px; }
-    .pv-nom { font-size: 11pt; font-weight: bold; text-transform: uppercase; }
-    .cartouche-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 9pt; font-weight: normal; }
-    .cartouche-table td { border: 1px solid #000; padding: 3px 4px; text-align: center; }
-    .intro-block { text-align: justify; font-family: "Times New Roman", Times, serif; font-size: 11pt; margin-top: 10px; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid #000; line-height: 1.3; }
-    .section-title { font-family: "Times New Roman", Times, serif; font-size: 11pt; font-weight: bold; text-decoration: underline; text-transform: uppercase; margin-top: 14px; margin-bottom: 5px; page-break-after: avoid; }
-    .section-content { font-family: "Times New Roman", Times, serif; font-size: 11pt; text-align: justify; margin-bottom: 12px; line-height: 1.3; }
-    .photo-card-pdf { margin: 10px auto; border: 1px solid #000; padding: 6px; text-align: center; background-color: #fafafa; page-break-inside: avoid; width: 90%; }
-    .photo-card-pdf img { max-width: 100%; max-height: 230px; object-fit: contain; display: block; margin: 0 auto 6px auto; }
-    .photo-caption-pdf { font-family: "Times New Roman", Times, serif; font-size: 9pt; text-align: left; border-top: 1px solid #999; padding-top: 4px; }
-    .signature-container { text-align: right; margin-top: 20px; page-break-inside: avoid; }
-    .signature-box { display: inline-block; width: 260px; text-align: center; font-size: 10.5pt; font-family: "Times New Roman", Times, serif; }
-    .signature-img { max-width: 180px; max-height: 70px; margin-top: 5px; }
   </style>
 </head>
 <body>
@@ -85,7 +66,7 @@
     <button class="btn btn-secondary" onclick="toggleConfig()" style="font-size: 11px; padding: 5px 8px;">Profil</button>
   </header>
 
-  <div class="container" id="main-ui">
+  <div class="container">
 
     <div class="card" id="config-card" style="display:none;">
       <div class="card-title">Profil & Unité</div>
@@ -184,15 +165,18 @@
 
   </div>
 
+  <!-- MODALE SIGNATURE AVEC BOUTONS TOUJOURS ACCESSIBLES -->
   <div id="modal-signature">
-    <div class="sig-header">
-      <span>Apposez votre signature (basculez l'écran au besoin)</span>
-      <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px;" onclick="fermerModalSignature()">Annuler</button>
+    <div class="sig-top-bar">
+      <button class="btn btn-secondary" style="padding: 6px 10px; font-size: 11px;" onclick="fermerModalSignature()">Annuler</button>
+      <span>Signez au doigt</span>
+      <div style="display: flex; gap: 6px;">
+        <button class="btn btn-danger" style="padding: 6px 10px; font-size: 11px;" onclick="effacerSignaturePleinEcran()">Effacer</button>
+        <button class="btn btn-primary" style="padding: 6px 12px; font-size: 11px;" onclick="validerSignaturePleinEcran()">Valider</button>
+      </div>
     </div>
-    <canvas id="sig-fullscreen-canvas"></canvas>
-    <div class="sig-footer">
-      <button class="btn btn-secondary" onclick="effacerSignaturePleinEcran()">Effacer</button>
-      <button class="btn btn-primary" onclick="validerSignaturePleinEcran()">Valider la signature</button>
+    <div class="sig-canvas-container">
+      <canvas id="sig-fullscreen-canvas"></canvas>
     </div>
   </div>
 
@@ -211,10 +195,6 @@
         <button type="button" class="btn btn-primary" onclick="genererEtEnvoyer()">Générer le PDF</button>
       </div>
     </div>
-  </div>
-
-  <div id="pdf-wrapper">
-    <div id="pdf-render"></div>
   </div>
 
   <script src="app.js"></script>
