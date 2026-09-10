@@ -28,7 +28,7 @@ function initServiceWorker() {
 }
 
 // =============================================================================
-// PROFIL ENQUÊTEUR & CO-ENQUÊTEUR (PERSISTANT)
+// PROFIL ENQUÊTEUR & CO-ENQUÊTEUR
 // =============================================================================
 function toggleConfig() {
   const card = document.getElementById('config-card');
@@ -106,7 +106,7 @@ function insererTexte(champId, texte) {
 function declencherArrivee() {
   const now = new Date();
   const dateStr = now.toLocaleDateString('fr-FR');
-  const timeStr = now.toLocaleTimeString('fr-FR');
+  const timeStr = `${String(now.getHours()).padStart(2, '0')} heures ${String(now.getMinutes()).padStart(2, '0')} minutes`;
   document.getElementById('f-arrivee-time').value = `${dateStr} à ${timeStr}`;
 
   if ('geolocation' in navigator) {
@@ -197,7 +197,7 @@ function dicter(targetId, btnId) {
 }
 
 // =============================================================================
-// GESTION DES PHOTOS INTÉGRÉES PAR RUBRIQUE
+// PHOTOS PAR RUBRIQUE
 // =============================================================================
 function declencherPhotoSection(section) {
   sectionCiblePhoto = section;
@@ -243,7 +243,7 @@ function traiterPhotoPrise(event) {
         height: height,
         aspectRatio: width / height,
         date: now.toLocaleDateString('fr-FR'),
-        heure: now.toLocaleTimeString('fr-FR'),
+        heure: `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`,
         gps: gpsVal,
         legende: ''
       };
@@ -362,7 +362,7 @@ function validerSignaturePleinEcran() {
 }
 
 // =============================================================================
-// CONTRÔLE ET GÉNÉRATION DU PDF (STRUCTURE TABLEAU CONFORME MODÈLES ODT)
+// CONTRÔLE ET GÉNÉRATION DU PDF (MISE EN PAGE NORMALISÉE)
 // =============================================================================
 function ouvrirModalControle() {
   document.getElementById('modal-cotes').style.display = 'flex';
@@ -375,7 +375,6 @@ function fermerModal() {
 async function genererEtEnvoyer() {
   fermerModal();
 
-  // Mise à jour des légendes
   ['situation', 'mesures', 'etat', 'corps'].forEach(sec => {
     photosParSection[sec].forEach(p => {
       const el = document.getElementById(`leg-${p.id}`);
@@ -387,6 +386,7 @@ async function genererEtEnvoyer() {
   const jours = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
   const mois = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
   const dateFormatee = `${jours[now.getDay()]} ${String(now.getDate()).padStart(2, '0')} ${mois[now.getMonth()]} ${now.getFullYear()}`;
+  const heureFinExacte = `${String(now.getHours()).padStart(2, '0')} heures ${String(now.getMinutes()).padStart(2, '0')} minutes`;
 
   const pvNum = document.getElementById('m-pv-num').value;
   const pieceNum = document.getElementById('m-piece-num').value;
@@ -409,7 +409,6 @@ async function genererEtEnvoyer() {
   const adjQualite = document.getElementById('cfg-adj-qualite').value;
   const adjResidence = document.getElementById('cfg-adj-residence').value;
 
-  // Articles CPP
   let articles = cadreActif === 'FLAGRANCE' ? '16 à 19 et 53 à 67' : '16 à 19 et 75 à 78';
   if (adjointActif) {
     articles = cadreActif === 'FLAGRANCE' 
@@ -435,72 +434,97 @@ async function genererEtEnvoyer() {
     const pageWidth = 210;
     const pageHeight = 297;
     const leftMargin = 12;
-    const rightMargin = 12;
-    const usableWidth = pageWidth - leftMargin - rightMargin; // 186 mm
-    
-    // Colonne de gauche (texte + photos) et colonne de droite (titres)
-    const rightColWidth = 35; 
-    const leftColWidth = usableWidth - rightColWidth; // 151 mm
-    const colSeparatorX = leftMargin + leftColWidth; // Ligne verticale
+    const usableWidth = 186;
     const rightMarginX = leftMargin + usableWidth;
+    const leftBlockW = 75;
 
-    let y = 12;
+    let y = 10;
 
-    // --- EN-TÊTE RÉGLEMENTAIRE CONFORME ---
-    doc.setFont("times", "normal");
-    doc.setFontSize(8.5);
-    doc.text("GENDARMERIE NATIONALE", leftMargin, y);
-    doc.text(`Compagnie de ${comp}`, leftMargin, y + 4);
-    doc.text(`COB ${cob}`, leftMargin, y + 8);
-    doc.text(`BP ${bde}`, leftMargin, y + 12);
-
-    // Titres en haut à droite
-    doc.setFont("times", "bold");
-    doc.setFontSize(10.5);
-    doc.text(`ENQUÊTE ${cadreActif === 'FLAGRANCE' ? 'DE FLAGRANCE' : 'PRÉLIMINAIRE'}`, 130, y + 4, { align: "center" });
-    doc.setFontSize(9);
-    doc.text("PROCÈS-VERBAL DE TRANSPORT CONSTATATIONS", 130, y + 8.5, { align: "center" });
-    doc.text("ET MESURES PRISES", 130, y + 12.5, { align: "center" });
-
-    // CARTOUCHE COMPARTIMENTÉ STRICT
-    y += 16;
-    const cartoucheH = 12;
+    // =========================================================================
+    // EN-TÊTE RÉGLEMENTAIRE CONFORME AU MODÈLE
+    // =========================================================================
     doc.setDrawColor(0, 0, 0);
     doc.setLineWidth(0.2);
-    doc.rect(leftMargin, y, usableWidth, cartoucheH);
 
-    // Subdivisions
-    const colW1 = 28, colW2 = 32, colW3 = 22, colW4 = 48, colW5 = 26;
-    doc.line(leftMargin + colW1, y, leftMargin + colW1, y + cartoucheH);
-    doc.line(leftMargin + colW1 + colW2, y, leftMargin + colW1 + colW2, y + cartoucheH);
-    doc.line(leftMargin + colW1 + colW2 + colW3, y, leftMargin + colW1 + colW2 + colW3, y + cartoucheH);
-    doc.line(leftMargin + colW1 + colW2 + colW3 + colW4, y, leftMargin + colW1 + colW2 + colW3 + colW4, y + cartoucheH);
-    doc.line(leftMargin + colW1 + colW2 + colW3 + colW4 + colW5, y, leftMargin + colW1 + colW2 + colW3 + colW4 + colW5, y + cartoucheH);
-
-    // Textes cartouche
-    doc.setFontSize(7.5);
-    doc.setFont("times", "normal");
-    doc.text("Code unité", leftMargin + 2, y + 3.5);
-    doc.text("Nmr P.V.", leftMargin + colW1 + 2, y + 3.5);
-    doc.text("Année", leftMargin + colW1 + colW2 + 2, y + 3.5);
-    doc.text("Nmr dossier justice", leftMargin + colW1 + colW2 + colW3 + 2, y + 3.5);
-    doc.text("Nmr pièce", leftMargin + colW1 + colW2 + colW3 + colW4 + 2, y + 3.5);
-    doc.text("N° feuillet", leftMargin + colW1 + colW2 + colW3 + colW4 + colW5 + 2, y + 3.5);
-
+    // Bloc gauche : Gendarmerie
+    doc.setFillColor(240, 240, 240);
+    doc.rect(leftMargin, y, leftBlockW, 5, 'FD');
     doc.setFont("times", "bold");
     doc.setFontSize(8.5);
-    doc.text(codeU, leftMargin + 2, y + 8.5);
-    doc.text(pvNum, leftMargin + colW1 + 2, y + 8.5);
-    doc.text(String(now.getFullYear()), leftMargin + colW1 + colW2 + 2, y + 8.5);
-    doc.text(dossierNum, leftMargin + colW1 + colW2 + colW3 + 2, y + 8.5);
-    doc.text(pieceNum, leftMargin + colW1 + colW2 + colW3 + colW4 + 2, y + 8.5);
+    doc.setTextColor(0, 0, 0);
+    doc.text("GENDARMERIE NATIONALE", leftMargin + (leftBlockW / 2), y + 3.6, { align: "center" });
 
-    // Marqueur pour la pagination dynamique finale
-    const pageNumY = y + 8.5;
-    const pageNumX = leftMargin + colW1 + colW2 + colW3 + colW4 + colW5 + 2;
+    const uniteH = 15;
+    doc.rect(leftMargin, y + 5, leftBlockW, uniteH);
+    doc.setFont("times", "normal");
+    doc.setFontSize(8);
+    doc.text("Compagnie", leftMargin + 2, y + 8.5);
+    doc.text(comp, leftMargin + 2, y + 12);
+    doc.setFont("times", "bold");
+    doc.text(`COB ${cob}`, leftMargin + 2, y + 15.5);
+    doc.text(`BP ${bde}`, leftMargin + 2, y + 19);
 
-    // Introduction procédurale
-    y += cartoucheH + 5;
+    // Cartouche gauche (Code unité / Nmr P.V. / Année / Nmr dossier justice)
+    const cartoucheY = y + 5 + uniteH; // 30 mm
+    const cartoucheH = 9;
+    doc.rect(leftMargin, cartoucheY, leftBlockW, cartoucheH);
+
+    const wCode = 16, wPv = 18, wAnnee = 13;
+    doc.line(leftMargin + wCode, cartoucheY, leftMargin + wCode, cartoucheY + cartoucheH);
+    doc.line(leftMargin + wCode + wPv, cartoucheY, leftMargin + wCode + wPv, cartoucheY + cartoucheH);
+    doc.line(leftMargin + wCode + wPv + wAnnee, cartoucheY, leftMargin + wCode + wPv + wAnnee, cartoucheY + cartoucheH);
+    doc.line(leftMargin, cartoucheY + 4, leftMargin + leftBlockW, cartoucheY + 4);
+
+    doc.setFont("times", "italic");
+    doc.setFontSize(6.5);
+    doc.text("Code unité", leftMargin + (wCode / 2), cartoucheY + 2.8, { align: "center" });
+    doc.text("Nmr P.V.", leftMargin + wCode + (wPv / 2), cartoucheY + 2.8, { align: "center" });
+    doc.text("Année", leftMargin + wCode + wPv + (wAnnee / 2), cartoucheY + 2.8, { align: "center" });
+    doc.text("Nmr dossier justice", leftMargin + wCode + wPv + wAnnee + 1, cartoucheY + 2.8);
+
+    doc.setFont("times", "bold");
+    doc.setFontSize(8);
+    doc.text(codeU, leftMargin + (wCode / 2), cartoucheY + 7.5, { align: "center" });
+    doc.text(pvNum, leftMargin + wCode + (wPv / 2), cartoucheY + 7.5, { align: "center" });
+    doc.text(String(now.getFullYear()), leftMargin + wCode + wPv + (wAnnee / 2), cartoucheY + 7.5, { align: "center" });
+    doc.setFontSize(7.5);
+    doc.text(dossierNum, leftMargin + wCode + wPv + wAnnee + 1, cartoucheY + 7.5);
+
+    // Bloc droit : Enquête & Nmr pièce / feuillet
+    const rightBlockX = leftMargin + leftBlockW;
+    const rightBlockW = usableWidth - leftBlockW;
+    doc.rect(rightBlockX, y, rightBlockW, 20);
+
+    doc.setFont("times", "bold");
+    doc.setFontSize(9.5);
+    doc.text(`ENQUÊTE ${cadreActif === 'FLAGRANCE' ? 'DE FLAGRANCE' : 'PRÉLIMINAIRE'}`, rightBlockX + 4, y + 6);
+    doc.setFontSize(8.5);
+    doc.text("PROCÈS-VERBAL DE TRANSPORT CONSTATATIONS ET", rightBlockX + 4, y + 12);
+    doc.text("MESURES PRISES", rightBlockX + 4, y + 16.5);
+
+    const wPiece = 20, wFeuillet = 18;
+    const pieceX = rightMarginX - wPiece - wFeuillet;
+    const feuilletX = rightMarginX - wFeuillet;
+
+    doc.rect(pieceX, cartoucheY, wPiece, cartoucheH);
+    doc.rect(feuilletX, cartoucheY, wFeuillet, cartoucheH);
+    doc.line(pieceX, cartoucheY + 4, pieceX + wPiece, cartoucheY + 4);
+    doc.line(feuilletX, cartoucheY + 4, feuilletX + wFeuillet, cartoucheY + 4);
+
+    doc.setFont("times", "italic");
+    doc.setFontSize(6.5);
+    doc.text("Nmr pièce", pieceX + (wPiece / 2), cartoucheY + 2.8, { align: "center" });
+    doc.text("N° feuillet", feuilletX + (wFeuillet / 2), cartoucheY + 2.8, { align: "center" });
+
+    doc.setFont("times", "bold");
+    doc.setFontSize(8);
+    doc.text(pieceNum, pieceX + (wPiece / 2), cartoucheY + 7.5, { align: "center" });
+
+    const pageNumX = feuilletX + (wFeuillet / 2);
+    const pageNumY = cartoucheY + 7.5;
+
+    // Intro procédurale
+    y = cartoucheY + cartoucheH + 5;
     doc.setFont("times", "normal");
     doc.setFontSize(9.5);
 
@@ -510,138 +534,120 @@ async function genererEtEnvoyer() {
     }
     intro += `\nVu les articles ${articles} du Code de Procédure Pénale.\nNous trouvant au bureau de notre unité à ${residenceU}, rapportons les opérations suivantes :`;
 
-    const introLines = doc.splitTextToSize(intro, leftColWidth - 4);
-    doc.text(introLines, leftMargin + 2, y);
-    y += introLines.length * 4.2 + 2;
+    const introLines = doc.splitTextToSize(intro, usableWidth);
+    doc.text(introLines, leftMargin, y);
+    y += introLines.length * 4.2 + 4;
 
-    // Ligne sous l'intro
-    doc.line(leftMargin, y, rightMarginX, y);
-
-    // --- FONCTION D'AJOUT DE RUBRIQUE DANS LE TABLEAU À 2 COLONNES ---
+    // =========================================================================
+    // BANDEAUX DE TITRES ET GESTION ÉQUILIBRÉE DES CLICHÉS
+    // =========================================================================
     function ajouterRubrique(titre, texte, listePhotos) {
-      const startY = y;
-      let curY = y + 4;
+      // Évite un bandeau orphelin en fond de page
+      if (y > pageHeight - 35) {
+        doc.addPage();
+        y = 14;
+      }
 
-      // Impression du texte dans la colonne gauche
+      // Bandeau de titre encadré avec fond gris clair
+      const bannerH = 6;
+      doc.setFillColor(242, 242, 242);
+      doc.setDrawColor(0, 0, 0);
+      doc.setLineWidth(0.2);
+      doc.rect(leftMargin, y, usableWidth, bannerH, 'FD');
+
+      doc.setFont("times", "bold");
+      doc.setFontSize(9);
+      doc.setTextColor(0, 0, 0);
+      doc.text(titre, leftMargin + (usableWidth / 2), y + 4.2, { align: "center" });
+
+      y += bannerH + 4;
+
+      // Texte narratif
       doc.setFont("times", "normal");
       doc.setFontSize(9.5);
-      const lines = doc.splitTextToSize(texte, leftColWidth - 4);
+      const lines = doc.splitTextToSize(texte, usableWidth);
       lines.forEach(line => {
-        if (curY > pageHeight - 20) {
-          terminerPageTableau(startY, curY, titre);
-          curY = y + 4;
+        if (y > pageHeight - 15) {
+          doc.addPage();
+          y = 14;
         }
-        doc.text(line, leftMargin + 2, curY);
-        curY += 4.2;
+        doc.text(line, leftMargin, y);
+        y += 4.2;
       });
 
-      // Insertion des photos dans la colonne gauche sous le texte
+      // Insertion contrôlée des photos (zéro photo orpheline)
       if (listePhotos && listePhotos.length > 0) {
+        y += 2;
         listePhotos.forEach((p, i) => {
           const ratio = p.aspectRatio || 1.33;
-          const imgW = Math.min(leftColWidth - 10, 130);
-          const imgH = Math.min(Math.round(imgW / ratio), 80);
+          const imgW = Math.min(usableWidth - 20, 140);
+          const imgH = Math.min(Math.round(imgW / ratio), 85);
+          const blockPhotoTotalH = imgH + 12; // Espace requis : image + légende + marge
 
-          if (curY + imgH + 12 > pageHeight - 18) {
-            terminerPageTableau(startY, curY, titre);
-            curY = y + 4;
+          // Si l'espace restant ne permet pas d'accueillir la photo ET sa légende : saut de page immédiat
+          if (y + blockPhotoTotalH > pageHeight - 15) {
+            doc.addPage();
+            y = 14;
           }
 
           try {
-            doc.addImage(p.data, 'JPEG', leftMargin + 4, curY, imgW, imgH);
-            curY += imgH + 3.5;
+            const posX = leftMargin + (usableWidth - imgW) / 2;
+            doc.addImage(p.data, 'JPEG', posX, y, imgW, imgH);
+            y += imgH + 3.5;
             doc.setFontSize(8);
             doc.setFont("times", "italic");
             const legTxt = p.legende ? `Cliché n° ${i + 1} : ${p.legende}` : `Cliché n° ${i + 1} (${p.date} à ${p.heure})`;
-            doc.text(legTxt, leftMargin + 4, curY);
-            curY += 5;
+            doc.text(legTxt, posX, y);
+            y += 5.5;
           } catch (e) {}
         });
       }
 
-      curY += 2;
-      const blockHeight = curY - startY;
-
-      // Dessin des bordures du bloc
-      doc.setDrawColor(0, 0, 0);
-      doc.setLineWidth(0.2);
-      doc.line(leftMargin, startY, leftMargin, curY); // Bord gauche
-      doc.line(rightMarginX, startY, rightMarginX, curY); // Bord droit
-      doc.line(colSeparatorX, startY, colSeparatorX, curY); // Séparateur vertical
-      doc.line(leftMargin, curY, rightMarginX, curY); // Ligne horizontale basse
-
-      // Titre en colonne droite (BLEU GENDARMERIE EXACT #002060)
-      doc.setFont("times", "bold");
-      doc.setFontSize(9);
-      doc.setTextColor(0, 32, 96); // #002060
-
-      const titleLines = doc.splitTextToSize(titre, rightColWidth - 4);
-      const titleTotalHeight = titleLines.length * 4;
-      const titleY = startY + (blockHeight / 2) - (titleTotalHeight / 2) + 3;
-
-      doc.text(titleLines, colSeparatorX + (rightColWidth / 2), titleY, { align: "center" });
-
-      doc.setTextColor(0, 0, 0); // Remise au noir
-      y = curY;
+      y += 3;
     }
 
-    function terminerPageTableau(startY, curY, titre) {
-      doc.setDrawColor(0, 0, 0);
-      doc.setLineWidth(0.2);
-      doc.line(leftMargin, startY, leftMargin, curY);
-      doc.line(rightMarginX, startY, rightMarginX, curY);
-      doc.line(colSeparatorX, startY, colSeparatorX, curY);
-      doc.line(leftMargin, curY, rightMarginX, curY);
-
-      // Titre sur la page en cours
-      doc.setFont("times", "bold");
-      doc.setFontSize(9);
-      doc.setTextColor(0, 32, 96);
-      const titleLines = doc.splitTextToSize(titre, rightColWidth - 4);
-      const titleTotalHeight = titleLines.length * 4;
-      doc.text(titleLines, colSeparatorX + (rightColWidth / 2), startY + ((curY - startY) / 2) - (titleTotalHeight / 2) + 3, { align: "center" });
-      doc.setTextColor(0, 0, 0);
-
-      doc.addPage();
-      y = 14;
-    }
-
-    // Ajout des rubriques séquentielles
     ajouterRubrique("SAISINE", saisine, []);
-    ajouterRubrique("SITUATION À L'ARRIVÉE DES ENQUÊTEURS", `Transport sur les lieux le ${arriveeTime} sis à ${adr} ${gps ? `(GPS : ${gps})` : ''}.\n\n${situation}`, photosParSection.situation);
+    ajouterRubrique("SITUATION À L'ARRIVÉE DES ENQUÊTEURS", `Nous arrivons sur les lieux le ${arriveeTime} sis à ${adr} ${gps ? `(GPS : ${gps})` : ''}.\n${situation}`, photosParSection.situation);
     ajouterRubrique("MESURES PRISES", mesures, photosParSection.mesures);
     ajouterRubrique("ÉTAT DES LIEUX", etatLieux, photosParSection.etat);
     ajouterRubrique("CORPS DU DÉLIT", corpsDelit, photosParSection.corps);
     ajouterRubrique("MESURES DIVERSES", mesuresDiv, []);
 
-    // Formule de clôture & Signature dans la colonne gauche
-    if (y > pageHeight - 35) { doc.addPage(); y = 14; }
-    
+    // =========================================================================
+    // CLÔTURE & SIGNATURE (FORMULES STRICTEMENT CONFORMES)
+    // =========================================================================
+    if (y > pageHeight - 40) {
+      doc.addPage();
+      y = 14;
+    }
+
     y += 4;
     doc.setFont("times", "normal");
     doc.setFontSize(9.5);
-    doc.text(`Nos constatations prennent fin le ${dateFormatee}.`, leftMargin + 2, y);
-    y += 5;
-    doc.text(`Dont procès verbal fait et clos à ${residenceU}, le ${dateFormatee}`, leftMargin + 2, y);
-    y += 6;
+    // 1. Date et heure exacte de fin
+    doc.text(`Nos constatations prennent fin le ${dateFormatee} à ${heureFinExacte}.`, leftMargin, y);
+    y += 5.5;
+    // 2. Date seule pour la clôture formelle
+    doc.text(`Dont procès verbal fait et clos à ${residenceU}, le ${dateFormatee}`, leftMargin, y);
+    y += 7;
 
     doc.setFont("times", "bold");
-    doc.text("L'Officier de Police Judiciaire", leftMargin + (leftColWidth / 2), y, { align: "center" });
-    y += 4;
+    doc.text("L'Officier de Police Judiciaire", leftMargin + (usableWidth / 2), y, { align: "center" });
+    y += 4.5;
     doc.setFont("times", "normal");
-    doc.text(`${gradeOpj} ${nomOpj}`, leftMargin + (leftColWidth / 2), y, { align: "center" });
-    
+    doc.text(`${gradeOpj} ${nomOpj}`, leftMargin + (usableWidth / 2), y, { align: "center" });
+
     if (signatureBlobData) {
-      doc.addImage(signatureBlobData, 'PNG', leftMargin + (leftColWidth / 2) - 25, y + 2, 50, 22);
+      doc.addImage(signatureBlobData, 'PNG', leftMargin + (usableWidth / 2) - 25, y + 2, 50, 22);
     }
 
-    // --- MISE À JOUR DE LA PAGINATION RÉELLE SUR TOUTES LES PAGES ---
+    // Pagination dynamique finale
     const totalPages = doc.internal.getNumberOfPages();
     for (let p = 1; p <= totalPages; p++) {
       doc.setPage(p);
       doc.setFont("times", "bold");
-      doc.setFontSize(8.5);
-      doc.text(`${p}/ ${totalPages}`, pageNumX, pageNumY);
+      doc.setFontSize(8);
+      doc.text(`${p}/ ${totalPages}`, pageNumX, pageNumY, { align: "center" });
     }
 
     const nomFichier = `PV_Constatations_${now.toISOString().slice(0, 10)}.pdf`;
