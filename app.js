@@ -2,7 +2,14 @@
 // ÉTAT GLOBAL DE L'APPLICATION
 // =============================================================================
 let cadreActif = 'FLAGRANCE';
-let photos = [];
+let sectionCiblePhoto = null;
+let photosParSection = {
+  situation: [],
+  mesures: [],
+  etat: [],
+  corps: []
+};
+
 let sigCanvas, sigCtx, isDrawing = false;
 let signatureBlobData = null;
 let recognition = null;
@@ -21,11 +28,16 @@ function initServiceWorker() {
 }
 
 // =============================================================================
-// PROFIL ENQUÊTEUR
+// PROFIL ENQUÊTEUR & CO-ENQUÊTEUR (PERSISTANT)
 // =============================================================================
 function toggleConfig() {
   const card = document.getElementById('config-card');
   card.style.display = card.style.display === 'none' ? 'block' : 'none';
+}
+
+function toggleAdjointForm() {
+  const actif = document.getElementById('cfg-adjoint-actif').checked;
+  document.getElementById('box-adjoint').style.display = actif ? 'block' : 'none';
 }
 
 function sauvegarderProfil() {
@@ -35,17 +47,23 @@ function sauvegarderProfil() {
     brigade: document.getElementById('cfg-brigade').value,
     residence: document.getElementById('cfg-residence').value,
     codeUnite: document.getElementById('cfg-code-unite').value,
+    email: document.getElementById('cfg-email').value,
+    grade: document.getElementById('cfg-grade').value,
     nom: document.getElementById('cfg-nom').value,
     qualite: document.getElementById('cfg-qualite').value,
-    email: document.getElementById('cfg-email').value
+    adjointActif: document.getElementById('cfg-adjoint-actif').checked,
+    adjGrade: document.getElementById('cfg-adj-grade').value,
+    adjNom: document.getElementById('cfg-adj-nom').value,
+    adjQualite: document.getElementById('cfg-adj-qualite').value,
+    adjResidence: document.getElementById('cfg-adj-residence').value
   };
-  localStorage.setItem('gn_profil', JSON.stringify(profil));
+  localStorage.setItem('gn_profil_v3', JSON.stringify(profil));
   toggleConfig();
-  alert('Profil enquêteur enregistré.');
+  alert('Profils enregistrés.');
 }
 
 function chargerProfil() {
-  const data = localStorage.getItem('gn_profil');
+  const data = localStorage.getItem('gn_profil_v3');
   if (data) {
     const p = JSON.parse(data);
     if (p.compagnie) document.getElementById('cfg-compagnie').value = p.compagnie;
@@ -53,14 +71,23 @@ function chargerProfil() {
     if (p.brigade) document.getElementById('cfg-brigade').value = p.brigade;
     if (p.residence) document.getElementById('cfg-residence').value = p.residence;
     if (p.codeUnite) document.getElementById('cfg-code-unite').value = p.codeUnite;
+    if (p.email) document.getElementById('cfg-email').value = p.email;
+    if (p.grade) document.getElementById('cfg-grade').value = p.grade;
     if (p.nom) document.getElementById('cfg-nom').value = p.nom;
     if (p.qualite) document.getElementById('cfg-qualite').value = p.qualite;
-    if (p.email) document.getElementById('cfg-email').value = p.email;
+    if (p.adjointActif !== undefined) {
+      document.getElementById('cfg-adjoint-actif').checked = p.adjointActif;
+      toggleAdjointForm();
+    }
+    if (p.adjGrade) document.getElementById('cfg-adj-grade').value = p.adjGrade;
+    if (p.adjNom) document.getElementById('cfg-adj-nom').value = p.adjNom;
+    if (p.adjQualite) document.getElementById('cfg-adj-qualite').value = p.adjQualite;
+    if (p.adjResidence) document.getElementById('cfg-adj-residence').value = p.adjResidence;
   }
 }
 
 // =============================================================================
-// CADRE D'ENQUÊTE
+// CADRE D'ENQUÊTE & INSERTION PHRASES TYPES
 // =============================================================================
 function setCadre(type) {
   cadreActif = type;
@@ -68,8 +95,13 @@ function setCadre(type) {
   document.getElementById('btn-preliminaire').className = type === 'PRELIMINAIRE' ? 'active' : '';
 }
 
+function insererTexte(champId, texte) {
+  const el = document.getElementById(champId);
+  el.value = el.value ? `${el.value}\n${texte}` : texte;
+}
+
 // =============================================================================
-// HORODATAGE ET GPS
+// HORODATAGE ET GÉOLOCALISATION
 // =============================================================================
 function declencherArrivee() {
   const now = new Date();
@@ -104,12 +136,12 @@ async function resoudreAdresse(lat, lon) {
 }
 
 // =============================================================================
-// DICTÉE VOCALE CONTINUE
+// DICTÉE CONTINUE AVEC RELANCE
 // =============================================================================
 function dicter(targetId, btnId) {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) {
-    alert("Reconnaissance vocale non prise en charge sur ce navigateur.");
+    alert("Reconnaissance vocale non prise en charge.");
     return;
   }
 
@@ -119,13 +151,13 @@ function dicter(targetId, btnId) {
     shouldKeepListening = false;
     if (recognition) recognition.stop();
     btn.classList.remove('recording');
-    btn.innerText = '🎤 Dictée vocale';
+    btn.innerText = '🎤 Dictée continue';
     return;
   }
 
   shouldKeepListening = true;
   btn.classList.add('recording');
-  btn.innerText = '⏹️ Arrêter la dictée';
+  btn.innerText = '⏹️ Arrêter';
 
   function lancerReconnaissance() {
     if (!shouldKeepListening) return;
@@ -165,11 +197,16 @@ function dicter(targetId, btnId) {
 }
 
 // =============================================================================
-// CLICHÉS ET COMPRESSION (< 5 Mo)
+// GESTION DES PHOTOS INTÉGRÉES PAR RUBRIQUE
 // =============================================================================
-function ajouterPhoto(event) {
+function declencherPhotoSection(section) {
+  sectionCiblePhoto = section;
+  document.getElementById('global-camera-input').click();
+}
+
+function traiterPhotoPrise(event) {
   const file = event.target.files[0];
-  if (!file) return;
+  if (!file || !sectionCiblePhoto) return;
 
   const reader = new FileReader();
   reader.onload = (e) => {
@@ -197,9 +234,9 @@ function ajouterPhoto(event) {
 
       const compressedData = canvas.toDataURL('image/jpeg', 0.82);
       const now = new Date();
-      const gpsVal = document.getElementById('f-arrivee-gps').value || 'Coordonnées non relevées';
+      const gpsVal = document.getElementById('f-arrivee-gps').value || '';
 
-      photos.push({
+      const photoObj = {
         id: Date.now(),
         data: compressedData,
         width: width,
@@ -209,46 +246,44 @@ function ajouterPhoto(event) {
         heure: now.toLocaleTimeString('fr-FR'),
         gps: gpsVal,
         legende: ''
-      });
-      afficherPhotos();
+      };
+
+      photosParSection[sectionCiblePhoto].push(photoObj);
+      afficherPhotosSection(sectionCiblePhoto);
     };
     img.src = e.target.result;
   };
   reader.readAsDataURL(file);
 }
 
-function afficherPhotos() {
-  const cont = document.getElementById('galerie-photos');
+function afficherPhotosSection(section) {
+  const cont = document.getElementById(`photos-${section}`);
   cont.innerHTML = '';
-  document.getElementById('photo-compteur').innerText = `${photos.length} cliché${photos.length > 1 ? 's' : ''}`;
 
-  photos.forEach((p, idx) => {
+  photosParSection[section].forEach((p, idx) => {
     const card = document.createElement('div');
-    card.className = 'photo-slot';
+    card.className = 'photo-item';
     card.innerHTML = `
-      <img src="${p.data}" class="photo-preview">
-      <div style="font-size:11px; color:#64748b; margin-bottom:4px;">
-        Cliché n° ${idx + 1} — ${p.date} à ${p.heure} — GPS : ${p.gps}
-      </div>
-      <label>Légende descriptive :</label>
-      <input type="text" id="legende-${p.id}" value="${p.legende}" onchange="majLegende(${p.id}, this.value)" placeholder="Description de la trace, outil, dégradation...">
+      <img src="${p.data}">
+      <div style="font-size:10px; color:#64748b;">Cliché ${idx + 1} — ${p.date} à ${p.heure}</div>
+      <input type="text" id="leg-${p.id}" value="${p.legende}" placeholder="Légende du cliché..." onchange="majLegendeSection('${section}', ${p.id}, this.value)">
       <div class="btn-row">
-        <button type="button" class="btn-vocal" id="btn-voc-ph-${p.id}" onclick="dicter('legende-${p.id}', 'btn-voc-ph-${p.id}')">🎤 Dictée vocale</button>
-        <button type="button" class="btn btn-danger" style="padding:4px 8px; font-size:11px;" onclick="supprimerPhoto(${p.id})">Supprimer</button>
+        <button type="button" class="btn-vocal" id="voc-leg-${p.id}" onclick="dicter('leg-${p.id}', 'voc-leg-${p.id}')">🎤 Dictée légende</button>
+        <button type="button" class="btn btn-danger" style="font-size:10px; padding:3px 6px;" onclick="supprimerPhotoSection('${section}', ${p.id})">Supprimer</button>
       </div>
     `;
     cont.appendChild(card);
   });
 }
 
-function majLegende(id, val) {
-  const p = photos.find(x => x.id === id);
+function majLegendeSection(section, id, val) {
+  const p = photosParSection[section].find(x => x.id === id);
   if (p) p.legende = val;
 }
 
-function supprimerPhoto(id) {
-  photos = photos.filter(x => x.id !== id);
-  afficherPhotos();
+function supprimerPhotoSection(section, id) {
+  photosParSection[section] = photosParSection[section].filter(x => x.id !== id);
+  afficherPhotosSection(section);
 }
 
 // =============================================================================
@@ -327,7 +362,7 @@ function validerSignaturePleinEcran() {
 }
 
 // =============================================================================
-// CONTRÔLE ET GÉNÉRATION DU PDF (CONFORME MODÈLE EXACT)
+// CONTRÔLE ET GÉNÉRATION DU PDF (STRUCTURE TABLEAU CONFORME MODÈLES ODT)
 // =============================================================================
 function ouvrirModalControle() {
   document.getElementById('modal-cotes').style.display = 'flex';
@@ -340,14 +375,18 @@ function fermerModal() {
 async function genererEtEnvoyer() {
   fermerModal();
 
-  photos.forEach(p => {
-    const el = document.getElementById(`legende-${p.id}`);
-    if (el) p.legende = el.value;
+  // Mise à jour des légendes
+  ['situation', 'mesures', 'etat', 'corps'].forEach(sec => {
+    photosParSection[sec].forEach(p => {
+      const el = document.getElementById(`leg-${p.id}`);
+      if (el) p.legende = el.value;
+    });
   });
 
   const now = new Date();
-  const dateCloture = now.toLocaleDateString('fr-FR');
-  const heureCloture = now.toLocaleTimeString('fr-FR');
+  const jours = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+  const mois = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+  const dateFormatee = `${jours[now.getDay()]} ${String(now.getDate()).padStart(2, '0')} ${mois[now.getMonth()]} ${now.getFullYear()}`;
 
   const pvNum = document.getElementById('m-pv-num').value;
   const pieceNum = document.getElementById('m-piece-num').value;
@@ -357,16 +396,30 @@ async function genererEtEnvoyer() {
   const cob = document.getElementById('cfg-cob').value;
   const bde = document.getElementById('cfg-brigade').value;
   const codeU = document.getElementById('cfg-code-unite').value;
-  const nomOpj = document.getElementById('cfg-nom').value;
-  const qualiteOpj = document.getElementById('cfg-qualite').value;
   const residenceU = document.getElementById('cfg-residence').value;
   const destEmail = document.getElementById('cfg-email').value;
 
-  const articles = cadreActif === 'FLAGRANCE' ? '53 à 67' : '75 à 78';
+  const gradeOpj = document.getElementById('cfg-grade').value;
+  const nomOpj = document.getElementById('cfg-nom').value;
+  const qualiteOpj = document.getElementById('cfg-qualite').value;
 
-  const arriveeTime = document.getElementById('f-arrivee-time').value || `${dateCloture} à ${heureCloture}`;
-  const gps = document.getElementById('f-arrivee-gps').value || 'Coordonnées non relevées';
-  const adr = document.getElementById('f-adresse').value || 'Non précisée';
+  const adjointActif = document.getElementById('cfg-adjoint-actif').checked;
+  const adjGrade = document.getElementById('cfg-adj-grade').value;
+  const adjNom = document.getElementById('cfg-adj-nom').value;
+  const adjQualite = document.getElementById('cfg-adj-qualite').value;
+  const adjResidence = document.getElementById('cfg-adj-residence').value;
+
+  // Articles CPP
+  let articles = cadreActif === 'FLAGRANCE' ? '16 à 19 et 53 à 67' : '16 à 19 et 75 à 78';
+  if (adjointActif) {
+    articles = cadreActif === 'FLAGRANCE' 
+      ? '16 à 19, 21 1° bis, 21-1 et 53 à 67' 
+      : '16 à 19, 21 1° bis, 21-1 et 75 à 78';
+  }
+
+  const arriveeTime = document.getElementById('f-arrivee-time').value || dateFormatee;
+  const gps = document.getElementById('f-arrivee-gps').value || '';
+  const adr = document.getElementById('f-adresse').value || '';
 
   const saisine = document.getElementById('f-saisine').value || 'Néant.';
   const situation = document.getElementById('f-situation').value || 'Néant.';
@@ -379,191 +432,216 @@ async function genererEtEnvoyer() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
 
-    let y = 14;
-    const pageBottomLimit = 270;
-    const leftMargin = 14;
-    const contentWidth = 182;
+    const pageWidth = 210;
+    const pageHeight = 297;
+    const leftMargin = 12;
+    const rightMargin = 12;
+    const usableWidth = pageWidth - leftMargin - rightMargin; // 186 mm
+    
+    // Colonne de gauche (texte + photos) et colonne de droite (titres)
+    const rightColWidth = 35; 
+    const leftColWidth = usableWidth - rightColWidth; // 151 mm
+    const colSeparatorX = leftMargin + leftColWidth; // Ligne verticale
+    const rightMarginX = leftMargin + usableWidth;
 
-    // --- EN-TÊTE RÉGLEMENTAIRE (STYLE EXACT DU MODÈLE ODT) ---
-    doc.setFont("times", "bold");
+    let y = 12;
+
+    // --- EN-TÊTE RÉGLEMENTAIRE CONFORME ---
+    doc.setFont("times", "normal");
     doc.setFontSize(8.5);
     doc.text("GENDARMERIE NATIONALE", leftMargin, y);
-    doc.text(comp.toUpperCase(), leftMargin, y + 3.8);
-    doc.text(cob.toUpperCase(), leftMargin, y + 7.6);
-    doc.text(bde.toUpperCase(), leftMargin, y + 11.4);
+    doc.text(`Compagnie de ${comp}`, leftMargin, y + 4);
+    doc.text(`COB ${cob}`, leftMargin, y + 8);
+    doc.text(`BP ${bde}`, leftMargin, y + 12);
 
-    // Titres centrés
+    // Titres en haut à droite
+    doc.setFont("times", "bold");
     doc.setFontSize(10.5);
-    doc.text(`ENQUÊTE DE ${cadreActif}`, 135, y + 3.8, { align: "center" });
-    doc.setFontSize(9.5);
-    doc.text("PROCÈS-VERBAL DE TRANSPORT CONSTATATIONS", 135, y + 8, { align: "center" });
-    doc.text("ET MESURES PRISES", 135, y + 12, { align: "center" });
+    doc.text(`ENQUÊTE ${cadreActif === 'FLAGRANCE' ? 'DE FLAGRANCE' : 'PRÉLIMINAIRE'}`, 130, y + 4, { align: "center" });
+    doc.setFontSize(9);
+    doc.text("PROCÈS-VERBAL DE TRANSPORT CONSTATATIONS", 130, y + 8.5, { align: "center" });
+    doc.text("ET MESURES PRISES", 130, y + 12.5, { align: "center" });
 
-    // CARTOUCHE COMPARTIMENTÉ EN 2 BOÎTES CONFORME MODÈLE ODT
+    // CARTOUCHE COMPARTIMENTÉ STRICT
     y += 16;
-    const cartoucheX = leftMargin;
-    const b1W = 55; // Boîte gauche
-    const b2W = 40; // Boîte droite
-    const boxH = 26;
+    const cartoucheH = 12;
+    doc.setDrawColor(0, 0, 0);
+    doc.setLineWidth(0.2);
+    doc.rect(leftMargin, y, usableWidth, cartoucheH);
 
-    doc.rect(cartoucheX, y, b1W, boxH);
-    doc.rect(cartoucheX + b1W, y, b2W, boxH);
+    // Subdivisions
+    const colW1 = 28, colW2 = 32, colW3 = 22, colW4 = 48, colW5 = 26;
+    doc.line(leftMargin + colW1, y, leftMargin + colW1, y + cartoucheH);
+    doc.line(leftMargin + colW1 + colW2, y, leftMargin + colW1 + colW2, y + cartoucheH);
+    doc.line(leftMargin + colW1 + colW2 + colW3, y, leftMargin + colW1 + colW2 + colW3, y + cartoucheH);
+    doc.line(leftMargin + colW1 + colW2 + colW3 + colW4, y, leftMargin + colW1 + colW2 + colW3 + colW4, y + cartoucheH);
+    doc.line(leftMargin + colW1 + colW2 + colW3 + colW4 + colW5, y, leftMargin + colW1 + colW2 + colW3 + colW4 + colW5, y + cartoucheH);
 
+    // Textes cartouche
     doc.setFontSize(7.5);
     doc.setFont("times", "normal");
-    // Boîte 1
-    doc.text("Code Unité", cartoucheX + 2, y + 4);
+    doc.text("Code unité", leftMargin + 2, y + 3.5);
+    doc.text("Nmr P.V.", leftMargin + colW1 + 2, y + 3.5);
+    doc.text("Année", leftMargin + colW1 + colW2 + 2, y + 3.5);
+    doc.text("Nmr dossier justice", leftMargin + colW1 + colW2 + colW3 + 2, y + 3.5);
+    doc.text("Nmr pièce", leftMargin + colW1 + colW2 + colW3 + colW4 + 2, y + 3.5);
+    doc.text("N° feuillet", leftMargin + colW1 + colW2 + colW3 + colW4 + colW5 + 2, y + 3.5);
+
     doc.setFont("times", "bold");
-    doc.text(codeU, cartoucheX + 2, y + 7.5);
+    doc.setFontSize(8.5);
+    doc.text(codeU, leftMargin + 2, y + 8.5);
+    doc.text(pvNum, leftMargin + colW1 + 2, y + 8.5);
+    doc.text(String(now.getFullYear()), leftMargin + colW1 + colW2 + 2, y + 8.5);
+    doc.text(dossierNum, leftMargin + colW1 + colW2 + colW3 + 2, y + 8.5);
+    doc.text(pieceNum, leftMargin + colW1 + colW2 + colW3 + colW4 + 2, y + 8.5);
 
+    // Marqueur pour la pagination dynamique finale
+    const pageNumY = y + 8.5;
+    const pageNumX = leftMargin + colW1 + colW2 + colW3 + colW4 + colW5 + 2;
+
+    // Introduction procédurale
+    y += cartoucheH + 5;
     doc.setFont("times", "normal");
-    doc.text("P.V.", cartoucheX + 2, y + 11);
-    doc.setFont("times", "bold");
-    doc.text(pvNum, cartoucheX + 2, y + 14.5);
+    doc.setFontSize(9.5);
 
-    doc.setFont("times", "normal");
-    doc.text("Année", cartoucheX + 32, y + 11);
-    doc.setFont("times", "bold");
-    doc.text(String(now.getFullYear()), cartoucheX + 32, y + 14.5);
+    let intro = `Le ${dateFormatee}\nNous soussigné ${gradeOpj} ${nomOpj}, ${qualiteOpj} en résidence à ${residenceU}`;
+    if (adjointActif) {
+      intro += `\nAssisté du ${adjGrade} ${adjNom}, ${adjQualite} en résidence à ${adjResidence}`;
+    }
+    intro += `\nVu les articles ${articles} du Code de Procédure Pénale.\nNous trouvant au bureau de notre unité à ${residenceU}, rapportons les opérations suivantes :`;
 
-    doc.setFont("times", "normal");
-    doc.text("Nmr Dossier Justice", cartoucheX + 2, y + 18.5);
-    doc.setFont("times", "bold");
-    doc.text(dossierNum, cartoucheX + 2, y + 22.5);
+    const introLines = doc.splitTextToSize(intro, leftColWidth - 4);
+    doc.text(introLines, leftMargin + 2, y);
+    y += introLines.length * 4.2 + 2;
 
-    // Boîte 2
-    doc.setFont("times", "normal");
-    doc.text("N° pièce", cartoucheX + b1W + 2, y + 4);
-    doc.setFont("times", "bold");
-    doc.text(pieceNum, cartoucheX + b1W + 2, y + 8);
+    // Ligne sous l'intro
+    doc.line(leftMargin, y, rightMarginX, y);
 
-    doc.setFont("times", "normal");
-    doc.text("N° feuillet", cartoucheX + b1W + 2, y + 15);
-    doc.setFont("times", "bold");
-    const totalFeuilletsEstime = photos.length > 4 ? Math.ceil(photos.length / 2) + 1 : 1;
-    doc.text(`1/${totalFeuilletsEstime}`, cartoucheX + b1W + 2, y + 20);
+    // --- FONCTION D'AJOUT DE RUBRIQUE DANS LE TABLEAU À 2 COLONNES ---
+    function ajouterRubrique(titre, texte, listePhotos) {
+      const startY = y;
+      let curY = y + 4;
 
-    // Paragraphe introductif
-    y += boxH + 6;
-    doc.setFontSize(10);
-    doc.setFont("times", "normal");
-    const introTxt = `Le ${dateCloture} à ${heureCloture}. Nous soussigné, ${nomOpj}, ${qualiteOpj} en résidence à ${residenceU}. Vu les articles 16 à 19 et ${articles} du Code de Procédure Pénale. Nous trouvant au bureau de notre unité à ${residenceU}, rapportons les opérations suivantes :`;
-    const introLines = doc.splitTextToSize(introTxt, contentWidth);
-    doc.text(introLines, leftMargin, y);
-    y += introLines.length * 4.8 + 2;
-
-    doc.line(leftMargin, y, leftMargin + contentWidth, y);
-    y += 5;
-
-    // --- FONCTION SECTION AVEC TITRE CENTRÉ ET SOULIGNÉ ---
-    function addSection(title, content) {
-      if (y > pageBottomLimit - 20) { doc.addPage(); y = 14; }
-      
-      doc.setFont("times", "bold");
-      doc.setFontSize(10.5);
-      // Titre centré
-      doc.text(title, 105, y, { align: "center" });
-      const titleW = doc.getTextWidth(title);
-      doc.line(105 - (titleW / 2), y + 0.8, 105 + (titleW / 2), y + 0.8);
-      y += 6;
-
+      // Impression du texte dans la colonne gauche
       doc.setFont("times", "normal");
-      doc.setFontSize(10);
-      const lines = doc.splitTextToSize(content, contentWidth);
-      lines.forEach(l => {
-        if (y > pageBottomLimit - 10) { doc.addPage(); y = 14; }
-        doc.text(l, leftMargin, y);
-        y += 4.5;
-      });
-      y += 3;
-    }
-
-    addSection("SAISINE", saisine);
-    addSection("SITUATION A L'ARRIVÉE DES ENQUÊTEURS", `Transport sur les lieux le ${arriveeTime} sis à ${adr} (GPS : ${gps}).\n\n${situation}`);
-    addSection("MESURES PRISES", mesures);
-    addSection("ETAT DES LIEUX", etatLieux);
-
-    // Intégration directe si <= 4 photos
-    if (photos.length > 0 && photos.length <= 4) {
-      for (let i = 0; i < photos.length; i++) {
-        const p = photos[i];
-        const ratio = p.aspectRatio || 1.33;
-        const imgW = 125;
-        const imgH = Math.min(Math.round(imgW / ratio), 80);
-
-        if (y + imgH + 18 > pageBottomLimit) { doc.addPage(); y = 14; }
-        try {
-          doc.addImage(p.data, 'JPEG', (210 - imgW) / 2, y, imgW, imgH);
-          y += imgH + 4;
-          doc.setFontSize(8.5);
-          doc.setFont("times", "italic");
-          doc.text(`Cliché n° ${i + 1} - ${p.date} à ${p.heure} (GPS : ${p.gps})`, (210 - imgW) / 2, y);
-          y += 4;
-          doc.setFont("times", "normal");
-          doc.text(`Légende : ${p.legende || 'Néant'}`, (210 - imgW) / 2, y);
-          y += 6;
-        } catch (e) {}
-      }
-    } else if (photos.length > 4) {
-      addSection("CLICHÉS PHOTOGRAPHIQUES", `(Se reporter aux clichés n° 01 à ${photos.length} joints en annexe photographique du présent procès-verbal).`);
-    }
-
-    addSection("CORPS DU DELIT", corpsDelit);
-    addSection("MESURES DIVERSES", mesuresDiv);
-
-    // Clôture et Signature
-    if (y > pageBottomLimit - 38) { doc.addPage(); y = 14; }
-    doc.setFont("times", "bold");
-    doc.setFontSize(10);
-    doc.text(`Dont procès-verbal fait et clos le ${dateCloture} à ${heureCloture}.`, leftMargin, y);
-    y += 7;
-
-    doc.setFont("times", "normal");
-    doc.text(qualiteOpj, 130, y);
-    doc.text(nomOpj, 130, y + 4);
-    if (signatureBlobData) {
-      doc.addImage(signatureBlobData, 'PNG', 125, y + 6, 50, 22);
-      y += 28;
-    } else {
-      y += 12;
-    }
-
-    // =========================================================================
-    // PLANCHE PHOTOGRAPHIQUE (SI > 4 PHOTOS) : STRICTEMENT 2 PAR PAGE
-    // =========================================================================
-    if (photos.length > 4) {
-      for (let i = 0; i < photos.length; i++) {
-        if (i % 2 === 0) {
-          doc.addPage();
-          y = 14;
-          const numFeuillet = Math.floor(i / 2) + 2;
-
-          // En-tête annexe
-          doc.setFont("times", "bold");
-          doc.setFontSize(10.5);
-          doc.text("ANNEXE PHOTOGRAPHIQUE CONTINUE", 105, y, { align: "center" });
-          doc.setFontSize(8.5);
-          doc.setFont("times", "normal");
-          doc.text(`P.V. N° : ${pvNum}  —  Feuillet ${numFeuillet}/${totalFeuilletsEstime}`, 105, y + 4.5, { align: "center" });
-          y += 12;
+      doc.setFontSize(9.5);
+      const lines = doc.splitTextToSize(texte, leftColWidth - 4);
+      lines.forEach(line => {
+        if (curY > pageHeight - 20) {
+          terminerPageTableau(startY, curY, titre);
+          curY = y + 4;
         }
+        doc.text(line, leftMargin + 2, curY);
+        curY += 4.2;
+      });
 
-        const p = photos[i];
-        const ratio = p.aspectRatio || 1.33;
-        const imgW = 140;
-        const imgH = Math.min(Math.round(imgW / ratio), 82); // 82 mm max : garantit l'insertion de 2 photos complètes avec légendes par page A4
+      // Insertion des photos dans la colonne gauche sous le texte
+      if (listePhotos && listePhotos.length > 0) {
+        listePhotos.forEach((p, i) => {
+          const ratio = p.aspectRatio || 1.33;
+          const imgW = Math.min(leftColWidth - 10, 130);
+          const imgH = Math.min(Math.round(imgW / ratio), 80);
 
-        doc.addImage(p.data, 'JPEG', (210 - imgW) / 2, y, imgW, imgH);
-        y += imgH + 4;
+          if (curY + imgH + 12 > pageHeight - 18) {
+            terminerPageTableau(startY, curY, titre);
+            curY = y + 4;
+          }
 
-        doc.setFontSize(8.5);
-        doc.setFont("times", "italic");
-        doc.text(`Cliché n° ${i + 1} - ${p.date} à ${p.heure} - GPS : ${p.gps}`, (210 - imgW) / 2, y);
-        y += 4;
-        doc.setFont("times", "normal");
-        doc.text(`Légende : ${p.legende || 'Néant'}`, (210 - imgW) / 2, y);
-        y += 12;
+          try {
+            doc.addImage(p.data, 'JPEG', leftMargin + 4, curY, imgW, imgH);
+            curY += imgH + 3.5;
+            doc.setFontSize(8);
+            doc.setFont("times", "italic");
+            const legTxt = p.legende ? `Cliché n° ${i + 1} : ${p.legende}` : `Cliché n° ${i + 1} (${p.date} à ${p.heure})`;
+            doc.text(legTxt, leftMargin + 4, curY);
+            curY += 5;
+          } catch (e) {}
+        });
       }
+
+      curY += 2;
+      const blockHeight = curY - startY;
+
+      // Dessin des bordures du bloc
+      doc.setDrawColor(0, 0, 0);
+      doc.setLineWidth(0.2);
+      doc.line(leftMargin, startY, leftMargin, curY); // Bord gauche
+      doc.line(rightMarginX, startY, rightMarginX, curY); // Bord droit
+      doc.line(colSeparatorX, startY, colSeparatorX, curY); // Séparateur vertical
+      doc.line(leftMargin, curY, rightMarginX, curY); // Ligne horizontale basse
+
+      // Titre en colonne droite (BLEU GENDARMERIE EXACT #002060)
+      doc.setFont("times", "bold");
+      doc.setFontSize(9);
+      doc.setTextColor(0, 32, 96); // #002060
+
+      const titleLines = doc.splitTextToSize(titre, rightColWidth - 4);
+      const titleTotalHeight = titleLines.length * 4;
+      const titleY = startY + (blockHeight / 2) - (titleTotalHeight / 2) + 3;
+
+      doc.text(titleLines, colSeparatorX + (rightColWidth / 2), titleY, { align: "center" });
+
+      doc.setTextColor(0, 0, 0); // Remise au noir
+      y = curY;
+    }
+
+    function terminerPageTableau(startY, curY, titre) {
+      doc.setDrawColor(0, 0, 0);
+      doc.setLineWidth(0.2);
+      doc.line(leftMargin, startY, leftMargin, curY);
+      doc.line(rightMarginX, startY, rightMarginX, curY);
+      doc.line(colSeparatorX, startY, colSeparatorX, curY);
+      doc.line(leftMargin, curY, rightMarginX, curY);
+
+      // Titre sur la page en cours
+      doc.setFont("times", "bold");
+      doc.setFontSize(9);
+      doc.setTextColor(0, 32, 96);
+      const titleLines = doc.splitTextToSize(titre, rightColWidth - 4);
+      const titleTotalHeight = titleLines.length * 4;
+      doc.text(titleLines, colSeparatorX + (rightColWidth / 2), startY + ((curY - startY) / 2) - (titleTotalHeight / 2) + 3, { align: "center" });
+      doc.setTextColor(0, 0, 0);
+
+      doc.addPage();
+      y = 14;
+    }
+
+    // Ajout des rubriques séquentielles
+    ajouterRubrique("SAISINE", saisine, []);
+    ajouterRubrique("SITUATION À L'ARRIVÉE DES ENQUÊTEURS", `Transport sur les lieux le ${arriveeTime} sis à ${adr} ${gps ? `(GPS : ${gps})` : ''}.\n\n${situation}`, photosParSection.situation);
+    ajouterRubrique("MESURES PRISES", mesures, photosParSection.mesures);
+    ajouterRubrique("ÉTAT DES LIEUX", etatLieux, photosParSection.etat);
+    ajouterRubrique("CORPS DU DÉLIT", corpsDelit, photosParSection.corps);
+    ajouterRubrique("MESURES DIVERSES", mesuresDiv, []);
+
+    // Formule de clôture & Signature dans la colonne gauche
+    if (y > pageHeight - 35) { doc.addPage(); y = 14; }
+    
+    y += 4;
+    doc.setFont("times", "normal");
+    doc.setFontSize(9.5);
+    doc.text(`Nos constatations prennent fin le ${dateFormatee}.`, leftMargin + 2, y);
+    y += 5;
+    doc.text(`Dont procès verbal fait et clos à ${residenceU}, le ${dateFormatee}`, leftMargin + 2, y);
+    y += 6;
+
+    doc.setFont("times", "bold");
+    doc.text("L'Officier de Police Judiciaire", leftMargin + (leftColWidth / 2), y, { align: "center" });
+    y += 4;
+    doc.setFont("times", "normal");
+    doc.text(`${gradeOpj} ${nomOpj}`, leftMargin + (leftColWidth / 2), y, { align: "center" });
+    
+    if (signatureBlobData) {
+      doc.addImage(signatureBlobData, 'PNG', leftMargin + (leftColWidth / 2) - 25, y + 2, 50, 22);
+    }
+
+    // --- MISE À JOUR DE LA PAGINATION RÉELLE SUR TOUTES LES PAGES ---
+    const totalPages = doc.internal.getNumberOfPages();
+    for (let p = 1; p <= totalPages; p++) {
+      doc.setPage(p);
+      doc.setFont("times", "bold");
+      doc.setFontSize(8.5);
+      doc.text(`${p}/ ${totalPages}`, pageNumX, pageNumY);
     }
 
     const nomFichier = `PV_Constatations_${now.toISOString().slice(0, 10)}.pdf`;
@@ -573,7 +651,7 @@ async function genererEtEnvoyer() {
     if (navigator.canShare && navigator.canShare({ files: [fichierPdf] })) {
       await navigator.share({
         title: `PV de Constatations - ${pvNum}`,
-        text: `PV de transport, constatations et mesures prises (${cadreActif}). Destinataire : ${destEmail}`,
+        text: `PV de transport constatations et mesures prises (${cadreActif}). Destinataire : ${destEmail}`,
         files: [fichierPdf]
       });
     } else {
@@ -587,7 +665,7 @@ async function genererEtEnvoyer() {
     }
 
     setTimeout(() => {
-      if (confirm("Transmission terminée.\n\nSouhaitez-vous PURGER DÉFINITIVEMENT les clichés et données du terminal ?")) {
+      if (confirm("Transmission effectuée.\n\nSouhaitez-vous PURGER DÉFINITIVEMENT les clichés et données locales du terminal ?")) {
         nettoyerTerminal();
       }
     }, 1200);
@@ -598,9 +676,9 @@ async function genererEtEnvoyer() {
 }
 
 function nettoyerTerminal() {
-  photos = [];
+  photosParSection = { situation: [], mesures: [], etat: [], corps: [] };
   signatureBlobData = null;
-  afficherPhotos();
+  ['situation', 'mesures', 'etat', 'corps'].forEach(sec => afficherPhotosSection(sec));
   document.getElementById('sig-preview-placeholder').style.display = 'block';
   document.getElementById('sig-preview-img').style.display = 'none';
   document.getElementById('f-arrivee-time').value = '';
@@ -612,5 +690,5 @@ function nettoyerTerminal() {
   document.getElementById('f-etat-lieux').value = '';
   document.getElementById('f-corps-delit').value = '';
   document.getElementById('f-mesures-div').value = '';
-  alert('Nettoyage sécurisé effectué. Aucune trace conservée.');
+  alert('Nettoyage sécurisé effectué. Aucune donnée ne subsiste sur le terminal.');
 }
