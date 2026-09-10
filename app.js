@@ -14,6 +14,7 @@ let sigCanvas, sigCtx, isDrawing = false;
 let signatureBlobData = null;
 let recognition = null;
 let shouldKeepListening = false;
+let restartTimeout = null;
 
 window.addEventListener('DOMContentLoaded', () => {
   chargerProfil();
@@ -136,7 +137,7 @@ async function resoudreAdresse(lat, lon) {
 }
 
 // =============================================================================
-// DICTÉE CONTINUE AVEC RELANCE
+// DICTÉE VOCALE CONTINUE (PAUSE ÉTENDUE À 3 SECONDES)
 // =============================================================================
 function dicter(targetId, btnId) {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -149,6 +150,7 @@ function dicter(targetId, btnId) {
 
   if (shouldKeepListening) {
     shouldKeepListening = false;
+    clearTimeout(restartTimeout);
     if (recognition) recognition.stop();
     btn.classList.remove('recording');
     btn.innerText = '🎤 Dictée continue';
@@ -184,9 +186,10 @@ function dicter(targetId, btnId) {
 
     recognition.onend = () => {
       if (shouldKeepListening) {
-        setTimeout(() => {
+        // Attente de 3 secondes avant la relance pour laisser un temps de réflexion confortable
+        restartTimeout = setTimeout(() => {
           try { lancerReconnaissance(); } catch (e) {}
-        }, 150);
+        }, 3000);
       }
     };
 
@@ -362,7 +365,7 @@ function validerSignaturePleinEcran() {
 }
 
 // =============================================================================
-// CONTRÔLE ET GÉNÉRATION DU PDF (MISE EN PAGE NORMALISÉE)
+// CONTRÔLE ET GÉNÉRATION DU PDF (CONFORME STRICT)
 // =============================================================================
 function ouvrirModalControle() {
   document.getElementById('modal-cotes').style.display = 'flex';
@@ -388,7 +391,14 @@ async function genererEtEnvoyer() {
   const dateFormatee = `${jours[now.getDay()]} ${String(now.getDate()).padStart(2, '0')} ${mois[now.getMonth()]} ${now.getFullYear()}`;
   const heureFinExacte = `${String(now.getHours()).padStart(2, '0')} heures ${String(now.getMinutes()).padStart(2, '0')} minutes`;
 
-  const pvNum = document.getElementById('m-pv-num').value;
+  const brutPv = document.getElementById('m-pv-num').value.trim();
+  // Extraction propre du numéro de PV pur (ex: "14364/2525/2026" -> "2525")
+  let pvNum = brutPv;
+  if (brutPv.includes('/')) {
+    const parts = brutPv.split('/');
+    pvNum = parts.length === 3 ? parts[1] : parts[0];
+  }
+
   const pieceNum = document.getElementById('m-piece-num').value;
   const dossierNum = document.getElementById('m-dossier-num').value;
 
@@ -431,7 +441,6 @@ async function genererEtEnvoyer() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
 
-    const pageWidth = 210;
     const pageHeight = 297;
     const leftMargin = 12;
     const usableWidth = 186;
@@ -539,16 +548,15 @@ async function genererEtEnvoyer() {
     y += introLines.length * 4.2 + 4;
 
     // =========================================================================
-    // BANDEAUX DE TITRES ET GESTION ÉQUILIBRÉE DES CLICHÉS
+    // BANDEAUX DE TITRES ET GESTION NON DÉFORMÉE DES PHOTOS
     // =========================================================================
     function ajouterRubrique(titre, texte, listePhotos) {
-      // Évite un bandeau orphelin en fond de page
       if (y > pageHeight - 35) {
         doc.addPage();
         y = 14;
       }
 
-      // Bandeau de titre encadré avec fond gris clair
+      // Bandeau encadré fond gris
       const bannerH = 6;
       doc.setFillColor(242, 242, 242);
       doc.setDrawColor(0, 0, 0);
@@ -562,7 +570,7 @@ async function genererEtEnvoyer() {
 
       y += bannerH + 4;
 
-      // Texte narratif
+      // Texte
       doc.setFont("times", "normal");
       doc.setFontSize(9.5);
       const lines = doc.splitTextToSize(texte, usableWidth);
@@ -575,17 +583,16 @@ async function genererEtEnvoyer() {
         y += 4.2;
       });
 
-      // Insertion contrôlée des photos (zéro photo orpheline)
+      // Photos respectant STRICTEMENT le ratio natif (largeur 135 mm)
       if (listePhotos && listePhotos.length > 0) {
         y += 2;
         listePhotos.forEach((p, i) => {
           const ratio = p.aspectRatio || 1.33;
-          const imgW = Math.min(usableWidth - 20, 140);
-          const imgH = Math.min(Math.round(imgW / ratio), 85);
-          const blockPhotoTotalH = imgH + 12; // Espace requis : image + légende + marge
+          const imgW = 135;
+          const imgH = imgW / ratio; // Calcul naturel : aucun écrasement en hauteur
+          const blockH = imgH + 11;
 
-          // Si l'espace restant ne permet pas d'accueillir la photo ET sa légende : saut de page immédiat
-          if (y + blockPhotoTotalH > pageHeight - 15) {
+          if (y + blockH > pageHeight - 15) {
             doc.addPage();
             y = 14;
           }
@@ -614,7 +621,7 @@ async function genererEtEnvoyer() {
     ajouterRubrique("MESURES DIVERSES", mesuresDiv, []);
 
     // =========================================================================
-    // CLÔTURE & SIGNATURE (FORMULES STRICTEMENT CONFORMES)
+    // CLÔTURE & SIGNATURE
     // =========================================================================
     if (y > pageHeight - 40) {
       doc.addPage();
@@ -624,10 +631,8 @@ async function genererEtEnvoyer() {
     y += 4;
     doc.setFont("times", "normal");
     doc.setFontSize(9.5);
-    // 1. Date et heure exacte de fin
     doc.text(`Nos constatations prennent fin le ${dateFormatee} à ${heureFinExacte}.`, leftMargin, y);
     y += 5.5;
-    // 2. Date seule pour la clôture formelle
     doc.text(`Dont procès verbal fait et clos à ${residenceU}, le ${dateFormatee}`, leftMargin, y);
     y += 7;
 
@@ -641,7 +646,7 @@ async function genererEtEnvoyer() {
       doc.addImage(signatureBlobData, 'PNG', leftMargin + (usableWidth / 2) - 25, y + 2, 50, 22);
     }
 
-    // Pagination dynamique finale
+    // Pagination dynamique
     const totalPages = doc.internal.getNumberOfPages();
     for (let p = 1; p <= totalPages; p++) {
       doc.setPage(p);
