@@ -1,9 +1,20 @@
 {
-  "name": "Constatations Gendarmerie",
-  "short_name": "PV Constat",
+  "name": "PWA TCMP Gendarmerie",
+  "short_name": "TCMP",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#1a365d",
-  "icons": []
+  "background_color": "#1a2a3a",
+  "theme_color": "#1a2a3a",
+  "icons": [
+    {
+      "src": "signature.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "signature.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
 }
