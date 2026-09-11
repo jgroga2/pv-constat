@@ -10,6 +10,8 @@ let photosParSection = {
   corps: []
 };
 
+let sigCanvas, sigCtx, isDrawing = false;
+let signatureBlobData = null;
 let recognition = null;
 let shouldKeepListening = false;
 let restartTimeout = null;
@@ -17,6 +19,7 @@ let restartTimeout = null;
 // Initialisation
 window.addEventListener('DOMContentLoaded', () => {
   chargerEtat();
+  initSignaturePleinEcran();
   initServiceWorker();
 });
 
@@ -55,6 +58,7 @@ function sauvegarderEtat() {
     etatLieux: document.getElementById('f-etat-lieux').value,
     corpsDelit: document.getElementById('f-corps-delit').value,
     mesuresDiv: document.getElementById('f-mesures-div').value,
+    signatureBlobData,
     photosParSection
   };
   localStorage.setItem('gn_pv_brouillon', JSON.stringify(etat));
@@ -93,6 +97,13 @@ function chargerEtat() {
     if (e.etatLieux) document.getElementById('f-etat-lieux').value = e.etatLieux;
     if (e.corpsDelit) document.getElementById('f-corps-delit').value = e.corpsDelit;
     if (e.mesuresDiv) document.getElementById('f-mesures-div').value = e.mesuresDiv;
+    if (e.signatureBlobData) {
+      signatureBlobData = e.signatureBlobData;
+      document.getElementById('sig-preview-placeholder').style.display = 'none';
+      const previewImg = document.getElementById('sig-preview-img');
+      previewImg.src = signatureBlobData;
+      previewImg.style.display = 'block';
+    }
     if (e.photosParSection) {
       photosParSection = e.photosParSection;
       ['situation', 'mesures', 'etat', 'corps'].forEach(sec => afficherPhotosSection(sec));
@@ -172,7 +183,7 @@ async function resoudreAdresse(lat, lon) {
 }
 
 // =============================================================================
-// DICTÉE CONTINUE AVEC SUPPRESSION DES TICS DE LANGAGE
+// DICTÉE VOCALE CONTINUE
 // =============================================================================
 function nettoyerTics(texte) {
   return texte
@@ -341,37 +352,83 @@ function supprimerPhotoSection(section, id) {
 }
 
 // =============================================================================
-// DESSIN DU SCEAU OFFICIEL PROCÉDURE NUMÉRIQUE (GRENADE GN)
+// SIGNATURE TACTILE AU DOIGT (PLEIN ÉCRAN ORIENTABLE)
 // =============================================================================
-function dessinerTamponProcedureNumerique(doc, xCenter, yCenter) {
-  doc.setDrawColor(0, 0, 0);
-  doc.setLineWidth(0.4);
-  doc.circle(xCenter, yCenter, 14);
-  doc.setLineWidth(0.2);
-  doc.circle(xCenter, yCenter, 11.5);
+function initSignaturePleinEcran() {
+  sigCanvas = document.getElementById('sig-fullscreen-canvas');
+  sigCtx = sigCanvas.getContext('2d');
 
-  doc.setFont("times", "bold");
-  doc.setFontSize(8);
-  doc.text("★", xCenter - 12.8, yCenter + 0.8, { align: "center" });
-  doc.text("★", xCenter + 12.8, yCenter + 0.8, { align: "center" });
+  const getPos = (e) => {
+    const rect = sigCanvas.getBoundingClientRect();
+    const touch = e.touches ? e.touches[0] : e;
+    return { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
+  };
 
-  doc.setFontSize(5.5);
-  doc.text("GENDARMERIE NATIONALE", xCenter, yCenter - 12, { align: "center" });
-  doc.text("PROCÉDURE NUMÉRIQUE", xCenter, yCenter + 13.2, { align: "center" });
+  const start = (e) => { isDrawing = true; const p = getPos(e); sigCtx.beginPath(); sigCtx.moveTo(p.x, p.y); };
+  const move = (e) => { if (!isDrawing) return; const p = getPos(e); sigCtx.lineTo(p.x, p.y); sigCtx.stroke(); };
+  const end = () => { isDrawing = false; };
 
-  doc.setLineWidth(0.3);
-  doc.circle(xCenter, yCenter + 3.5, 3.2);
+  sigCanvas.addEventListener('mousedown', start);
+  sigCanvas.addEventListener('mousemove', move);
+  window.addEventListener('mouseup', end);
 
-  doc.line(xCenter, yCenter + 0.3, xCenter, yCenter - 7);
-  doc.line(xCenter - 1.2, yCenter + 0.5, xCenter - 3.5, yCenter - 5);
-  doc.line(xCenter + 1.2, yCenter + 0.5, xCenter + 3.5, yCenter - 5);
-  doc.line(xCenter - 2.2, yCenter + 1.5, xCenter - 5, yCenter - 2.5);
-  doc.line(xCenter + 2.2, yCenter + 1.5, xCenter + 5, yCenter - 2.5);
-  doc.line(xCenter - 6, yCenter + 3.5, xCenter + 6, yCenter + 3.5);
+  sigCanvas.addEventListener('touchstart', (e) => { e.preventDefault(); start(e); });
+  sigCanvas.addEventListener('touchmove', (e) => { e.preventDefault(); move(e); });
+  sigCanvas.addEventListener('touchend', end);
+
+  window.addEventListener('resize', redimensionnerCanvasSignature);
+}
+
+function redimensionnerCanvasSignature() {
+  const modal = document.getElementById('modal-signature');
+  if (modal && modal.style.display === 'flex') {
+    const temp = sigCanvas.toDataURL();
+    const container = sigCanvas.parentElement;
+    sigCanvas.width = container.clientWidth;
+    sigCanvas.height = container.clientHeight;
+    sigCtx.lineWidth = 3;
+    sigCtx.strokeStyle = '#000';
+    sigCtx.lineCap = 'round';
+    
+    const img = new Image();
+    img.onload = () => sigCtx.drawImage(img, 0, 0);
+    img.src = temp;
+  }
+}
+
+function ouvrirModalSignature() {
+  const modal = document.getElementById('modal-signature');
+  modal.style.display = 'flex';
+  setTimeout(() => {
+    const container = sigCanvas.parentElement;
+    sigCanvas.width = container.clientWidth;
+    sigCanvas.height = container.clientHeight;
+    sigCtx.lineWidth = 3;
+    sigCtx.strokeStyle = '#000';
+    sigCtx.lineCap = 'round';
+  }, 100);
+}
+
+function fermerModalSignature() {
+  document.getElementById('modal-signature').style.display = 'none';
+}
+
+function effacerSignaturePleinEcran() {
+  sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
+}
+
+function validerSignaturePleinEcran() {
+  signatureBlobData = sigCanvas.toDataURL('image/png');
+  document.getElementById('sig-preview-placeholder').style.display = 'none';
+  const previewImg = document.getElementById('sig-preview-img');
+  previewImg.src = signatureBlobData;
+  previewImg.style.display = 'block';
+  sauvegarderEtat();
+  fermerModalSignature();
 }
 
 // =============================================================================
-// GÉNÉRATION STRICTE DU PDF ET CONTRÔLE JURIDIQUE
+// CONTRÔLE ET GÉNÉRATION DU PDF
 // =============================================================================
 function ouvrirModalControle() {
   document.getElementById('modal-cotes').style.display = 'flex';
@@ -625,7 +682,7 @@ async function genererEtEnvoyer() {
     ajouterRubrique("MESURES DIVERSES", mesuresDiv, []);
 
     // =========================================================================
-    // CLÔTURE & APPOSITION DU TAMPON PROCÉDURE NUMÉRIQUE
+    // CLÔTURE & SIGNATURE TACTILE APPOSÉE
     // =========================================================================
     if (y > pageHeight - 45) {
       doc.addPage();
@@ -646,8 +703,13 @@ async function genererEtEnvoyer() {
     doc.setFont("times", "normal");
     doc.text(`${gradeOpj} ${nomOpj}`, leftMargin + (usableWidth / 2), y, { align: "center" });
 
-    y += 16;
-    dessinerTamponProcedureNumerique(doc, leftMargin + (usableWidth / 2), y);
+    // Insertion du tracé de signature manuel si validé
+    if (signatureBlobData) {
+      doc.addImage(signatureBlobData, 'PNG', leftMargin + (usableWidth / 2) - 25, y + 2, 50, 22);
+      y += 26;
+    } else {
+      y += 12;
+    }
 
     const totalPages = doc.internal.getNumberOfPages();
     for (let p = 1; p <= totalPages; p++) {
@@ -691,7 +753,10 @@ async function genererEtEnvoyer() {
 function nettoyerTerminal(alerter = false) {
   localStorage.removeItem('gn_pv_brouillon');
   photosParSection = { situation: [], mesures: [], etat: [], corps: [] };
+  signatureBlobData = null;
   ['situation', 'mesures', 'etat', 'corps'].forEach(sec => afficherPhotosSection(sec));
+  document.getElementById('sig-preview-placeholder').style.display = 'block';
+  document.getElementById('sig-preview-img').style.display = 'none';
   document.getElementById('f-arrivee-time').value = '';
   document.getElementById('f-arrivee-gps').value = '';
   document.getElementById('f-adresse').value = '';
