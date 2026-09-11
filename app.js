@@ -1,5 +1,5 @@
 // =============================================================================
-// ÉTAT GLOBAL DE L'APPLICATION
+// ÉTAT GLOBAL
 // =============================================================================
 let cadreActif = 'FLAGRANCE';
 let sectionCiblePhoto = null;
@@ -16,11 +16,10 @@ let recognition = null;
 let shouldKeepListening = false;
 let restartTimeout = null;
 
-// Initialisation robuste
 window.addEventListener('DOMContentLoaded', () => {
-  try { chargerEtat(); } catch (e) { console.error('Erreur chargement état:', e); }
-  try { initSignaturePleinEcran(); } catch (e) { console.error('Erreur signature:', e); }
-  try { initServiceWorker(); } catch (e) { console.error('Erreur SW:', e); }
+  chargerEtat();
+  initSignaturePleinEcran();
+  initServiceWorker();
 });
 
 function initServiceWorker() {
@@ -33,42 +32,42 @@ function initServiceWorker() {
 // SAUVEGARDE EN DIRECT (ANTI-PERTE)
 // =============================================================================
 function sauvegarderEtat() {
-  try {
-    const getVal = (id) => {
-      const el = document.getElementById(id);
-      return el ? el.value : '';
-    };
+  const getVal = (id) => {
+    const el = document.getElementById(id);
+    return el ? el.value : '';
+  };
 
-    const etat = {
-      cadreActif,
-      compagnie: getVal('cfg-compagnie'),
-      cob: getVal('cfg-cob'),
-      brigade: getVal('cfg-brigade'),
-      residence: getVal('cfg-residence'),
-      codeUnite: getVal('cfg-code-unite'),
-      email: getVal('cfg-email'),
-      grade: getVal('cfg-grade'),
-      nom: getVal('cfg-nom'),
-      qualite: getVal('cfg-qualite'),
-      adjointActif: document.getElementById('cfg-adjoint-actif') ? document.getElementById('cfg-adjoint-actif').checked : false,
-      adjGrade: getVal('cfg-adj-grade'),
-      adjNom: getVal('cfg-adj-nom'),
-      adjQualite: getVal('cfg-adj-qualite'),
-      adjResidence: getVal('cfg-adj-residence'),
-      arriveeTime: getVal('f-arrivee-time'),
-      arriveeGps: getVal('f-arrivee-gps'),
-      adresse: getVal('f-adresse'),
-      saisine: getVal('f-saisine'),
-      situation: getVal('f-situation'),
-      mesures: getVal('f-mesures'),
-      etatLieux: getVal('f-etat-lieux'),
-      corpsDelit: getVal('f-corps-delit'),
-      mesuresDiv: getVal('f-mesures-div'),
-      signatureBlobData,
-      photosParSection
-    };
-    localStorage.setItem('gn_pv_brouillon', JSON.stringify(etat));
-  } catch (e) {}
+  const chkAdj = document.getElementById('cfg-adjoint-actif');
+
+  const etat = {
+    cadreActif,
+    compagnie: getVal('cfg-compagnie'),
+    cob: getVal('cfg-cob'),
+    brigade: getVal('cfg-brigade'),
+    residence: getVal('cfg-residence'),
+    codeUnite: getVal('cfg-code-unite'),
+    email: getVal('cfg-email'),
+    grade: getVal('cfg-grade'),
+    nom: getVal('cfg-nom'),
+    qualite: getVal('cfg-qualite'),
+    adjointActif: chkAdj ? chkAdj.checked : false,
+    adjGrade: getVal('cfg-adj-grade'),
+    adjNom: getVal('cfg-adj-nom'),
+    adjQualite: getVal('cfg-adj-qualite'),
+    adjResidence: getVal('cfg-adj-residence'),
+    arriveeTime: getVal('f-arrivee-time'),
+    arriveeGps: getVal('f-arrivee-gps'),
+    adresse: getVal('f-adresse'),
+    saisine: getVal('f-saisine'),
+    situation: getVal('f-situation'),
+    mesures: getVal('f-mesures'),
+    etatLieux: getVal('f-etat-lieux'),
+    corpsDelit: getVal('f-corps-delit'),
+    mesuresDiv: getVal('f-mesures-div'),
+    signatureBlobData,
+    photosParSection
+  };
+  localStorage.setItem('gn_pv_brouillon', JSON.stringify(etat));
 }
 
 function chargerEtat() {
@@ -110,7 +109,7 @@ function chargerEtat() {
     setVal('f-situation', e.situation);
     setVal('f-mesures', e.mesures);
     setVal('f-etat-lieux', e.etatLieux);
-    setVal('corpsDelit', e.corpsDelit);
+    setVal('f-corps-delit', e.corpsDelit);
     setVal('f-mesures-div', e.mesuresDiv);
 
     if (e.signatureBlobData) {
@@ -138,7 +137,7 @@ function demanderReinitialisation() {
 }
 
 // =============================================================================
-// ACTIONS BOUTONS (PROFILS / SUGGESTIONS / CADRE)
+// PROFILS & CADRE
 // =============================================================================
 function toggleConfig() {
   const card = document.getElementById('config-card');
@@ -216,7 +215,7 @@ async function resoudreAdresse(lat, lon) {
 }
 
 // =============================================================================
-// DICTÉE CONTINUE AVEC SUPPRESSION DES TICS
+// DICTÉE CONTINUE
 // =============================================================================
 function nettoyerTics(texte) {
   return texte
@@ -477,7 +476,7 @@ function validerSignaturePleinEcran() {
 }
 
 // =============================================================================
-// GÉNÉRATION DU PDF VECTORIEL
+// CONTRÔLE ET GÉNÉRATION DU PDF
 // =============================================================================
 function ouvrirModalControle() {
   const m = document.getElementById('modal-cotes');
@@ -574,7 +573,6 @@ async function genererEtEnvoyer() {
 
     let y = 10;
 
-    // En-tête
     doc.setDrawColor(0, 0, 0);
     doc.setLineWidth(0.2);
 
@@ -821,7 +819,7 @@ function nettoyerTerminal(alerter = false) {
   setEmpty('f-situation');
   setEmpty('f-mesures');
   setEmpty('f-etat-lieux');
-  setEmpty('corpsDelit');
+  setEmpty('f-corps-delit');
   setEmpty('f-mesures-div');
 
   if (alerter) {
