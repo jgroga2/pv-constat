@@ -10,15 +10,13 @@ let photosParSection = {
   corps: []
 };
 
-let sigCanvas, sigCtx, isDrawing = false;
-let signatureBlobData = null;
 let recognition = null;
 let shouldKeepListening = false;
 let restartTimeout = null;
 
+// Initialisation
 window.addEventListener('DOMContentLoaded', () => {
-  chargerProfil();
-  initSignaturePleinEcran();
+  chargerEtat();
   initServiceWorker();
 });
 
@@ -29,20 +27,11 @@ function initServiceWorker() {
 }
 
 // =============================================================================
-// PROFIL ENQUÊTEUR & CO-ENQUÊTEUR
+// SAUVEGARDE EN DIRECT (ANTI-PERTE SI SORTIE DE L'APPLICATION)
 // =============================================================================
-function toggleConfig() {
-  const card = document.getElementById('config-card');
-  card.style.display = card.style.display === 'none' ? 'block' : 'none';
-}
-
-function toggleAdjointForm() {
-  const actif = document.getElementById('cfg-adjoint-actif').checked;
-  document.getElementById('box-adjoint').style.display = actif ? 'block' : 'none';
-}
-
-function sauvegarderProfil() {
-  const profil = {
+function sauvegarderEtat() {
+  const etat = {
+    cadreActif,
     compagnie: document.getElementById('cfg-compagnie').value,
     cob: document.getElementById('cfg-cob').value,
     brigade: document.getElementById('cfg-brigade').value,
@@ -56,49 +45,91 @@ function sauvegarderProfil() {
     adjGrade: document.getElementById('cfg-adj-grade').value,
     adjNom: document.getElementById('cfg-adj-nom').value,
     adjQualite: document.getElementById('cfg-adj-qualite').value,
-    adjResidence: document.getElementById('cfg-adj-residence').value
+    adjResidence: document.getElementById('cfg-adj-residence').value,
+    arriveeTime: document.getElementById('f-arrivee-time').value,
+    arriveeGps: document.getElementById('f-arrivee-gps').value,
+    adresse: document.getElementById('f-adresse').value,
+    saisine: document.getElementById('f-saisine').value,
+    situation: document.getElementById('f-situation').value,
+    mesures: document.getElementById('f-mesures').value,
+    etatLieux: document.getElementById('f-etat-lieux').value,
+    corpsDelit: document.getElementById('f-corps-delit').value,
+    mesuresDiv: document.getElementById('f-mesures-div').value,
+    photosParSection
   };
-  localStorage.setItem('gn_profil_v3', JSON.stringify(profil));
-  toggleConfig();
-  alert('Profils enregistrés.');
+  localStorage.setItem('gn_pv_brouillon', JSON.stringify(etat));
 }
 
-function chargerProfil() {
-  const data = localStorage.getItem('gn_profil_v3');
-  if (data) {
-    const p = JSON.parse(data);
-    if (p.compagnie) document.getElementById('cfg-compagnie').value = p.compagnie;
-    if (p.cob) document.getElementById('cfg-cob').value = p.cob;
-    if (p.brigade) document.getElementById('cfg-brigade').value = p.brigade;
-    if (p.residence) document.getElementById('cfg-residence').value = p.residence;
-    if (p.codeUnite) document.getElementById('cfg-code-unite').value = p.codeUnite;
-    if (p.email) document.getElementById('cfg-email').value = p.email;
-    if (p.grade) document.getElementById('cfg-grade').value = p.grade;
-    if (p.nom) document.getElementById('cfg-nom').value = p.nom;
-    if (p.qualite) document.getElementById('cfg-qualite').value = p.qualite;
-    if (p.adjointActif !== undefined) {
-      document.getElementById('cfg-adjoint-actif').checked = p.adjointActif;
+function chargerEtat() {
+  const donnees = localStorage.getItem('gn_pv_brouillon');
+  if (!donnees) return;
+
+  try {
+    const e = JSON.parse(donnees);
+    if (e.cadreActif) setCadre(e.cadreActif);
+    if (e.compagnie) document.getElementById('cfg-compagnie').value = e.compagnie;
+    if (e.cob) document.getElementById('cfg-cob').value = e.cob;
+    if (e.brigade) document.getElementById('cfg-brigade').value = e.brigade;
+    if (e.residence) document.getElementById('cfg-residence').value = e.residence;
+    if (e.codeUnite) document.getElementById('cfg-code-unite').value = e.codeUnite;
+    if (e.email) document.getElementById('cfg-email').value = e.email;
+    if (e.grade) document.getElementById('cfg-grade').value = e.grade;
+    if (e.nom) document.getElementById('cfg-nom').value = e.nom;
+    if (e.qualite) document.getElementById('cfg-qualite').value = e.qualite;
+    if (e.adjointActif !== undefined) {
+      document.getElementById('cfg-adjoint-actif').checked = e.adjointActif;
       toggleAdjointForm();
     }
-    if (p.adjGrade) document.getElementById('cfg-adj-grade').value = p.adjGrade;
-    if (p.adjNom) document.getElementById('cfg-adj-nom').value = p.adjNom;
-    if (p.adjQualite) document.getElementById('cfg-adj-qualite').value = p.adjQualite;
-    if (p.adjResidence) document.getElementById('cfg-adj-residence').value = p.adjResidence;
+    if (e.adjGrade) document.getElementById('cfg-adj-grade').value = e.adjGrade;
+    if (e.adjNom) document.getElementById('cfg-adj-nom').value = e.adjNom;
+    if (e.adjQualite) document.getElementById('cfg-adj-qualite').value = e.adjQualite;
+    if (e.adjResidence) document.getElementById('cfg-adj-residence').value = e.adjResidence;
+    if (e.arriveeTime) document.getElementById('f-arrivee-time').value = e.arriveeTime;
+    if (e.arriveeGps) document.getElementById('f-arrivee-gps').value = e.arriveeGps;
+    if (e.adresse) document.getElementById('f-adresse').value = e.adresse;
+    if (e.saisine) document.getElementById('f-saisine').value = e.saisine;
+    if (e.situation) document.getElementById('f-situation').value = e.situation;
+    if (e.mesures) document.getElementById('f-mesures').value = e.mesures;
+    if (e.etatLieux) document.getElementById('f-etat-lieux').value = e.etatLieux;
+    if (e.corpsDelit) document.getElementById('f-corps-delit').value = e.corpsDelit;
+    if (e.mesuresDiv) document.getElementById('f-mesures-div').value = e.mesuresDiv;
+    if (e.photosParSection) {
+      photosParSection = e.photosParSection;
+      ['situation', 'mesures', 'etat', 'corps'].forEach(sec => afficherPhotosSection(sec));
+    }
+  } catch (err) {}
+}
+
+function demanderReinitialisation() {
+  if (confirm("ATTENTION : Souhaitez-vous tout réinitialiser et effacer l'ensemble des données saisies ?")) {
+    nettoyerTerminal(true);
   }
 }
 
 // =============================================================================
-// CADRE D'ENQUÊTE & INSERTION PHRASES TYPES
+// CONFIGURATION PROFILS & CADRE
 // =============================================================================
+function toggleConfig() {
+  const card = document.getElementById('config-card');
+  card.style.display = card.style.display === 'none' ? 'block' : 'none';
+}
+
+function toggleAdjointForm() {
+  const actif = document.getElementById('cfg-adjoint-actif').checked;
+  document.getElementById('box-adjoint').style.display = actif ? 'block' : 'none';
+}
+
 function setCadre(type) {
   cadreActif = type;
   document.getElementById('btn-flagrance').className = type === 'FLAGRANCE' ? 'active' : '';
   document.getElementById('btn-preliminaire').className = type === 'PRELIMINAIRE' ? 'active' : '';
+  sauvegarderEtat();
 }
 
 function insererTexte(champId, texte) {
   const el = document.getElementById(champId);
   el.value = el.value ? `${el.value}\n${texte}` : texte;
+  sauvegarderEtat();
 }
 
 // =============================================================================
@@ -116,14 +147,17 @@ function declencherArrivee() {
         const lat = pos.coords.latitude.toFixed(5);
         const lon = pos.coords.longitude.toFixed(5);
         document.getElementById('f-arrivee-gps').value = `${lat}, ${lon}`;
+        sauvegarderEtat();
         resoudreAdresse(pos.coords.latitude, pos.coords.longitude);
       },
       () => {
         document.getElementById('f-arrivee-gps').value = 'Signal GPS indisponible';
+        sauvegarderEtat();
       },
       { enableHighAccuracy: true, timeout: 8000 }
     );
   }
+  sauvegarderEtat();
 }
 
 async function resoudreAdresse(lat, lon) {
@@ -132,13 +166,22 @@ async function resoudreAdresse(lat, lon) {
     const data = await res.json();
     if (data && data.display_name) {
       document.getElementById('f-adresse').value = data.display_name;
+      sauvegarderEtat();
     }
   } catch (e) {}
 }
 
 // =============================================================================
-// DICTÉE VOCALE CONTINUE (PAUSE ÉTENDUE À 3 SECONDES)
+// DICTÉE CONTINUE AVEC SUPPRESSION DES TICS DE LANGAGE
 // =============================================================================
+function nettoyerTics(texte) {
+  return texte
+    .replace(/\b(euh|euh+|heu|heuu|hum|ben)\b/gi, '')
+    .replace(/\b(tu vois|t'vois|genre|du coup|en fait|voilà)\b/gi, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
+
 function dicter(targetId, btnId) {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) {
@@ -174,8 +217,12 @@ function dicter(targetId, btnId) {
     recognition.onresult = (event) => {
       for (let i = event.resultIndex; i < event.results.length; ++i) {
         if (event.results[i].isFinal) {
-          const transcript = event.results[i][0].transcript.trim();
-          el.value = el.value ? `${el.value} ${transcript}` : transcript;
+          const brut = event.results[i][0].transcript;
+          const propre = nettoyerTics(brut);
+          if (propre.length > 0) {
+            el.value = el.value ? `${el.value} ${propre}` : propre;
+            sauvegarderEtat();
+          }
         }
       }
     };
@@ -186,10 +233,9 @@ function dicter(targetId, btnId) {
 
     recognition.onend = () => {
       if (shouldKeepListening) {
-        // Attente de 3 secondes avant la relance pour laisser un temps de réflexion confortable
         restartTimeout = setTimeout(() => {
           try { lancerReconnaissance(); } catch (e) {}
-        }, 3000);
+        }, 1200);
       }
     };
 
@@ -200,7 +246,7 @@ function dicter(targetId, btnId) {
 }
 
 // =============================================================================
-// PHOTOS PAR RUBRIQUE
+// GESTION DES CLICHÉS PAR RUBRIQUE
 // =============================================================================
 function declencherPhotoSection(section) {
   sectionCiblePhoto = section;
@@ -253,6 +299,7 @@ function traiterPhotoPrise(event) {
 
       photosParSection[sectionCiblePhoto].push(photoObj);
       afficherPhotosSection(sectionCiblePhoto);
+      sauvegarderEtat();
     };
     img.src = e.target.result;
   };
@@ -271,7 +318,7 @@ function afficherPhotosSection(section) {
       <div style="font-size:10px; color:#64748b;">Cliché ${idx + 1} — ${p.date} à ${p.heure}</div>
       <input type="text" id="leg-${p.id}" value="${p.legende}" placeholder="Légende du cliché..." onchange="majLegendeSection('${section}', ${p.id}, this.value)">
       <div class="btn-row">
-        <button type="button" class="btn-vocal" id="voc-leg-${p.id}" onclick="dicter('leg-${p.id}', 'voc-leg-${p.id}')">🎤 Dictée légende</button>
+        <button type="button" class="btn-vocal" id="voc-leg-${p.id}" onclick="dicter('leg-${p.id}', 'voc-leg-${p.id}')">🎤 Dictée</button>
         <button type="button" class="btn btn-danger" style="font-size:10px; padding:3px 6px;" onclick="supprimerPhotoSection('${section}', ${p.id})">Supprimer</button>
       </div>
     `;
@@ -281,91 +328,54 @@ function afficherPhotosSection(section) {
 
 function majLegendeSection(section, id, val) {
   const p = photosParSection[section].find(x => x.id === id);
-  if (p) p.legende = val;
+  if (p) {
+    p.legende = val;
+    sauvegarderEtat();
+  }
 }
 
 function supprimerPhotoSection(section, id) {
   photosParSection[section] = photosParSection[section].filter(x => x.id !== id);
   afficherPhotosSection(section);
+  sauvegarderEtat();
 }
 
 // =============================================================================
-// SIGNATURE PLEIN ÉCRAN
+// DESSIN DU SCEAU OFFICIEL PROCÉDURE NUMÉRIQUE (GRENADE GN)
 // =============================================================================
-function initSignaturePleinEcran() {
-  sigCanvas = document.getElementById('sig-fullscreen-canvas');
-  sigCtx = sigCanvas.getContext('2d');
+function dessinerTamponProcedureNumerique(doc, xCenter, yCenter) {
+  doc.setDrawColor(0, 0, 0);
+  doc.setLineWidth(0.4);
+  doc.circle(xCenter, yCenter, 14); // Cercle extérieur 28 mm
+  doc.setLineWidth(0.2);
+  doc.circle(xCenter, yCenter, 11.5); // Cercle intérieur
 
-  const getPos = (e) => {
-    const rect = sigCanvas.getBoundingClientRect();
-    const touch = e.touches ? e.touches[0] : e;
-    return { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
-  };
+  // Étoiles latérales
+  doc.setFont("times", "bold");
+  doc.setFontSize(8);
+  doc.text("★", xCenter - 12.8, yCenter + 0.8, { align: "center" });
+  doc.text("★", xCenter + 12.8, yCenter + 0.8, { align: "center" });
 
-  const start = (e) => { isDrawing = true; const p = getPos(e); sigCtx.beginPath(); sigCtx.moveTo(p.x, p.y); };
-  const move = (e) => { if (!isDrawing) return; const p = getPos(e); sigCtx.lineTo(p.x, p.y); sigCtx.stroke(); };
-  const end = () => { isDrawing = false; };
+  // Mentions circulaires
+  doc.setFontSize(5.5);
+  doc.text("GENDARMERIE NATIONALE", xCenter, yCenter - 12, { align: "center" });
+  doc.text("PROCÉDURE NUMÉRIQUE", xCenter, yCenter + 13.2, { align: "center" });
 
-  sigCanvas.addEventListener('mousedown', start);
-  sigCanvas.addEventListener('mousemove', move);
-  window.addEventListener('mouseup', end);
+  // Grenade à 8 flammes (Silhouette vectorielle officielle)
+  doc.setLineWidth(0.3);
+  doc.circle(xCenter, yCenter + 3.5, 3.2); // Bombe ronde
 
-  sigCanvas.addEventListener('touchstart', (e) => { e.preventDefault(); start(e); });
-  sigCanvas.addEventListener('touchmove', (e) => { e.preventDefault(); move(e); });
-  sigCanvas.addEventListener('touchend', end);
-
-  window.addEventListener('resize', redimensionnerCanvasSignature);
-}
-
-function redimensionnerCanvasSignature() {
-  const modal = document.getElementById('modal-signature');
-  if (modal && modal.style.display === 'flex') {
-    const temp = sigCanvas.toDataURL();
-    const container = sigCanvas.parentElement;
-    sigCanvas.width = container.clientWidth;
-    sigCanvas.height = container.clientHeight;
-    sigCtx.lineWidth = 3;
-    sigCtx.strokeStyle = '#000';
-    sigCtx.lineCap = 'round';
-    
-    const img = new Image();
-    img.onload = () => sigCtx.drawImage(img, 0, 0);
-    img.src = temp;
-  }
-}
-
-function ouvrirModalSignature() {
-  const modal = document.getElementById('modal-signature');
-  modal.style.display = 'flex';
-  setTimeout(() => {
-    const container = sigCanvas.parentElement;
-    sigCanvas.width = container.clientWidth;
-    sigCanvas.height = container.clientHeight;
-    sigCtx.lineWidth = 3;
-    sigCtx.strokeStyle = '#000';
-    sigCtx.lineCap = 'round';
-  }, 100);
-}
-
-function fermerModalSignature() {
-  document.getElementById('modal-signature').style.display = 'none';
-}
-
-function effacerSignaturePleinEcran() {
-  sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
-}
-
-function validerSignaturePleinEcran() {
-  signatureBlobData = sigCanvas.toDataURL('image/png');
-  document.getElementById('sig-preview-placeholder').style.display = 'none';
-  const previewImg = document.getElementById('sig-preview-img');
-  previewImg.src = signatureBlobData;
-  previewImg.style.display = 'block';
-  fermerModalSignature();
+  // Flammes stylisées
+  doc.line(xCenter, yCenter + 0.3, xCenter, yCenter - 7);
+  doc.line(xCenter - 1.2, yCenter + 0.5, xCenter - 3.5, yCenter - 5);
+  doc.line(xCenter + 1.2, yCenter + 0.5, xCenter + 3.5, yCenter - 5);
+  doc.line(xCenter - 2.2, yCenter + 1.5, xCenter - 5, yCenter - 2.5);
+  doc.line(xCenter + 2.2, yCenter + 1.5, xCenter + 5, yCenter - 2.5);
+  doc.line(xCenter - 6, yCenter + 3.5, xCenter + 6, yCenter + 3.5); // Ligne d'horizon
 }
 
 // =============================================================================
-// CONTRÔLE ET GÉNÉRATION DU PDF (CONFORME STRICT)
+// GÉNÉRATION STRICTE DU PDF ET CONTRÔLE JURIDIQUE
 // =============================================================================
 function ouvrirModalControle() {
   document.getElementById('modal-cotes').style.display = 'flex';
@@ -392,7 +402,6 @@ async function genererEtEnvoyer() {
   const heureFinExacte = `${String(now.getHours()).padStart(2, '0')} heures ${String(now.getMinutes()).padStart(2, '0')} minutes`;
 
   const brutPv = document.getElementById('m-pv-num').value.trim();
-  // Extraction propre du numéro de PV pur (ex: "14364/2525/2026" -> "2525")
   let pvNum = brutPv;
   if (brutPv.includes('/')) {
     const parts = brutPv.split('/');
@@ -416,14 +425,22 @@ async function genererEtEnvoyer() {
   const adjointActif = document.getElementById('cfg-adjoint-actif').checked;
   const adjGrade = document.getElementById('cfg-adj-grade').value;
   const adjNom = document.getElementById('cfg-adj-nom').value;
-  const adjQualite = document.getElementById('cfg-adj-qualite').value;
+  const adjQualiteCode = document.getElementById('cfg-adj-qualite').value;
   const adjResidence = document.getElementById('cfg-adj-residence').value;
 
-  let articles = cadreActif === 'FLAGRANCE' ? '16 à 19 et 53 à 67' : '16 à 19 et 75 à 78';
-  if (adjointActif) {
-    articles = cadreActif === 'FLAGRANCE' 
-      ? '16 à 19, 21 1° bis, 21-1 et 53 à 67' 
-      : '16 à 19, 21 1° bis, 21-1 et 75 à 78';
+  // Libellé clair de la qualité pour l'intro
+  let adjQualiteLibelle = "Agent de Police Judiciaire Adjoint";
+  if (adjQualiteCode === 'APJ') adjQualiteLibelle = "Agent de Police Judiciaire";
+  if (adjQualiteCode === 'OPJ') adjQualiteLibelle = "Officier de Police Judiciaire";
+
+  // SÉCURISATION JURIDIQUE DES VISAS DU CODE DE PROCÉDURE PÉNALE
+  let articles = "";
+  if (!adjointActif || adjQualiteCode === 'OPJ') {
+    articles = cadreActif === 'FLAGRANCE' ? "16 à 19 et 53 à 67" : "16 à 19 et 75 à 78";
+  } else if (adjQualiteCode === 'APJ') {
+    articles = cadreActif === 'FLAGRANCE' ? "16 à 19, 20 et 53 à 67" : "16 à 19, 20 et 75 à 78";
+  } else if (adjQualiteCode === 'APJA') {
+    articles = cadreActif === 'FLAGRANCE' ? "16 à 19, 21 1° bis, 21-1 et 53 à 67" : "16 à 19, 21 1° bis, 21-1 et 75 à 78";
   }
 
   const arriveeTime = document.getElementById('f-arrivee-time').value || dateFormatee;
@@ -450,12 +467,12 @@ async function genererEtEnvoyer() {
     let y = 10;
 
     // =========================================================================
-    // EN-TÊTE RÉGLEMENTAIRE CONFORME AU MODÈLE
+    // EN-TÊTE RÉGLEMENTAIRE (STRUCTURE EXACTE DU VISUEL TRANSMIS)
     // =========================================================================
     doc.setDrawColor(0, 0, 0);
     doc.setLineWidth(0.2);
 
-    // Bloc gauche : Gendarmerie
+    // Bloc gauche : Gendarmerie (avec fond gris)
     doc.setFillColor(240, 240, 240);
     doc.rect(leftMargin, y, leftBlockW, 5, 'FD');
     doc.setFont("times", "bold");
@@ -463,15 +480,16 @@ async function genererEtEnvoyer() {
     doc.setTextColor(0, 0, 0);
     doc.text("GENDARMERIE NATIONALE", leftMargin + (leftBlockW / 2), y + 3.6, { align: "center" });
 
+    // Hiérarchie unité
     const uniteH = 15;
     doc.rect(leftMargin, y + 5, leftBlockW, uniteH);
     doc.setFont("times", "normal");
-    doc.setFontSize(8);
-    doc.text("Compagnie", leftMargin + 2, y + 8.5);
-    doc.text(comp, leftMargin + 2, y + 12);
+    doc.setFontSize(7.5);
+    const linesComp = doc.splitTextToSize(comp, leftBlockW - 4);
+    doc.text(linesComp, leftMargin + 2, y + 8.5);
     doc.setFont("times", "bold");
-    doc.text(`COB ${cob}`, leftMargin + 2, y + 15.5);
-    doc.text(`BP ${bde}`, leftMargin + 2, y + 19);
+    doc.text(cob, leftMargin + 2, y + 15.5);
+    doc.text(bde, leftMargin + 2, y + 19);
 
     // Cartouche gauche (Code unité / Nmr P.V. / Année / Nmr dossier justice)
     const cartoucheY = y + 5 + uniteH; // 30 mm
@@ -499,10 +517,9 @@ async function genererEtEnvoyer() {
     doc.setFontSize(7.5);
     doc.text(dossierNum, leftMargin + wCode + wPv + wAnnee + 1, cartoucheY + 7.5);
 
-    // Bloc droit : Enquête & Nmr pièce / feuillet
+    // Bloc droit : NON ENCADRÉ EN HAUT, fermé uniquement en bas
     const rightBlockX = leftMargin + leftBlockW;
     const rightBlockW = usableWidth - leftBlockW;
-    doc.rect(rightBlockX, y, rightBlockW, 20);
 
     doc.setFont("times", "bold");
     doc.setFontSize(9.5);
@@ -511,6 +528,7 @@ async function genererEtEnvoyer() {
     doc.text("PROCÈS-VERBAL DE TRANSPORT CONSTATATIONS ET", rightBlockX + 4, y + 12);
     doc.text("MESURES PRISES", rightBlockX + 4, y + 16.5);
 
+    // Boîtes fermées à droite pour Nmr pièce et N° feuillet
     const wPiece = 20, wFeuillet = 18;
     const pieceX = rightMarginX - wPiece - wFeuillet;
     const feuilletX = rightMarginX - wFeuillet;
@@ -532,6 +550,9 @@ async function genererEtEnvoyer() {
     const pageNumX = feuilletX + (wFeuillet / 2);
     const pageNumY = cartoucheY + 7.5;
 
+    // Ligne horizontale continue de fermeture de l'en-tête
+    doc.line(leftMargin, cartoucheY + cartoucheH, rightMarginX, cartoucheY + cartoucheH);
+
     // Intro procédurale
     y = cartoucheY + cartoucheH + 5;
     doc.setFont("times", "normal");
@@ -539,7 +560,7 @@ async function genererEtEnvoyer() {
 
     let intro = `Le ${dateFormatee}\nNous soussigné ${gradeOpj} ${nomOpj}, ${qualiteOpj} en résidence à ${residenceU}`;
     if (adjointActif) {
-      intro += `\nAssisté du ${adjGrade} ${adjNom}, ${adjQualite} en résidence à ${adjResidence}`;
+      intro += `\nAssisté du ${adjGrade} ${adjNom}, ${adjQualiteLibelle} en résidence à ${adjResidence}`;
     }
     intro += `\nVu les articles ${articles} du Code de Procédure Pénale.\nNous trouvant au bureau de notre unité à ${residenceU}, rapportons les opérations suivantes :`;
 
@@ -548,7 +569,7 @@ async function genererEtEnvoyer() {
     y += introLines.length * 4.2 + 4;
 
     // =========================================================================
-    // BANDEAUX DE TITRES ET GESTION NON DÉFORMÉE DES PHOTOS
+    // BANDEAUX DE TITRES ET GESTION DES PHOTOS
     // =========================================================================
     function ajouterRubrique(titre, texte, listePhotos) {
       if (y > pageHeight - 35) {
@@ -556,7 +577,6 @@ async function genererEtEnvoyer() {
         y = 14;
       }
 
-      // Bandeau encadré fond gris
       const bannerH = 6;
       doc.setFillColor(242, 242, 242);
       doc.setDrawColor(0, 0, 0);
@@ -570,7 +590,6 @@ async function genererEtEnvoyer() {
 
       y += bannerH + 4;
 
-      // Texte
       doc.setFont("times", "normal");
       doc.setFontSize(9.5);
       const lines = doc.splitTextToSize(texte, usableWidth);
@@ -583,13 +602,12 @@ async function genererEtEnvoyer() {
         y += 4.2;
       });
 
-      // Photos respectant STRICTEMENT le ratio natif (largeur 135 mm)
       if (listePhotos && listePhotos.length > 0) {
         y += 2;
         listePhotos.forEach((p, i) => {
           const ratio = p.aspectRatio || 1.33;
           const imgW = 135;
-          const imgH = imgW / ratio; // Calcul naturel : aucun écrasement en hauteur
+          const imgH = imgW / ratio;
           const blockH = imgH + 11;
 
           if (y + blockH > pageHeight - 15) {
@@ -621,9 +639,9 @@ async function genererEtEnvoyer() {
     ajouterRubrique("MESURES DIVERSES", mesuresDiv, []);
 
     // =========================================================================
-    // CLÔTURE & SIGNATURE
+    // CLÔTURE & APPOSITION DU TAMPON PROCÉDURE NUMÉRIQUE
     // =========================================================================
-    if (y > pageHeight - 40) {
+    if (y > pageHeight - 45) {
       doc.addPage();
       y = 14;
     }
@@ -642,9 +660,9 @@ async function genererEtEnvoyer() {
     doc.setFont("times", "normal");
     doc.text(`${gradeOpj} ${nomOpj}`, leftMargin + (usableWidth / 2), y, { align: "center" });
 
-    if (signatureBlobData) {
-      doc.addImage(signatureBlobData, 'PNG', leftMargin + (usableWidth / 2) - 25, y + 2, 50, 22);
-    }
+    // Apposition automatique du timbre numérique officiel
+    y += 16;
+    dessinerTamponProcedureNumerique(doc, leftMargin + (usableWidth / 2), y);
 
     // Pagination dynamique
     const totalPages = doc.internal.getNumberOfPages();
@@ -652,7 +670,7 @@ async function genererEtEnvoyer() {
       doc.setPage(p);
       doc.setFont("times", "bold");
       doc.setFontSize(8);
-      doc.text(`${p}/ ${totalPages}`, pageNumX, pageNumY, { align: "center" });
+      doc.text(`${p} / ${totalPages}`, pageNumX, pageNumY, { align: "center" });
     }
 
     const nomFichier = `PV_Constatations_${now.toISOString().slice(0, 10)}.pdf`;
@@ -676,8 +694,8 @@ async function genererEtEnvoyer() {
     }
 
     setTimeout(() => {
-      if (confirm("Transmission effectuée.\n\nSouhaitez-vous PURGER DÉFINITIVEMENT les clichés et données locales du terminal ?")) {
-        nettoyerTerminal();
+      if (confirm("Transmission effectuée.\n\nSouhaitez-vous PURGER DÉFINITIVEMENT les clichés et le brouillon local ?")) {
+        nettoyerTerminal(false);
       }
     }, 1200);
 
@@ -686,12 +704,10 @@ async function genererEtEnvoyer() {
   }
 }
 
-function nettoyerTerminal() {
+function nettoyerTerminal(alerter = false) {
+  localStorage.removeItem('gn_pv_brouillon');
   photosParSection = { situation: [], mesures: [], etat: [], corps: [] };
-  signatureBlobData = null;
   ['situation', 'mesures', 'etat', 'corps'].forEach(sec => afficherPhotosSection(sec));
-  document.getElementById('sig-preview-placeholder').style.display = 'block';
-  document.getElementById('sig-preview-img').style.display = 'none';
   document.getElementById('f-arrivee-time').value = '';
   document.getElementById('f-arrivee-gps').value = '';
   document.getElementById('f-adresse').value = '';
@@ -701,5 +717,7 @@ function nettoyerTerminal() {
   document.getElementById('f-etat-lieux').value = '';
   document.getElementById('f-corps-delit').value = '';
   document.getElementById('f-mesures-div').value = '';
-  alert('Nettoyage sécurisé effectué. Aucune donnée ne subsiste sur le terminal.');
+  if (alerter) {
+    alert('Brouillon et données réinitialisés.');
+  }
 }
