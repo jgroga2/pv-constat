@@ -49,7 +49,6 @@
     .photo-item { border: 1px solid var(--border-color); border-radius: 6px; padding: 6px; margin-top: 6px; background: #f8fafc; }
     .photo-item img { max-width: 100%; height: 130px; object-fit: contain; background: #000; border-radius: 4px; display: block; margin: 4px auto; }
 
-    /* Zone signature tactile */
     #sig-preview { width: 100%; height: 90px; border: 2px dashed #94a3b8; border-radius: 6px; display: flex; align-items: center; justify-content: center; background: #fff; cursor: pointer; margin-top: 6px; }
     #sig-preview img { max-height: 80px; max-width: 90%; }
 
@@ -67,14 +66,13 @@
   <header>
     <h1>Procédure de Terrain</h1>
     <div style="display:flex; gap:6px;">
-      <button class="btn btn-danger" onclick="demanderReinitialisation()" style="font-size: 11px; padding: 4px 8px;">🔄 Tout effacer</button>
-      <button class="btn btn-secondary" onclick="toggleConfig()" style="font-size: 11px; padding: 4px 8px;">Profils</button>
+      <button type="button" class="btn btn-danger" onclick="demanderReinitialisation()" style="font-size: 11px; padding: 4px 8px;">🔄 Tout effacer</button>
+      <button type="button" class="btn btn-secondary" onclick="toggleConfig()" style="font-size: 11px; padding: 4px 8px;">Profils</button>
     </div>
   </header>
 
   <div class="container">
 
-    <!-- Configuration Profil Enquêteurs -->
     <div class="card" id="config-card" style="display:none;">
       <div class="card-title">Profils & Unité</div>
       
@@ -141,16 +139,14 @@
         </div>
       </div>
 
-      <button class="btn btn-primary" style="margin-top: 10px; width: 100%;" onclick="toggleConfig()">Fermer les réglages</button>
+      <button type="button" class="btn btn-primary" style="margin-top: 10px; width: 100%;" onclick="toggleConfig()">Fermer les réglages</button>
     </div>
 
-    <!-- Cadre d'Enquête -->
     <div class="switch-cadre">
       <button type="button" id="btn-flagrance" class="active" onclick="setCadre('FLAGRANCE')">FLAGRANCE</button>
       <button type="button" id="btn-preliminaire" onclick="setCadre('PRELIMINAIRE')">PRÉLIMINAIRE</button>
     </div>
 
-    <!-- Arrivée sur les lieux -->
     <div class="card">
       <div class="card-title">Arrivée sur les lieux</div>
       <button type="button" class="btn btn-primary" style="width: 100%;" onclick="declencherArrivee()">
@@ -171,24 +167,22 @@
       <button type="button" class="btn-vocal" id="btn-voc-adresse" onclick="dicter('f-adresse', 'btn-voc-adresse')">🎤 Dictée continue</button>
     </div>
 
-    <!-- 1. SAISINE -->
     <div class="card">
       <div class="card-title">Saisine</div>
       <textarea id="f-saisine" placeholder="Ex. : Sollicités par le CORG Tours..." oninput="sauvegarderEtat()"></textarea>
       <div class="quick-tags">
-        <button class="tag-btn" onclick="insererTexte('f-saisine', 'Le centre d\'opérations et de renseignements de la gendarmerie de TOURS sollicite notre intervention pour des faits de vol par effraction. Nous nous transportons immédiatement sur les lieux.')">+ Saisine Cambriolage</button>
-        <button class="tag-btn" onclick="insererTexte('f-saisine', 'Le centre d\'opérations et de renseignements de la gendarmerie de TOURS sollicite notre intervention pour un différend intrafamilial. Nous nous transportons immédiatement sur les lieux.')">+ Saisine Différend familial</button>
+        <button type="button" class="tag-btn" onclick="insererTexte('f-saisine', 'Le centre d\'opérations et de renseignements de la gendarmerie de TOURS sollicite notre intervention pour des faits de vol par effraction. Nous nous transportons immédiatement sur les lieux.')">+ Saisine Cambriolage</button>
+        <button type="button" class="tag-btn" onclick="insererTexte('f-saisine', 'Le centre d\'opérations et de renseignements de la gendarmerie de TOURS sollicite notre intervention pour un différend intrafamilial. Nous nous transportons immédiatement sur les lieux.')">+ Saisine Différend familial</button>
       </div>
       <button type="button" class="btn-vocal" id="btn-voc-saisine" onclick="dicter('f-saisine', 'btn-voc-saisine')">🎤 Dictée continue</button>
     </div>
 
-    <!-- 2. SITUATION À L'ARRIVÉE -->
     <div class="card">
       <div class="card-title">Situation à l'arrivée des enquêteurs</div>
       <textarea id="f-situation" placeholder="Accueil, personnes présentes, modifications..." oninput="sauvegarderEtat()"></textarea>
       <div class="quick-tags">
-        <button class="tag-btn" onclick="insererTexte('f-situation', 'Nous sommes accueillis par la victime qui nous indique ne pas avoir apporté de modification à la scène d\'infraction avant notre arrivée.')">+ Accueil Victime (Scène préservée)</button>
-        <button class="tag-btn" onclick="insererTexte('f-situation', 'Nous sommes reçus par le voisin qui a constaté les dégradations en l\'absence des propriétaires.')">+ Reçus par Voisin</button>
+        <button type="button" class="tag-btn" onclick="insererTexte('f-situation', 'Nous sommes accueillis par la victime qui nous indique ne pas avoir apporté de modification à la scène d\'infraction avant notre arrivée.')">+ Accueil Victime (Scène préservée)</button>
+        <button type="button" class="tag-btn" onclick="insererTexte('f-situation', 'Nous sommes reçus par le voisin qui a constaté les dégradations en l\'absence des propriétaires.')">+ Reçus par Voisin</button>
       </div>
       <button type="button" class="btn-vocal" id="btn-voc-situation" onclick="dicter('f-situation', 'btn-voc-situation')">🎤 Dictée continue</button>
 
@@ -198,15 +192,14 @@
       </div>
     </div>
 
-    <!-- 3. MESURES PRISES -->
     <div class="card">
       <div class="card-title">Mesures prises</div>
       <textarea id="f-mesures" placeholder="Gel des lieux, PTS, avis..." oninput="sauvegarderEtat()"></textarea>
       <div class="quick-tags">
-        <button class="tag-btn" onclick="insererTexte('f-mesures', 'Un compte-rendu téléphonique est effectué au gradé de permanence de la brigade.')">+ CR Gradé</button>
-        <button class="tag-btn" onclick="insererTexte('f-mesures', 'Munis de gants de protection, nous procédons au gel des lieux. Des recherches de traces et indices en police technique et scientifique sont réalisées.')">+ Gel des lieux & PTS</button>
-        <button class="tag-btn" onclick="insererTexte('f-mesures', 'Les opérations de recherches de traces papillaires et biologiques se révèlent négatives.')">+ PTS négative</button>
-        <button class="tag-btn" onclick="insererTexte('f-mesures', 'Une enquête de voisinage est immédiatement diligentée aux abords.')">+ Enquête voisinage</button>
+        <button type="button" class="tag-btn" onclick="insererTexte('f-mesures', 'Un compte-rendu téléphonique est effectué au gradé de permanence de la brigade.')">+ CR Gradé</button>
+        <button type="button" class="tag-btn" onclick="insererTexte('f-mesures', 'Munis de gants de protection, nous procédons au gel des lieux. Des recherches de traces et indices en police technique et scientifique sont réalisées.')">+ Gel des lieux & PTS</button>
+        <button type="button" class="tag-btn" onclick="insererTexte('f-mesures', 'Les opérations de recherches de traces papillaires et biologiques se révèlent négatives.')">+ PTS négative</button>
+        <button type="button" class="tag-btn" onclick="insererTexte('f-mesures', 'Une enquête de voisinage est immédiatement diligentée aux abords.')">+ Enquête voisinage</button>
       </div>
       <button type="button" class="btn-vocal" id="btn-voc-mesures" onclick="dicter('f-mesures', 'btn-voc-mesures')">🎤 Dictée continue</button>
 
@@ -216,13 +209,12 @@
       </div>
     </div>
 
-    <!-- 4. ÉTAT DES LIEUX -->
     <div class="card">
       <div class="card-title">État des lieux</div>
       <textarea id="f-etat-lieux" placeholder="Configuration des lieux, environnement..." oninput="sauvegarderEtat()"></textarea>
       <div class="quick-tags">
-        <button class="tag-btn" onclick="insererTexte('f-etat-lieux', 'Il s\'agit d\'une maison individuelle implantée en zone pavillonnaire. Le terrain est ceinturé par une clôture grillagée et fermé par un portillon.')">+ Pavillon individuel clos</button>
-        <button class="tag-btn" onclick="insererTexte('f-etat-lieux', 'L\'appartement est situé au deuxième étage d\'une résidence collective.')">+ Appartement collectif</button>
+        <button type="button" class="tag-btn" onclick="insererTexte('f-etat-lieux', 'Il s\'agit d\'une maison individuelle implantée en zone pavillonnaire. Le terrain est ceinturé par une clôture grillagée et fermé par un portillon.')">+ Pavillon individuel clos</button>
+        <button type="button" class="tag-btn" onclick="insererTexte('f-etat-lieux', 'L\'appartement est situé au deuxième étage d\'une résidence collective.')">+ Appartement collectif</button>
       </div>
       <button type="button" class="btn-vocal" id="btn-voc-etat" onclick="dicter('f-etat-lieux', 'btn-voc-etat')">🎤 Dictée continue</button>
 
@@ -232,15 +224,14 @@
       </div>
     </div>
 
-    <!-- 5. CORPS DU DÉLIT -->
     <div class="card">
       <div class="card-title">Corps du délit</div>
       <textarea id="f-corps-delit" placeholder="Traces, effraction, pesées, désordre constaté..." oninput="sauvegarderEtat()"></textarea>
       <div class="quick-tags">
-        <button class="tag-btn" onclick="insererTexte('f-corps-delit', 'Constatons des traces de pesées d\'une largeur d\'1 cm au niveau de la menuiserie, compatibles avec l\'usage d\'un outil plat.')">+ Pesée 1 cm</button>
-        <button class="tag-btn" onclick="insererTexte('f-corps-delit', 'Constatons la fracture de la porte-fenêtre située à l\'arrière de l\'habitation.')">+ Porte-fenêtre forcée</button>
-        <button class="tag-btn" onclick="insererTexte('f-corps-delit', 'Le barillet de la porte d\'accès a été rompu par un outil contondant.')">+ Barillet fracturé</button>
-        <button class="tag-btn" onclick="insererTexte('f-corps-delit', 'Toutes les pièces de l\'habitation ont été fouillées. Les tiroirs ont été ouverts et vidés sur les lits dans le but manifeste de dérober bijoux et numéraire.')">+ Fouille chambres / Bijoux</button>
+        <button type="button" class="tag-btn" onclick="insererTexte('f-corps-delit', 'Constatons des traces de pesées d\'une largeur d\'1 cm au niveau de la menuiserie, compatibles avec l\'usage d\'un outil plat.')">+ Pesée 1 cm</button>
+        <button type="button" class="tag-btn" onclick="insererTexte('f-corps-delit', 'Constatons la fracture de la porte-fenêtre située à l\'arrière de l\'habitation.')">+ Porte-fenêtre forcée</button>
+        <button type="button" class="tag-btn" onclick="insererTexte('f-corps-delit', 'Le barillet de la porte d\'accès a été rompu par un outil contondant.')">+ Barillet fracturé</button>
+        <button type="button" class="tag-btn" onclick="insererTexte('f-corps-delit', 'Toutes les pièces de l\'habitation ont été fouillées. Les tiroirs ont été ouverts et vidés sur les lits dans le but manifeste de dérober bijoux et numéraire.')">+ Fouille chambres / Bijoux</button>
       </div>
       <button type="button" class="btn-vocal" id="btn-voc-corps" onclick="dicter('f-corps-delit', 'btn-voc-corps')">🎤 Dictée continue</button>
 
@@ -250,18 +241,16 @@
       </div>
     </div>
 
-    <!-- 6. MESURES DIVERSES -->
     <div class="card">
       <div class="card-title">Mesures diverses</div>
       <textarea id="f-mesures-div" placeholder="Plainte, conseils..." oninput="sauvegarderEtat()"></textarea>
       <div class="quick-tags">
-        <button class="tag-btn" onclick="insererTexte('f-mesures-div', 'Nous invitons la victime à venir déposer plainte à notre unité munie d\'un état estimatif et descriptif précis des objets dérobés.')">+ Invitation Plainte</button>
-        <button class="tag-btn" onclick="insererTexte('f-mesures-div', 'Nous conseillons à la victime de contacter sans délai son assurance afin de faire sécuriser les ouvertures dégradées.')">+ Conseil Assurance/Serrurier</button>
+        <button type="button" class="tag-btn" onclick="insererTexte('f-mesures-div', 'Nous invitons la victime à venir déposer plainte à notre unité munie d\'un état estimatif et descriptif précis des objets dérobés.')">+ Invitation Plainte</button>
+        <button type="button" class="tag-btn" onclick="insererTexte('f-mesures-div', 'Nous conseillons à la victime de contacter sans délai son assurance afin de faire sécuriser les ouvertures dégradées.')">+ Conseil Assurance/Serrurier</button>
       </div>
       <button type="button" class="btn-vocal" id="btn-voc-div" onclick="dicter('f-mesures-div', 'btn-voc-div')">🎤 Dictée continue</button>
     </div>
 
-    <!-- Signature Manuelle Tactile -->
     <div class="card">
       <div class="card-title">Signature de l'OPJ</div>
       <div id="sig-preview" onclick="ouvrirModalSignature()">
@@ -277,14 +266,13 @@
 
   <input type="file" id="global-camera-input" accept="image/*" capture="environment" style="display:none;" onchange="traiterPhotoPrise(event)">
 
-  <!-- Modal Signature Plein Écran -->
   <div id="modal-signature">
     <div class="sig-top-bar">
-      <button class="btn btn-secondary" style="padding: 5px 8px; font-size: 11px;" onclick="fermerModalSignature()">Annuler</button>
+      <button type="button" class="btn btn-secondary" style="padding: 5px 8px; font-size: 11px;" onclick="fermerModalSignature()">Annuler</button>
       <span style="font-size:12px;">Signez au doigt</span>
       <div style="display: flex; gap: 4px;">
-        <button class="btn btn-danger" style="padding: 5px 8px; font-size: 11px;" onclick="effacerSignaturePleinEcran()">Effacer</button>
-        <button class="btn btn-primary" style="padding: 5px 10px; font-size: 11px;" onclick="validerSignaturePleinEcran()">Valider</button>
+        <button type="button" class="btn btn-danger" style="padding: 5px 8px; font-size: 11px;" onclick="effacerSignaturePleinEcran()">Effacer</button>
+        <button type="button" class="btn btn-primary" style="padding: 5px 10px; font-size: 11px;" onclick="validerSignaturePleinEcran()">Valider</button>
       </div>
     </div>
     <div class="sig-canvas-container">
@@ -292,7 +280,6 @@
     </div>
   </div>
 
-  <!-- Modal Cotes et Transmission -->
   <div id="modal-cotes" class="modal">
     <div class="modal-content">
       <h3 style="margin-top:0; color:var(--gn-blue); font-size:14px;">Numérotation procédurale</h3>
