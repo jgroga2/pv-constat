@@ -49,6 +49,15 @@
     .photo-item { border: 1px solid var(--border-color); border-radius: 6px; padding: 6px; margin-top: 6px; background: #f8fafc; }
     .photo-item img { max-width: 100%; height: 130px; object-fit: contain; background: #000; border-radius: 4px; display: block; margin: 4px auto; }
 
+    /* Zone signature tactile */
+    #sig-preview { width: 100%; height: 90px; border: 2px dashed #94a3b8; border-radius: 6px; display: flex; align-items: center; justify-content: center; background: #fff; cursor: pointer; margin-top: 6px; }
+    #sig-preview img { max-height: 80px; max-width: 90%; }
+
+    #modal-signature { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #ffffff; z-index: 200; flex-direction: column; }
+    .sig-top-bar { background: var(--gn-blue); color: white; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; height: 48px; flex-shrink: 0; }
+    .sig-canvas-container { flex: 1; position: relative; width: 100%; height: calc(100vh - 48px); background: #fafafa; }
+    #sig-fullscreen-canvas { width: 100%; height: 100%; touch-action: none; display: block; }
+
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 100; align-items: center; justify-content: center; }
     .modal-content { background: white; padding: 16px; border-radius: 8px; width: 90%; max-width: 440px; }
   </style>
@@ -252,19 +261,36 @@
       <button type="button" class="btn-vocal" id="btn-voc-div" onclick="dicter('f-mesures-div', 'btn-voc-div')">🎤 Dictée continue</button>
     </div>
 
-    <!-- Validation et Émission de la Procédure Numérique -->
-    <div class="card" style="text-align:center;">
-      <div style="font-size:11px; color:#475569; margin-bottom:8px;">
-        Validation par signature électronique officielle Gendarmerie (Procédure Numérique).
+    <!-- Signature Manuelle Tactile -->
+    <div class="card">
+      <div class="card-title">Signature de l'OPJ</div>
+      <div id="sig-preview" onclick="ouvrirModalSignature()">
+        <span id="sig-preview-placeholder" style="font-size: 12px; color: #64748b;">✍️ Toucher ici pour signer au doigt (portrait ou paysage)</span>
+        <img id="sig-preview-img" style="display:none;" alt="Aperçu signature">
       </div>
-      <button type="button" class="btn btn-primary" style="width: 100%; padding: 14px; font-size: 14px;" onclick="ouvrirModalControle()">
-        🔒 Valider, Signer & Transmettre le PV
+      <button type="button" class="btn btn-primary" style="width: 100%; margin-top: 14px; padding: 14px; font-size: 14px;" onclick="ouvrirModalControle()">
+        📄 Finaliser & Transmettre le PV
       </button>
     </div>
 
   </div>
 
   <input type="file" id="global-camera-input" accept="image/*" capture="environment" style="display:none;" onchange="traiterPhotoPrise(event)">
+
+  <!-- Modal Signature Plein Écran -->
+  <div id="modal-signature">
+    <div class="sig-top-bar">
+      <button class="btn btn-secondary" style="padding: 5px 8px; font-size: 11px;" onclick="fermerModalSignature()">Annuler</button>
+      <span style="font-size:12px;">Signez au doigt</span>
+      <div style="display: flex; gap: 4px;">
+        <button class="btn btn-danger" style="padding: 5px 8px; font-size: 11px;" onclick="effacerSignaturePleinEcran()">Effacer</button>
+        <button class="btn btn-primary" style="padding: 5px 10px; font-size: 11px;" onclick="validerSignaturePleinEcran()">Valider</button>
+      </div>
+    </div>
+    <div class="sig-canvas-container">
+      <canvas id="sig-fullscreen-canvas"></canvas>
+    </div>
+  </div>
 
   <!-- Modal Cotes et Transmission -->
   <div id="modal-cotes" class="modal">
