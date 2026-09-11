@@ -346,32 +346,28 @@ function supprimerPhotoSection(section, id) {
 function dessinerTamponProcedureNumerique(doc, xCenter, yCenter) {
   doc.setDrawColor(0, 0, 0);
   doc.setLineWidth(0.4);
-  doc.circle(xCenter, yCenter, 14); // Cercle extérieur 28 mm
+  doc.circle(xCenter, yCenter, 14);
   doc.setLineWidth(0.2);
-  doc.circle(xCenter, yCenter, 11.5); // Cercle intérieur
+  doc.circle(xCenter, yCenter, 11.5);
 
-  // Étoiles latérales
   doc.setFont("times", "bold");
   doc.setFontSize(8);
   doc.text("★", xCenter - 12.8, yCenter + 0.8, { align: "center" });
   doc.text("★", xCenter + 12.8, yCenter + 0.8, { align: "center" });
 
-  // Mentions circulaires
   doc.setFontSize(5.5);
   doc.text("GENDARMERIE NATIONALE", xCenter, yCenter - 12, { align: "center" });
   doc.text("PROCÉDURE NUMÉRIQUE", xCenter, yCenter + 13.2, { align: "center" });
 
-  // Grenade à 8 flammes (Silhouette vectorielle officielle)
   doc.setLineWidth(0.3);
-  doc.circle(xCenter, yCenter + 3.5, 3.2); // Bombe ronde
+  doc.circle(xCenter, yCenter + 3.5, 3.2);
 
-  // Flammes stylisées
   doc.line(xCenter, yCenter + 0.3, xCenter, yCenter - 7);
   doc.line(xCenter - 1.2, yCenter + 0.5, xCenter - 3.5, yCenter - 5);
   doc.line(xCenter + 1.2, yCenter + 0.5, xCenter + 3.5, yCenter - 5);
   doc.line(xCenter - 2.2, yCenter + 1.5, xCenter - 5, yCenter - 2.5);
   doc.line(xCenter + 2.2, yCenter + 1.5, xCenter + 5, yCenter - 2.5);
-  doc.line(xCenter - 6, yCenter + 3.5, xCenter + 6, yCenter + 3.5); // Ligne d'horizon
+  doc.line(xCenter - 6, yCenter + 3.5, xCenter + 6, yCenter + 3.5);
 }
 
 // =============================================================================
@@ -428,19 +424,17 @@ async function genererEtEnvoyer() {
   const adjQualiteCode = document.getElementById('cfg-adj-qualite').value;
   const adjResidence = document.getElementById('cfg-adj-residence').value;
 
-  // Libellé clair de la qualité pour l'intro
   let adjQualiteLibelle = "Agent de Police Judiciaire Adjoint";
   if (adjQualiteCode === 'APJ') adjQualiteLibelle = "Agent de Police Judiciaire";
   if (adjQualiteCode === 'OPJ') adjQualiteLibelle = "Officier de Police Judiciaire";
 
-  // SÉCURISATION JURIDIQUE DES VISAS DU CODE DE PROCÉDURE PÉNALE
   let articles = "";
   if (!adjointActif || adjQualiteCode === 'OPJ') {
     articles = cadreActif === 'FLAGRANCE' ? "16 à 19 et 53 à 67" : "16 à 19 et 75 à 78";
   } else if (adjQualiteCode === 'APJ') {
     articles = cadreActif === 'FLAGRANCE' ? "16 à 19, 20 et 53 à 67" : "16 à 19, 20 et 75 à 78";
   } else if (adjQualiteCode === 'APJA') {
-    articles = cadreActif === 'FLAGRANCE' ? "16 à 19, 21 1° bis, 21-1 et 53 à 67" : "16 à 19, 21 1° bis, 21-1 et 75 à 78";
+    articles = cadreActif === 'FLAGRANCE' ? "16 à 19, 21 1° bis, 21-1 et 53 à 67" : "16 à 19, 21 1° bis, 21-1 et 75 à 78";[cite: 2, 5]
   }
 
   const arriveeTime = document.getElementById('f-arrivee-time').value || dateFormatee;
@@ -467,12 +461,11 @@ async function genererEtEnvoyer() {
     let y = 10;
 
     // =========================================================================
-    // EN-TÊTE RÉGLEMENTAIRE (STRUCTURE EXACTE DU VISUEL TRANSMIS)
+    // EN-TÊTE RÉGLEMENTAIRE
     // =========================================================================
     doc.setDrawColor(0, 0, 0);
     doc.setLineWidth(0.2);
 
-    // Bloc gauche : Gendarmerie (avec fond gris)
     doc.setFillColor(240, 240, 240);
     doc.rect(leftMargin, y, leftBlockW, 5, 'FD');
     doc.setFont("times", "bold");
@@ -480,7 +473,6 @@ async function genererEtEnvoyer() {
     doc.setTextColor(0, 0, 0);
     doc.text("GENDARMERIE NATIONALE", leftMargin + (leftBlockW / 2), y + 3.6, { align: "center" });
 
-    // Hiérarchie unité
     const uniteH = 15;
     doc.rect(leftMargin, y + 5, leftBlockW, uniteH);
     doc.setFont("times", "normal");
@@ -491,8 +483,7 @@ async function genererEtEnvoyer() {
     doc.text(cob, leftMargin + 2, y + 15.5);
     doc.text(bde, leftMargin + 2, y + 19);
 
-    // Cartouche gauche (Code unité / Nmr P.V. / Année / Nmr dossier justice)
-    const cartoucheY = y + 5 + uniteH; // 30 mm
+    const cartoucheY = y + 5 + uniteH;
     const cartoucheH = 9;
     doc.rect(leftMargin, cartoucheY, leftBlockW, cartoucheH);
 
@@ -517,9 +508,7 @@ async function genererEtEnvoyer() {
     doc.setFontSize(7.5);
     doc.text(dossierNum, leftMargin + wCode + wPv + wAnnee + 1, cartoucheY + 7.5);
 
-    // Bloc droit : NON ENCADRÉ EN HAUT, fermé uniquement en bas
     const rightBlockX = leftMargin + leftBlockW;
-    const rightBlockW = usableWidth - leftBlockW;
 
     doc.setFont("times", "bold");
     doc.setFontSize(9.5);
@@ -528,7 +517,6 @@ async function genererEtEnvoyer() {
     doc.text("PROCÈS-VERBAL DE TRANSPORT CONSTATATIONS ET", rightBlockX + 4, y + 12);
     doc.text("MESURES PRISES", rightBlockX + 4, y + 16.5);
 
-    // Boîtes fermées à droite pour Nmr pièce et N° feuillet
     const wPiece = 20, wFeuillet = 18;
     const pieceX = rightMarginX - wPiece - wFeuillet;
     const feuilletX = rightMarginX - wFeuillet;
@@ -550,10 +538,8 @@ async function genererEtEnvoyer() {
     const pageNumX = feuilletX + (wFeuillet / 2);
     const pageNumY = cartoucheY + 7.5;
 
-    // Ligne horizontale continue de fermeture de l'en-tête
     doc.line(leftMargin, cartoucheY + cartoucheH, rightMarginX, cartoucheY + cartoucheH);
 
-    // Intro procédurale
     y = cartoucheY + cartoucheH + 5;
     doc.setFont("times", "normal");
     doc.setFontSize(9.5);
@@ -660,11 +646,9 @@ async function genererEtEnvoyer() {
     doc.setFont("times", "normal");
     doc.text(`${gradeOpj} ${nomOpj}`, leftMargin + (usableWidth / 2), y, { align: "center" });
 
-    // Apposition automatique du timbre numérique officiel
     y += 16;
     dessinerTamponProcedureNumerique(doc, leftMargin + (usableWidth / 2), y);
 
-    // Pagination dynamique
     const totalPages = doc.internal.getNumberOfPages();
     for (let p = 1; p <= totalPages; p++) {
       doc.setPage(p);
