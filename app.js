@@ -10,17 +10,17 @@ let photosParSection = {
   corps: []
 };
 
-let sigCanvas, sigCtx, isDrawing = false;
+let sigCanvas = null, sigCtx = null, isDrawing = false;
 let signatureBlobData = null;
 let recognition = null;
 let shouldKeepListening = false;
 let restartTimeout = null;
 
-// Initialisation
+// Initialisation robuste
 window.addEventListener('DOMContentLoaded', () => {
-  chargerEtat();
-  initSignaturePleinEcran();
-  initServiceWorker();
+  try { chargerEtat(); } catch (e) { console.error('Erreur chargement état:', e); }
+  try { initSignaturePleinEcran(); } catch (e) { console.error('Erreur signature:', e); }
+  try { initServiceWorker(); } catch (e) { console.error('Erreur SW:', e); }
 });
 
 function initServiceWorker() {
@@ -30,38 +30,45 @@ function initServiceWorker() {
 }
 
 // =============================================================================
-// SAUVEGARDE EN DIRECT (ANTI-PERTE SI SORTIE DE L'APPLICATION)
+// SAUVEGARDE EN DIRECT (ANTI-PERTE)
 // =============================================================================
 function sauvegarderEtat() {
-  const etat = {
-    cadreActif,
-    compagnie: document.getElementById('cfg-compagnie').value,
-    cob: document.getElementById('cfg-cob').value,
-    brigade: document.getElementById('cfg-brigade').value,
-    residence: document.getElementById('cfg-residence').value,
-    codeUnite: document.getElementById('cfg-code-unite').value,
-    email: document.getElementById('cfg-email').value,
-    grade: document.getElementById('cfg-grade').value,
-    nom: document.getElementById('cfg-nom').value,
-    qualite: document.getElementById('cfg-qualite').value,
-    adjointActif: document.getElementById('cfg-adjoint-actif').checked,
-    adjGrade: document.getElementById('cfg-adj-grade').value,
-    adjNom: document.getElementById('cfg-adj-nom').value,
-    adjQualite: document.getElementById('cfg-adj-qualite').value,
-    adjResidence: document.getElementById('cfg-adj-residence').value,
-    arriveeTime: document.getElementById('f-arrivee-time').value,
-    arriveeGps: document.getElementById('f-arrivee-gps').value,
-    adresse: document.getElementById('f-adresse').value,
-    saisine: document.getElementById('f-saisine').value,
-    situation: document.getElementById('f-situation').value,
-    mesures: document.getElementById('f-mesures').value,
-    etatLieux: document.getElementById('f-etat-lieux').value,
-    corpsDelit: document.getElementById('f-corps-delit').value,
-    mesuresDiv: document.getElementById('f-mesures-div').value,
-    signatureBlobData,
-    photosParSection
-  };
-  localStorage.setItem('gn_pv_brouillon', JSON.stringify(etat));
+  try {
+    const getVal = (id) => {
+      const el = document.getElementById(id);
+      return el ? el.value : '';
+    };
+
+    const etat = {
+      cadreActif,
+      compagnie: getVal('cfg-compagnie'),
+      cob: getVal('cfg-cob'),
+      brigade: getVal('cfg-brigade'),
+      residence: getVal('cfg-residence'),
+      codeUnite: getVal('cfg-code-unite'),
+      email: getVal('cfg-email'),
+      grade: getVal('cfg-grade'),
+      nom: getVal('cfg-nom'),
+      qualite: getVal('cfg-qualite'),
+      adjointActif: document.getElementById('cfg-adjoint-actif') ? document.getElementById('cfg-adjoint-actif').checked : false,
+      adjGrade: getVal('cfg-adj-grade'),
+      adjNom: getVal('cfg-adj-nom'),
+      adjQualite: getVal('cfg-adj-qualite'),
+      adjResidence: getVal('cfg-adj-residence'),
+      arriveeTime: getVal('f-arrivee-time'),
+      arriveeGps: getVal('f-arrivee-gps'),
+      adresse: getVal('f-adresse'),
+      saisine: getVal('f-saisine'),
+      situation: getVal('f-situation'),
+      mesures: getVal('f-mesures'),
+      etatLieux: getVal('f-etat-lieux'),
+      corpsDelit: getVal('f-corps-delit'),
+      mesuresDiv: getVal('f-mesures-div'),
+      signatureBlobData,
+      photosParSection
+    };
+    localStorage.setItem('gn_pv_brouillon', JSON.stringify(etat));
+  } catch (e) {}
 }
 
 function chargerEtat() {
@@ -70,40 +77,53 @@ function chargerEtat() {
 
   try {
     const e = JSON.parse(donnees);
+    const setVal = (id, val) => {
+      const el = document.getElementById(id);
+      if (el && val !== undefined) el.value = val;
+    };
+
     if (e.cadreActif) setCadre(e.cadreActif);
-    if (e.compagnie) document.getElementById('cfg-compagnie').value = e.compagnie;
-    if (e.cob) document.getElementById('cfg-cob').value = e.cob;
-    if (e.brigade) document.getElementById('cfg-brigade').value = e.brigade;
-    if (e.residence) document.getElementById('cfg-residence').value = e.residence;
-    if (e.codeUnite) document.getElementById('cfg-code-unite').value = e.codeUnite;
-    if (e.email) document.getElementById('cfg-email').value = e.email;
-    if (e.grade) document.getElementById('cfg-grade').value = e.grade;
-    if (e.nom) document.getElementById('cfg-nom').value = e.nom;
-    if (e.qualite) document.getElementById('cfg-qualite').value = e.qualite;
-    if (e.adjointActif !== undefined) {
-      document.getElementById('cfg-adjoint-actif').checked = e.adjointActif;
+    setVal('cfg-compagnie', e.compagnie);
+    setVal('cfg-cob', e.cob);
+    setVal('cfg-brigade', e.brigade);
+    setVal('cfg-residence', e.residence);
+    setVal('cfg-code-unite', e.codeUnite);
+    setVal('cfg-email', e.email);
+    setVal('cfg-grade', e.grade);
+    setVal('cfg-nom', e.nom);
+    setVal('cfg-qualite', e.qualite);
+
+    const chkAdj = document.getElementById('cfg-adjoint-actif');
+    if (chkAdj && e.adjointActif !== undefined) {
+      chkAdj.checked = e.adjointActif;
       toggleAdjointForm();
     }
-    if (e.adjGrade) document.getElementById('cfg-adj-grade').value = e.adjGrade;
-    if (e.adjNom) document.getElementById('cfg-adj-nom').value = e.adjNom;
-    if (e.adjQualite) document.getElementById('cfg-adj-qualite').value = e.adjQualite;
-    if (e.adjResidence) document.getElementById('cfg-adj-residence').value = e.adjResidence;
-    if (e.arriveeTime) document.getElementById('f-arrivee-time').value = e.arriveeTime;
-    if (e.arriveeGps) document.getElementById('f-arrivee-gps').value = e.arriveeGps;
-    if (e.adresse) document.getElementById('f-adresse').value = e.adresse;
-    if (e.saisine) document.getElementById('f-saisine').value = e.saisine;
-    if (e.situation) document.getElementById('f-situation').value = e.situation;
-    if (e.mesures) document.getElementById('f-mesures').value = e.mesures;
-    if (e.etatLieux) document.getElementById('f-etat-lieux').value = e.etatLieux;
-    if (e.corpsDelit) document.getElementById('f-corps-delit').value = e.corpsDelit;
-    if (e.mesuresDiv) document.getElementById('f-mesures-div').value = e.mesuresDiv;
+    setVal('cfg-adj-grade', e.adjGrade);
+    setVal('cfg-adj-nom', e.adjNom);
+    setVal('cfg-adj-qualite', e.adjQualite);
+    setVal('cfg-adj-residence', e.adjResidence);
+
+    setVal('f-arrivee-time', e.arriveeTime);
+    setVal('f-arrivee-gps', e.arriveeGps);
+    setVal('f-adresse', e.adresse);
+    setVal('f-saisine', e.saisine);
+    setVal('f-situation', e.situation);
+    setVal('f-mesures', e.mesures);
+    setVal('f-etat-lieux', e.etatLieux);
+    setVal('corpsDelit', e.corpsDelit);
+    setVal('f-mesures-div', e.mesuresDiv);
+
     if (e.signatureBlobData) {
       signatureBlobData = e.signatureBlobData;
-      document.getElementById('sig-preview-placeholder').style.display = 'none';
-      const previewImg = document.getElementById('sig-preview-img');
-      previewImg.src = signatureBlobData;
-      previewImg.style.display = 'block';
+      const ph = document.getElementById('sig-preview-placeholder');
+      const img = document.getElementById('sig-preview-img');
+      if (ph) ph.style.display = 'none';
+      if (img) {
+        img.src = signatureBlobData;
+        img.style.display = 'block';
+      }
     }
+
     if (e.photosParSection) {
       photosParSection = e.photosParSection;
       ['situation', 'mesures', 'etat', 'corps'].forEach(sec => afficherPhotosSection(sec));
@@ -118,29 +138,38 @@ function demanderReinitialisation() {
 }
 
 // =============================================================================
-// CONFIGURATION PROFILS & CADRE
+// ACTIONS BOUTONS (PROFILS / SUGGESTIONS / CADRE)
 // =============================================================================
 function toggleConfig() {
   const card = document.getElementById('config-card');
-  card.style.display = card.style.display === 'none' ? 'block' : 'none';
+  if (card) {
+    card.style.display = (card.style.display === 'none' || card.style.display === '') ? 'block' : 'none';
+  }
 }
 
 function toggleAdjointForm() {
-  const actif = document.getElementById('cfg-adjoint-actif').checked;
-  document.getElementById('box-adjoint').style.display = actif ? 'block' : 'none';
+  const chk = document.getElementById('cfg-adjoint-actif');
+  const box = document.getElementById('box-adjoint');
+  if (box && chk) {
+    box.style.display = chk.checked ? 'block' : 'none';
+  }
 }
 
 function setCadre(type) {
   cadreActif = type;
-  document.getElementById('btn-flagrance').className = type === 'FLAGRANCE' ? 'active' : '';
-  document.getElementById('btn-preliminaire').className = type === 'PRELIMINAIRE' ? 'active' : '';
+  const btnF = document.getElementById('btn-flagrance');
+  const btnP = document.getElementById('btn-preliminaire');
+  if (btnF) btnF.className = type === 'FLAGRANCE' ? 'active' : '';
+  if (btnP) btnP.className = type === 'PRELIMINAIRE' ? 'active' : '';
   sauvegarderEtat();
 }
 
 function insererTexte(champId, texte) {
   const el = document.getElementById(champId);
-  el.value = el.value ? `${el.value}\n${texte}` : texte;
-  sauvegarderEtat();
+  if (el) {
+    el.value = el.value ? `${el.value}\n${texte}` : texte;
+    sauvegarderEtat();
+  }
 }
 
 // =============================================================================
@@ -150,19 +179,22 @@ function declencherArrivee() {
   const now = new Date();
   const dateStr = now.toLocaleDateString('fr-FR');
   const timeStr = `${String(now.getHours()).padStart(2, '0')} heures ${String(now.getMinutes()).padStart(2, '0')} minutes`;
-  document.getElementById('f-arrivee-time').value = `${dateStr} à ${timeStr}`;
+  const elTime = document.getElementById('f-arrivee-time');
+  if (elTime) elTime.value = `${dateStr} à ${timeStr}`;
 
   if ('geolocation' in navigator) {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const lat = pos.coords.latitude.toFixed(5);
         const lon = pos.coords.longitude.toFixed(5);
-        document.getElementById('f-arrivee-gps').value = `${lat}, ${lon}`;
+        const elGps = document.getElementById('f-arrivee-gps');
+        if (elGps) elGps.value = `${lat}, ${lon}`;
         sauvegarderEtat();
         resoudreAdresse(pos.coords.latitude, pos.coords.longitude);
       },
       () => {
-        document.getElementById('f-arrivee-gps').value = 'Signal GPS indisponible';
+        const elGps = document.getElementById('f-arrivee-gps');
+        if (elGps) elGps.value = 'Signal GPS indisponible';
         sauvegarderEtat();
       },
       { enableHighAccuracy: true, timeout: 8000 }
@@ -176,14 +208,15 @@ async function resoudreAdresse(lat, lon) {
     const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
     const data = await res.json();
     if (data && data.display_name) {
-      document.getElementById('f-adresse').value = data.display_name;
+      const elAdr = document.getElementById('f-adresse');
+      if (elAdr) elAdr.value = data.display_name;
       sauvegarderEtat();
     }
   } catch (e) {}
 }
 
 // =============================================================================
-// DICTÉE VOCALE CONTINUE
+// DICTÉE CONTINUE AVEC SUPPRESSION DES TICS
 // =============================================================================
 function nettoyerTics(texte) {
   return texte
@@ -196,7 +229,7 @@ function nettoyerTics(texte) {
 function dicter(targetId, btnId) {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) {
-    alert("Reconnaissance vocale non prise en charge.");
+    alert("Reconnaissance vocale non prise en charge sur ce navigateur.");
     return;
   }
 
@@ -206,14 +239,18 @@ function dicter(targetId, btnId) {
     shouldKeepListening = false;
     clearTimeout(restartTimeout);
     if (recognition) recognition.stop();
-    btn.classList.remove('recording');
-    btn.innerText = '🎤 Dictée continue';
+    if (btn) {
+      btn.classList.remove('recording');
+      btn.innerText = '🎤 Dictée continue';
+    }
     return;
   }
 
   shouldKeepListening = true;
-  btn.classList.add('recording');
-  btn.innerText = '⏹️ Arrêter';
+  if (btn) {
+    btn.classList.add('recording');
+    btn.innerText = '⏹️ Arrêter';
+  }
 
   function lancerReconnaissance() {
     if (!shouldKeepListening) return;
@@ -230,7 +267,7 @@ function dicter(targetId, btnId) {
         if (event.results[i].isFinal) {
           const brut = event.results[i][0].transcript;
           const propre = nettoyerTics(brut);
-          if (propre.length > 0) {
+          if (propre.length > 0 && el) {
             el.value = el.value ? `${el.value} ${propre}` : propre;
             sauvegarderEtat();
           }
@@ -257,11 +294,12 @@ function dicter(targetId, btnId) {
 }
 
 // =============================================================================
-// GESTION DES CLICHÉS PAR RUBRIQUE
+// GESTION DES CLICHÉS
 // =============================================================================
 function declencherPhotoSection(section) {
   sectionCiblePhoto = section;
-  document.getElementById('global-camera-input').click();
+  const input = document.getElementById('global-camera-input');
+  if (input) input.click();
 }
 
 function traiterPhotoPrise(event) {
@@ -294,7 +332,8 @@ function traiterPhotoPrise(event) {
 
       const compressedData = canvas.toDataURL('image/jpeg', 0.82);
       const now = new Date();
-      const gpsVal = document.getElementById('f-arrivee-gps').value || '';
+      const elGps = document.getElementById('f-arrivee-gps');
+      const gpsVal = elGps ? elGps.value : '';
 
       const photoObj = {
         id: Date.now(),
@@ -319,6 +358,7 @@ function traiterPhotoPrise(event) {
 
 function afficherPhotosSection(section) {
   const cont = document.getElementById(`photos-${section}`);
+  if (!cont) return;
   cont.innerHTML = '';
 
   photosParSection[section].forEach((p, idx) => {
@@ -352,10 +392,11 @@ function supprimerPhotoSection(section, id) {
 }
 
 // =============================================================================
-// SIGNATURE TACTILE AU DOIGT (PLEIN ÉCRAN ORIENTABLE)
+// SIGNATURE TACTILE AU DOIGT
 // =============================================================================
 function initSignaturePleinEcran() {
   sigCanvas = document.getElementById('sig-fullscreen-canvas');
+  if (!sigCanvas) return;
   sigCtx = sigCanvas.getContext('2d');
 
   const getPos = (e) => {
@@ -381,7 +422,7 @@ function initSignaturePleinEcran() {
 
 function redimensionnerCanvasSignature() {
   const modal = document.getElementById('modal-signature');
-  if (modal && modal.style.display === 'flex') {
+  if (modal && modal.style.display === 'flex' && sigCanvas) {
     const temp = sigCanvas.toDataURL();
     const container = sigCanvas.parentElement;
     sigCanvas.width = container.clientWidth;
@@ -389,7 +430,7 @@ function redimensionnerCanvasSignature() {
     sigCtx.lineWidth = 3;
     sigCtx.strokeStyle = '#000';
     sigCtx.lineCap = 'round';
-    
+
     const img = new Image();
     img.onload = () => sigCtx.drawImage(img, 0, 0);
     img.src = temp;
@@ -398,6 +439,7 @@ function redimensionnerCanvasSignature() {
 
 function ouvrirModalSignature() {
   const modal = document.getElementById('modal-signature');
+  if (!modal || !sigCanvas) return;
   modal.style.display = 'flex';
   setTimeout(() => {
     const container = sigCanvas.parentElement;
@@ -410,32 +452,41 @@ function ouvrirModalSignature() {
 }
 
 function fermerModalSignature() {
-  document.getElementById('modal-signature').style.display = 'none';
+  const modal = document.getElementById('modal-signature');
+  if (modal) modal.style.display = 'none';
 }
 
 function effacerSignaturePleinEcran() {
-  sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
+  if (sigCtx && sigCanvas) {
+    sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
+  }
 }
 
 function validerSignaturePleinEcran() {
+  if (!sigCanvas) return;
   signatureBlobData = sigCanvas.toDataURL('image/png');
-  document.getElementById('sig-preview-placeholder').style.display = 'none';
-  const previewImg = document.getElementById('sig-preview-img');
-  previewImg.src = signatureBlobData;
-  previewImg.style.display = 'block';
+  const ph = document.getElementById('sig-preview-placeholder');
+  const img = document.getElementById('sig-preview-img');
+  if (ph) ph.style.display = 'none';
+  if (img) {
+    img.src = signatureBlobData;
+    img.style.display = 'block';
+  }
   sauvegarderEtat();
   fermerModalSignature();
 }
 
 // =============================================================================
-// CONTRÔLE ET GÉNÉRATION DU PDF
+// GÉNÉRATION DU PDF VECTORIEL
 // =============================================================================
 function ouvrirModalControle() {
-  document.getElementById('modal-cotes').style.display = 'flex';
+  const m = document.getElementById('modal-cotes');
+  if (m) m.style.display = 'flex';
 }
 
 function fermerModal() {
-  document.getElementById('modal-cotes').style.display = 'none';
+  const m = document.getElementById('modal-cotes');
+  if (m) m.style.display = 'none';
 }
 
 async function genererEtEnvoyer() {
@@ -454,32 +505,38 @@ async function genererEtEnvoyer() {
   const dateFormatee = `${jours[now.getDay()]} ${String(now.getDate()).padStart(2, '0')} ${mois[now.getMonth()]} ${now.getFullYear()}`;
   const heureFinExacte = `${String(now.getHours()).padStart(2, '0')} heures ${String(now.getMinutes()).padStart(2, '0')} minutes`;
 
-  const brutPv = document.getElementById('m-pv-num').value.trim();
+  const getVal = (id) => {
+    const el = document.getElementById(id);
+    return el ? el.value.trim() : '';
+  };
+
+  const brutPv = getVal('m-pv-num');
   let pvNum = brutPv;
   if (brutPv.includes('/')) {
     const parts = brutPv.split('/');
     pvNum = parts.length === 3 ? parts[1] : parts[0];
   }
 
-  const pieceNum = document.getElementById('m-piece-num').value;
-  const dossierNum = document.getElementById('m-dossier-num').value;
+  const pieceNum = getVal('m-piece-num') || '1';
+  const dossierNum = getVal('m-dossier-num') || '[ En cours ]';
 
-  const comp = document.getElementById('cfg-compagnie').value;
-  const cob = document.getElementById('cfg-cob').value;
-  const bde = document.getElementById('cfg-brigade').value;
-  const codeU = document.getElementById('cfg-code-unite').value;
-  const residenceU = document.getElementById('cfg-residence').value;
-  const destEmail = document.getElementById('cfg-email').value;
+  const comp = getVal('cfg-compagnie');
+  const cob = getVal('cfg-cob');
+  const bde = getVal('cfg-brigade');
+  const codeU = getVal('cfg-code-unite');
+  const residenceU = getVal('cfg-residence');
+  const destEmail = getVal('cfg-email');
 
-  const gradeOpj = document.getElementById('cfg-grade').value;
-  const nomOpj = document.getElementById('cfg-nom').value;
-  const qualiteOpj = document.getElementById('cfg-qualite').value;
+  const gradeOpj = getVal('cfg-grade');
+  const nomOpj = getVal('cfg-nom');
+  const qualiteOpj = getVal('cfg-qualite');
 
-  const adjointActif = document.getElementById('cfg-adjoint-actif').checked;
-  const adjGrade = document.getElementById('cfg-adj-grade').value;
-  const adjNom = document.getElementById('cfg-adj-nom').value;
-  const adjQualiteCode = document.getElementById('cfg-adj-qualite').value;
-  const adjResidence = document.getElementById('cfg-adj-residence').value;
+  const chkAdj = document.getElementById('cfg-adjoint-actif');
+  const adjointActif = chkAdj ? chkAdj.checked : false;
+  const adjGrade = getVal('cfg-adj-grade');
+  const adjNom = getVal('cfg-adj-nom');
+  const adjQualiteCode = getVal('cfg-adj-qualite');
+  const adjResidence = getVal('cfg-adj-residence');
 
   let adjQualiteLibelle = "Agent de Police Judiciaire Adjoint";
   if (adjQualiteCode === 'APJ') adjQualiteLibelle = "Agent de Police Judiciaire";
@@ -494,16 +551,16 @@ async function genererEtEnvoyer() {
     articles = cadreActif === 'FLAGRANCE' ? "16 à 19, 21 1° bis, 21-1 et 53 à 67" : "16 à 19, 21 1° bis, 21-1 et 75 à 78";[cite: 2, 5]
   }
 
-  const arriveeTime = document.getElementById('f-arrivee-time').value || dateFormatee;
-  const gps = document.getElementById('f-arrivee-gps').value || '';
-  const adr = document.getElementById('f-adresse').value || '';
+  const arriveeTime = getVal('f-arrivee-time') || dateFormatee;
+  const gps = getVal('f-arrivee-gps');
+  const adr = getVal('f-adresse');
 
-  const saisine = document.getElementById('f-saisine').value || 'Néant.';
-  const situation = document.getElementById('f-situation').value || 'Néant.';
-  const mesures = document.getElementById('f-mesures').value || 'Néant.';
-  const etatLieux = document.getElementById('f-etat-lieux').value || 'Néant.';
-  const corpsDelit = document.getElementById('f-corps-delit').value || 'Néant.';
-  const mesuresDiv = document.getElementById('f-mesures-div').value || 'Néant.';
+  const saisine = getVal('f-saisine') || 'Néant.';
+  const situation = getVal('f-situation') || 'Néant.';
+  const mesures = getVal('f-mesures') || 'Néant.';
+  const etatLieux = getVal('f-etat-lieux') || 'Néant.';
+  const corpsDelit = getVal('f-corps-delit') || 'Néant.';
+  const mesuresDiv = getVal('f-mesures-div') || 'Néant.';
 
   try {
     const { jsPDF } = window.jspdf;
@@ -517,9 +574,7 @@ async function genererEtEnvoyer() {
 
     let y = 10;
 
-    // =========================================================================
-    // EN-TÊTE RÉGLEMENTAIRE
-    // =========================================================================
+    // En-tête
     doc.setDrawColor(0, 0, 0);
     doc.setLineWidth(0.2);
 
@@ -611,9 +666,6 @@ async function genererEtEnvoyer() {
     doc.text(introLines, leftMargin, y);
     y += introLines.length * 4.2 + 4;
 
-    // =========================================================================
-    // BANDEAUX DE TITRES ET GESTION DES PHOTOS
-    // =========================================================================
     function ajouterRubrique(titre, texte, listePhotos) {
       if (y > pageHeight - 35) {
         doc.addPage();
@@ -681,9 +733,6 @@ async function genererEtEnvoyer() {
     ajouterRubrique("CORPS DU DÉLIT", corpsDelit, photosParSection.corps);
     ajouterRubrique("MESURES DIVERSES", mesuresDiv, []);
 
-    // =========================================================================
-    // CLÔTURE & SIGNATURE TACTILE APPOSÉE
-    // =========================================================================
     if (y > pageHeight - 45) {
       doc.addPage();
       y = 14;
@@ -703,7 +752,6 @@ async function genererEtEnvoyer() {
     doc.setFont("times", "normal");
     doc.text(`${gradeOpj} ${nomOpj}`, leftMargin + (usableWidth / 2), y, { align: "center" });
 
-    // Insertion du tracé de signature manuel si validé
     if (signatureBlobData) {
       doc.addImage(signatureBlobData, 'PNG', leftMargin + (usableWidth / 2) - 25, y + 2, 50, 22);
       y += 26;
@@ -755,17 +803,27 @@ function nettoyerTerminal(alerter = false) {
   photosParSection = { situation: [], mesures: [], etat: [], corps: [] };
   signatureBlobData = null;
   ['situation', 'mesures', 'etat', 'corps'].forEach(sec => afficherPhotosSection(sec));
-  document.getElementById('sig-preview-placeholder').style.display = 'block';
-  document.getElementById('sig-preview-img').style.display = 'none';
-  document.getElementById('f-arrivee-time').value = '';
-  document.getElementById('f-arrivee-gps').value = '';
-  document.getElementById('f-adresse').value = '';
-  document.getElementById('f-saisine').value = '';
-  document.getElementById('f-situation').value = '';
-  document.getElementById('f-mesures').value = '';
-  document.getElementById('f-etat-lieux').value = '';
-  document.getElementById('f-corps-delit').value = '';
-  document.getElementById('f-mesures-div').value = '';
+
+  const setEmpty = (id) => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  };
+
+  const ph = document.getElementById('sig-preview-placeholder');
+  const img = document.getElementById('sig-preview-img');
+  if (ph) ph.style.display = 'block';
+  if (img) img.style.display = 'none';
+
+  setEmpty('f-arrivee-time');
+  setEmpty('f-arrivee-gps');
+  setEmpty('f-adresse');
+  setEmpty('f-saisine');
+  setEmpty('f-situation');
+  setEmpty('f-mesures');
+  setEmpty('f-etat-lieux');
+  setEmpty('corpsDelit');
+  setEmpty('f-mesures-div');
+
   if (alerter) {
     alert('Brouillon et données réinitialisés.');
   }
