@@ -1,75 +1,398 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
+<!DOCTYPE html><html lang="fr"><head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>PV Constatations Gendarmerie</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     :root {
-      --gn-blue: #002060;
-      --bg-gray: #f1f5f9;
-      --border-color: #cbd5e1;
+      --gn-deep: #0b1d3a;
+      --gn-blue: #1e3a8a;
+      --gn-light: #2563eb;
+      --bg-main: #f8fafc;
+      --surface: #ffffff;
+      --border-subtle: #e2e8f0;
+      --border-focus: #94a3b8;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --text-label: #334155;
+      --danger: #dc2626;
+      --danger-dark: #b91c1c;
+      --success: #16a34a;
     }
-    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-    body { margin: 0; background: var(--bg-gray); color: #0f172a; padding-bottom: 70px; }
-    
-    #diag-bar { background: #16a34a; color: white; text-align: center; font-size: 11px; font-weight: bold; padding: 4px; display: none; }
-    
-    header { background: var(--gn-blue); color: white; padding: 12px 16px; position: sticky; top: 0; z-index: 50; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.15); }
-    header h1 { margin: 0; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
-    
-    .container { padding: 12px; max-width: 600px; margin: 0 auto; }
-    .card { background: white; border-radius: 8px; padding: 14px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid var(--border-color); }
-    .card-title { font-weight: bold; font-size: 13px; text-transform: uppercase; color: var(--gn-blue); margin-bottom: 8px; border-bottom: 2px solid var(--gn-blue); padding-bottom: 4px; display: flex; justify-content: space-between; align-items: center; }
-    
-    label { display: block; font-size: 11px; font-weight: 600; margin-top: 6px; margin-bottom: 2px; color: #475569; }
-    input[type="text"], textarea, select { width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; background: #fff; }
-    textarea { min-height: 65px; resize: vertical; }
-    
-    .btn-row { display: flex; gap: 6px; margin-top: 6px; }
-    .btn { display: inline-flex; align-items: center; justify-content: center; padding: 8px 12px; border: none; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; text-decoration: none; }
-    .btn-primary { background: var(--gn-blue); color: white; flex: 1; }
-    .btn-secondary { background: #64748b; color: white; }
-    .btn-danger { background: #b91c1c; color: white; }
 
-    .btn-vocal { background: #0284c7; color: white; padding: 6px 10px; font-size: 11px; margin-top: 4px; border-radius: 4px; border: none; cursor: pointer; font-weight: 600; }
-    .btn-vocal.recording { background: #dc2626; animation: pulse 1s infinite; }
-    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+    * {
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-    .quick-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; margin-bottom: 4px; }
-    .tag-btn { background: #e2e8f0; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 10.5px; padding: 3px 8px; cursor: pointer; font-weight: 500; color: #1e293b; }
-    .tag-btn:hover { background: #cbd5e1; }
+    body {
+      margin: 0;
+      background: var(--bg-main);
+      color: var(--text-main);
+      padding-bottom: 80px;
+      -webkit-font-smoothing: antialiased;
+    }
 
-    .switch-cadre { display: flex; border: 2px solid var(--gn-blue); border-radius: 6px; overflow: hidden; margin-bottom: 10px; }
-    .switch-cadre button { flex: 1; padding: 9px; border: none; background: white; color: var(--gn-blue); font-weight: bold; font-size: 12px; cursor: pointer; }
-    .switch-cadre button.active { background: var(--gn-blue); color: white; }
+    #diag-bar {
+      background: #15803d;
+      color: #ffffff;
+      text-align: center;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      padding: 6px 12px;
+      display: none;
+      transition: opacity 0.6s ease, transform 0.6s ease;
+      position: sticky;
+      top: 0;
+      z-index: 60;
+    }
 
-    .section-photos { margin-top: 8px; border-top: 1px dashed #cbd5e1; padding-top: 6px; }
-    .photo-item { border: 1px solid var(--border-color); border-radius: 6px; padding: 6px; margin-top: 6px; background: #f8fafc; }
-    .photo-item img { max-width: 100%; height: 130px; object-fit: contain; background: #000; border-radius: 4px; display: block; margin: 4px auto; }
+    header {
+      background: linear-gradient(180deg, var(--gn-deep) 0%, var(--gn-blue) 100%);
+      color: #ffffff;
+      padding: 12px 16px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 12px rgba(11, 29, 58, 0.15);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
 
-    #sig-preview { width: 100%; height: 90px; border: 2px dashed #94a3b8; border-radius: 6px; display: flex; align-items: center; justify-content: center; background: #fff; cursor: pointer; margin-top: 6px; }
-    #sig-preview img { max-height: 80px; max-width: 90%; }
+    header h1 {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
 
-    #modal-signature { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #ffffff; z-index: 200; flex-direction: column; }
-    .sig-top-bar { background: var(--gn-blue); color: white; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; height: 48px; flex-shrink: 0; }
-    .sig-canvas-container { flex: 1; position: relative; width: 100%; height: calc(100vh - 48px); background: #fafafa; }
-    #sig-fullscreen-canvas { width: 100%; height: 100%; touch-action: none; display: block; }
+    .container {
+      padding: 12px;
+      max-width: 640px;
+      margin: 0 auto;
+    }
 
-    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 100; align-items: center; justify-content: center; }
-    .modal-content { background: white; padding: 16px; border-radius: 8px; width: 90%; max-width: 440px; }
-  </style>
-</head>
-<body>
+    .card {
+      background: var(--surface);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 14px;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(15, 23, 42, 0.02);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .card-title {
+      font-weight: 700;
+      font-size: 12.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--gn-blue);
+      margin-bottom: 12px;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      margin-top: 10px;
+      margin-bottom: 4px;
+      color: var(--text-label);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    input[type="text"], select, textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      font-size: 13.5px;
+      background: #ffffff;
+      color: var(--text-main);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      outline: none;
+    }
+
+    input[type="text"]:focus, select:focus, textarea:focus {
+      border-color: var(--gn-blue);
+      box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+    }
+
+    textarea {
+      min-height: 95px;
+      resize: vertical;
+      line-height: 1.45;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 9px 14px;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 12px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background-color 0.15s ease, opacity 0.15s ease;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary {
+      background: var(--gn-blue);
+      color: #ffffff;
+    }
+
+    .btn-primary:hover {
+      background: var(--gn-deep);
+    }
+
+    .btn-secondary {
+      background: #475569;
+      color: #ffffff;
+    }
+
+    .btn-secondary:hover {
+      background: #334155;
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: #ffffff;
+    }
+
+    .btn-danger:hover {
+      background: var(--danger-dark);
+    }
+
+    .btn-vocal {
+      background: #f1f5f9;
+      color: var(--gn-blue);
+      border: 1px solid #cbd5e1;
+      padding: 7px 12px;
+      font-size: 11.5px;
+      margin-top: 6px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-vocal:hover {
+      background: #e2e8f0;
+    }
+
+    .btn-vocal.recording {
+      background: var(--danger);
+      color: #ffffff;
+      border-color: var(--danger);
+      animation: pulseVocal 1.2s infinite ease-in-out;
+    }
+
+    @keyframes pulseVocal {
+      0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
+      70% { box-shadow: 0 0 0 8px rgba(220, 38, 38, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+    }
+
+    .quick-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+      margin-bottom: 6px;
+    }
+
+    .tag-btn {
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      border-radius: 16px;
+      font-size: 11px;
+      padding: 4px 10px;
+      cursor: pointer;
+      font-weight: 500;
+      color: #334155;
+      transition: all 0.15s ease;
+    }
+
+    .tag-btn:hover {
+      background: #e2e8f0;
+      color: var(--gn-deep);
+      border-color: #94a3b8;
+    }
+
+    .switch-cadre {
+      display: flex;
+      background: #e2e8f0;
+      padding: 3px;
+      border-radius: 8px;
+      margin-bottom: 14px;
+      border: 1px solid #cbd5e1;
+    }
+
+    .switch-cadre button {
+      flex: 1;
+      padding: 10px 8px;
+      border: none;
+      background: transparent;
+      color: #475569;
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 0.4px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .switch-cadre button.active {
+      background: var(--gn-blue);
+      color: #ffffff;
+      box-shadow: 0 2px 4px rgba(15, 23, 42, 0.12);
+    }
+
+    .section-photos {
+      margin-top: 12px;
+      border-top: 1px dashed var(--border-subtle);
+      padding-top: 10px;
+    }
+
+    .photo-item {
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 8px;
+      margin-top: 8px;
+      background: #f8fafc;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    }
+
+    .photo-item img {
+      max-width: 100%;
+      height: 140px;
+      object-fit: contain;
+      background: #0f172a;
+      border-radius: 6px;
+      display: block;
+      margin: 4px auto 8px auto;
+    }
+
+    #sig-preview {
+      width: 100%;
+      height: 96px;
+      border: 2px dashed #94a3b8;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #ffffff;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: border-color 0.2s ease, background-color 0.2s ease;
+    }
+
+    #sig-preview:hover {
+      border-color: var(--gn-blue);
+      background-color: #f8fafc;
+    }
+
+    #sig-preview img {
+      max-height: 84px;
+      max-width: 90%;
+    }
+
+    #modal-signature {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #ffffff;
+      z-index: 200;
+      flex-direction: column;
+    }
+
+    .sig-top-bar {
+      background: var(--gn-deep);
+      color: #ffffff;
+      padding: 8px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: 52px;
+      flex-shrink: 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .sig-canvas-container {
+      flex: 1;
+      position: relative;
+      width: 100%;
+      height: calc(100vh - 52px);
+      background: #fafafa;
+    }
+
+    #sig-fullscreen-canvas {
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+      display: block;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(11, 29, 58, 0.55);
+      backdrop-filter: blur(2px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-content {
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 440px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--border-subtle);
+    }
+  </style></head><body>
 
   <div id="diag-bar">✓ APPLICATION CHARGÉE SANS ERREUR</div>
 
   <header>
     <h1>Procédure de Terrain</h1>
     <div style="display:flex; gap:6px;">
-      <button type="button" class="btn btn-danger" onclick="demanderReinitialisation()" style="font-size: 11px; padding: 4px 8px;">🔄 Tout effacer</button>
-      <button type="button" class="btn btn-secondary" onclick="toggleConfig()" style="font-size: 11px; padding: 4px 8px;">Profils</button>
+      <button type="button" class="btn btn-danger" onclick="demanderReinitialisation()" style="font-size: 11px; padding: 5px 9px;">🔄 Tout effacer</button>
+      <button type="button" class="btn btn-secondary" onclick="toggleConfig()" style="font-size: 11px; padding: 5px 9px;">Profils</button>
     </div>
   </header>
 
@@ -91,10 +414,10 @@
       <label>Courriel de réception</label>
       <input type="text" id="cfg-email" value="" oninput="sauvegarderEtat()">
 
-      <div style="margin-top:10px; border-top:1px solid #cbd5e1; padding-top:6px; font-weight:bold; color:var(--gn-blue); font-size:12px;">
+      <div style="margin-top:14px; border-top:1px solid #cbd5e1; padding-top:8px; font-weight:bold; color:var(--gn-blue); font-size:12px; letter-spacing:0.4px; text-transform:uppercase;">
         Officier rédacteur (OPJ)
       </div>
-      <div style="display:flex; gap:6px;">
+      <div style="display:flex; gap:8px;">
         <div style="flex:1;">
           <label>Grade</label>
           <input type="text" id="cfg-grade" value="Adjudant" oninput="sauvegarderEtat()">
@@ -107,15 +430,15 @@
       <label>Qualité</label>
       <input type="text" id="cfg-qualite" value="Officier de Police Judiciaire" oninput="sauvegarderEtat()">
 
-      <div style="margin-top:12px; border-top:1px solid #cbd5e1; padding-top:6px;">
-        <label style="display:inline-flex; align-items:center; gap:6px; font-weight:bold; color:var(--gn-blue); cursor:pointer;">
-          <input type="checkbox" id="cfg-adjoint-actif" onchange="toggleAdjointForm(); sauvegarderEtat();">
+      <div style="margin-top:14px; border-top:1px solid #cbd5e1; padding-top:8px;">
+        <label style="display:inline-flex; align-items:center; gap:8px; font-weight:bold; color:var(--gn-blue); cursor:pointer; text-transform:none;">
+          <input type="checkbox" id="cfg-adjoint-actif" onchange="toggleAdjointForm(); sauvegarderEtat();" style="width:auto; margin:0;">
           Ajouter un collègue / adjoint d'enquête
         </label>
       </div>
 
-      <div id="box-adjoint" style="display:none; background:#f8fafc; padding:8px; border-radius:6px; margin-top:6px; border:1px solid #e2e8f0;">
-        <div style="display:flex; gap:6px;">
+      <div id="box-adjoint" style="display:none; background:#f8fafc; padding:10px; border-radius:6px; margin-top:8px; border:1px solid #e2e8f0;">
+        <div style="display:flex; gap:8px;">
           <div style="flex:1;">
             <label>Grade</label>
             <input type="text" id="cfg-adj-grade" value="Gendarme" oninput="sauvegarderEtat()">
@@ -125,7 +448,7 @@
             <input type="text" id="cfg-adj-nom" value="" oninput="sauvegarderEtat()">
           </div>
         </div>
-        <div style="display:flex; gap:6px;">
+        <div style="display:flex; gap:8px;">
           <div style="flex:1;">
             <label>Qualité juridique</label>
             <select id="cfg-adj-qualite" onchange="sauvegarderEtat()">
@@ -141,7 +464,7 @@
         </div>
       </div>
 
-      <button type="button" class="btn btn-primary" style="margin-top: 10px; width: 100%;" onclick="toggleConfig()">Fermer les réglages</button>
+      <button type="button" class="btn btn-primary" style="margin-top: 14px; width: 100%;" onclick="toggleConfig()">Fermer les réglages</button>
     </div>
 
     <div class="switch-cadre">
@@ -154,14 +477,14 @@
       <button type="button" class="btn btn-primary" style="width: 100%;" onclick="declencherArrivee()">
         📍 Enregistrer l'arrivée et le GPS
       </button>
-      <div style="display: flex; gap: 6px; margin-top: 6px;">
+      <div style="display: flex; gap: 8px; margin-top: 6px;">
         <div style="flex: 1;">
           <label>Date & Heure</label>
-          <input type="text" id="f-arrivee-time" readonly>
+          <input type="text" id="f-arrivee-time" readonly style="background:#f8fafc;">
         </div>
         <div style="flex: 1;">
           <label>GPS</label>
-          <input type="text" id="f-arrivee-gps" readonly>
+          <input type="text" id="f-arrivee-gps" readonly style="background:#f8fafc;">
         </div>
       </div>
       <label>Adresse constatée</label>
@@ -189,7 +512,7 @@
       <button type="button" class="btn-vocal" id="btn-voc-situation" onclick="dicter('f-situation', 'btn-voc-situation')">🎤 Dictée continue</button>
 
       <div class="section-photos">
-        <button type="button" class="btn btn-secondary" style="font-size:11px; padding:4px 8px;" onclick="declencherPhotoSection('situation')">📷 + Cliché Situation / Abords</button>
+        <button type="button" class="btn btn-secondary" style="font-size:11px; padding:6px 10px;" onclick="declencherPhotoSection('situation')">📷 + Cliché Situation / Abords</button>
         <div id="photos-situation"></div>
       </div>
     </div>
@@ -206,7 +529,7 @@
       <button type="button" class="btn-vocal" id="btn-voc-mesures" onclick="dicter('f-mesures', 'btn-voc-mesures')">🎤 Dictée continue</button>
 
       <div class="section-photos">
-        <button type="button" class="btn btn-secondary" style="font-size:11px; padding:4px 8px;" onclick="declencherPhotoSection('mesures')">📷 + Cliché Mesures / Dispositif</button>
+        <button type="button" class="btn btn-secondary" style="font-size:11px; padding:6px 10px;" onclick="declencherPhotoSection('mesures')">📷 + Cliché Mesures / Dispositif</button>
         <div id="photos-mesures"></div>
       </div>
     </div>
@@ -221,7 +544,7 @@
       <button type="button" class="btn-vocal" id="btn-voc-etat" onclick="dicter('f-etat-lieux', 'btn-voc-etat')">🎤 Dictée continue</button>
 
       <div class="section-photos">
-        <button type="button" class="btn btn-secondary" style="font-size:11px; padding:4px 8px;" onclick="declencherPhotoSection('etat')">📷 + Cliché Plan / Façade / Clôture</button>
+        <button type="button" class="btn btn-secondary" style="font-size:11px; padding:6px 10px;" onclick="declencherPhotoSection('etat')">📷 + Cliché Plan / Façade / Clôture</button>
         <div id="photos-etat"></div>
       </div>
     </div>
@@ -238,7 +561,7 @@
       <button type="button" class="btn-vocal" id="btn-voc-corps" onclick="dicter('f-corps-delit', 'btn-voc-corps')">🎤 Dictée continue</button>
 
       <div class="section-photos">
-        <button type="button" class="btn btn-secondary" style="font-size:11px; padding:4px 8px;" onclick="declencherPhotoSection('corps')">📷 + Cliché Effraction / Pesée / Fouille</button>
+        <button type="button" class="btn btn-secondary" style="font-size:11px; padding:6px 10px;" onclick="declencherPhotoSection('corps')">📷 + Cliché Effraction / Pesée / Fouille</button>
         <div id="photos-corps"></div>
       </div>
     </div>
@@ -256,10 +579,10 @@
     <div class="card">
       <div class="card-title">Signature de l'OPJ</div>
       <div id="sig-preview" onclick="ouvrirModalSignature()">
-        <span id="sig-preview-placeholder" style="font-size: 12px; color: #64748b;">✍️ Toucher ici pour signer au doigt</span>
+        <span id="sig-preview-placeholder" style="font-size: 12px; color: var(--text-muted); font-weight: 500;">✍️ Toucher ici pour signer au doigt</span>
         <img id="sig-preview-img" style="display:none;" alt="Aperçu signature">
       </div>
-      <button type="button" class="btn btn-primary" style="width: 100%; margin-top: 14px; padding: 14px; font-size: 14px;" onclick="ouvrirModalControle()">
+      <button type="button" class="btn btn-primary" style="width: 100%; margin-top: 14px; padding: 13px; font-size: 13.5px;" onclick="ouvrirModalControle()">
         📄 Finaliser & Transmettre le PV
       </button>
     </div>
@@ -270,11 +593,11 @@
 
   <div id="modal-signature">
     <div class="sig-top-bar">
-      <button type="button" class="btn btn-secondary" style="padding: 5px 8px; font-size: 11px;" onclick="fermerModalSignature()">Annuler</button>
-      <span style="font-size:12px;">Signez au doigt</span>
-      <div style="display: flex; gap: 4px;">
-        <button type="button" class="btn btn-danger" style="padding: 5px 8px; font-size: 11px;" onclick="effacerSignaturePleinEcran()">Effacer</button>
-        <button type="button" class="btn btn-primary" style="padding: 5px 10px; font-size: 11px;" onclick="validerSignaturePleinEcran()">Valider</button>
+      <button type="button" class="btn btn-secondary" style="padding: 5px 10px; font-size: 11px;" onclick="fermerModalSignature()">Annuler</button>
+      <span style="font-size:12px; font-weight:600; letter-spacing:0.3px;">Signature de l'OPJ</span>
+      <div style="display: flex; gap: 6px;">
+        <button type="button" class="btn btn-danger" style="padding: 5px 10px; font-size: 11px;" onclick="effacerSignaturePleinEcran()">Effacer</button>
+        <button type="button" class="btn btn-primary" style="padding: 5px 12px; font-size: 11px;" onclick="validerSignaturePleinEcran()">Valider</button>
       </div>
     </div>
     <div class="sig-canvas-container">
@@ -284,16 +607,16 @@
 
   <div id="modal-cotes" class="modal">
     <div class="modal-content">
-      <h3 style="margin-top:0; color:var(--gn-blue); font-size:14px;">Numérotation procédurale</h3>
+      <h3 style="margin-top:0; color:var(--gn-blue); font-size:14px; text-transform:uppercase; letter-spacing:0.5px;">Numérotation procédurale</h3>
       <label>P.V. N° (ex. 2525)</label>
       <input type="text" id="m-pv-num" value="[ En cours ]">
       <label>N° Pièce</label>
       <input type="text" id="m-piece-num" value="1">
       <label>Nmr Dossier Justice</label>
       <input type="text" id="m-dossier-num" value="[ En cours ]">
-      <div class="btn-row" style="margin-top: 12px;">
-        <button type="button" class="btn btn-secondary" onclick="fermerModal()">Retour</button>
-        <button type="button" class="btn btn-primary" onclick="genererEtEnvoyer()">Générer le PDF</button>
+      <div class="btn-row" style="margin-top: 16px;">
+        <button type="button" class="btn btn-secondary" style="flex:1;" onclick="fermerModal()">Retour</button>
+        <button type="button" class="btn btn-primary" style="flex:1;" onclick="genererEtEnvoyer()">Générer le PDF</button>
       </div>
     </div>
   </div>
@@ -310,7 +633,14 @@
 
     window.addEventListener('load', function() {
       var diag = document.getElementById('diag-bar');
-      if (diag) diag.style.display = 'block';
+      if (diag) {
+        diag.style.display = 'block';
+        setTimeout(function() {
+          diag.style.opacity = '0';
+          diag.style.transform = 'translateY(-100%)';
+          setTimeout(function() { diag.style.display = 'none'; }, 600);
+        }, 3000);
+      }
       chargerEtat();
       initSignaturePleinEcran();
     });
@@ -624,11 +954,11 @@
         card.className = 'photo-item';
         card.innerHTML = 
           '<img src="' + p.data + '">' +
-          '<div style="font-size:10px; color:#64748b;">Cliché ' + (idx + 1) + ' — ' + p.date + ' à ' + p.heure + '</div>' +
-          '<input type="text" id="leg-' + p.id + '" value="' + p.legende + '" placeholder="Légende du cliché..." onchange="majLegendeSection(\'' + section + '\', ' + p.id + ', this.value)">' +
+          '<div style="font-size:10.5px; color:var(--text-muted); font-weight:500;">Cliché ' + (idx + 1) + ' — ' + p.date + ' à ' + p.heure + '</div>' +
+          '<input type="text" id="leg-' + p.id + '" value="' + p.legende + '" placeholder="Légende du cliché..." onchange="majLegendeSection(\'' + section + '\', ' + p.id + ', this.value)" style="margin-top:4px;">' +
           '<div class="btn-row">' +
             '<button type="button" class="btn-vocal" id="voc-leg-' + p.id + '" onclick="dicter(\'leg-' + p.id + '\', \'voc-leg-' + p.id + '\')">🎤 Dictée</button>' +
-            '<button type="button" class="btn btn-danger" style="font-size:10px; padding:3px 6px;" onclick="supprimerPhotoSection(\'' + section + '\', ' + p.id + ')">Supprimer</button>' +
+            '<button type="button" class="btn btn-danger" style="font-size:11px; padding:4px 8px;" onclick="supprimerPhotoSection(\'' + section + '\', ' + p.id + ')">Supprimer</button>' +
           '</div>';
         cont.appendChild(card);
       });
@@ -909,26 +1239,72 @@
           });
 
           if (listePhotos && listePhotos.length > 0) {
-            y += 2;
-            listePhotos.forEach(function(p, i) {
-              var ratio = p.aspectRatio || 1.33;
-              var imgW = 135;
-              var imgH = imgW / ratio;
-              var blockH = imgH + 11;
+            y += 3;
+            var i = 0;
+            while (i < listePhotos.length) {
+              var p1 = listePhotos[i];
+              var p2 = (i + 1 < listePhotos.length) ? listePhotos[i + 1] : null;
 
-              if (y + blockH > pageHeight - 15) { doc.addPage(); y = 14; }
+              var r1 = p1.aspectRatio || 1.33;
+              var isPaysage1 = r1 >= 1.2;
+              var r2 = p2 ? (p2.aspectRatio || 1.33) : 1.33;
+              var isPaysage2 = p2 ? (r2 >= 1.2) : false;
 
-              try {
+              if (p2 && isPaysage1 && isPaysage2) {
+                var wDuo = 88;
+                var h1 = wDuo / r1;
+                var h2 = wDuo / r2;
+                var maxH = Math.max(h1, h2);
+                var blockHDuo = maxH + 12;
+
+                if (y + blockHDuo > pageHeight - 15) { doc.addPage(); y = 14; }
+
+                var x1 = leftMargin;
+                var x2 = leftMargin + wDuo + 10;
+
+                try {
+                  doc.addImage(p1.data, 'JPEG', x1, y, wDuo, h1);
+                  doc.setFontSize(7.5);
+                  doc.setFont("times", "italic");
+                  var leg1 = p1.legende ? ("Cliché n° " + (i + 1) + " : " + p1.legende) : ("Cliché n° " + (i + 1) + " (" + p1.date + " à " + p1.heure + ")");
+                  var legLines1 = doc.splitTextToSize(leg1, wDuo);
+                  doc.text(legLines1, x1, y + h1 + 3.5);
+                } catch (e) {}
+
+                try {
+                  doc.addImage(p2.data, 'JPEG', x2, y, wDuo, h2);
+                  doc.setFontSize(7.5);
+                  doc.setFont("times", "italic");
+                  var leg2 = p2.legende ? ("Cliché n° " + (i + 2) + " : " + p2.legende) : ("Cliché n° " + (i + 2) + " (" + p2.date + " à " + p2.heure + ")");
+                  var legLines2 = doc.splitTextToSize(leg2, wDuo);
+                  doc.text(legLines2, x2, y + h2 + 3.5);
+                } catch (e) {}
+
+                y += blockHDuo + 2;
+                i += 2;
+              } else {
+                var imgW = 105;
+                var imgH = imgW / r1;
+                var blockH = imgH + 11;
+
+                if (y + blockH > pageHeight - 15) { doc.addPage(); y = 14; }
+
                 var posX = leftMargin + (usableWidth - imgW) / 2;
-                doc.addImage(p.data, 'JPEG', posX, y, imgW, imgH);
-                y += imgH + 3.5;
-                doc.setFontSize(8);
-                doc.setFont("times", "italic");
-                var legTxt = p.legende ? ("Cliché n° " + (i + 1) + " : " + p.legende) : ("Cliché n° " + (i + 1) + " (" + p.date + " à " + p.heure + ")");
-                doc.text(legTxt, posX, y);
-                y += 5.5;
-              } catch (e) {}
-            });
+                try {
+                  doc.addImage(p1.data, 'JPEG', posX, y, imgW, imgH);
+                  y += imgH + 3.5;
+                  doc.setFontSize(8);
+                  doc.setFont("times", "italic");
+                  var legTxt = p1.legende ? ("Cliché n° " + (i + 1) + " : " + p1.legende) : ("Cliché n° " + (i + 1) + " (" + p1.date + " à " + p1.heure + ")");
+                  var legLinesSolo = doc.splitTextToSize(legTxt, imgW);
+                  doc.text(legLinesSolo, posX, y);
+                  y += (legLinesSolo.length * 3.5) + 3;
+                } catch (e) {
+                  y += 6;
+                }
+                i += 1;
+              }
+            }
           }
 
           y += 3;
@@ -1032,6 +1408,4 @@
 
       if (alerter) alert('Brouillon et données réinitialisés.');
     }
-  </script>
-</body>
-</html>
+  </script></body></html>
