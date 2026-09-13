@@ -62,7 +62,6 @@
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     }
 
-    /* HEADER TACTIQUE */
     header {
       background: linear-gradient(180deg, var(--gn-deep) 0%, var(--gn-header) 100%);
       color: #ffffff;
@@ -185,7 +184,6 @@
       height: 17px;
     }
 
-    /* BANDEAU SUPÉRIEUR OPÉRATIONNEL */
     .tactical-meta-banner {
       background: #ffffff;
       border-bottom: 1px solid var(--border-subtle);
@@ -218,7 +216,6 @@
       letter-spacing: 0.3px;
     }
 
-    /* CONTAINER & CARDS */
     .container {
       padding: 12px 14px;
       max-width: 640px;
@@ -279,7 +276,6 @@
       border-color: rgba(22, 163, 74, 0.2);
     }
 
-    /* CADRE SEGMENTED SWITCH */
     .switch-cadre-container {
       background: #e2e8f0;
       padding: 3px;
@@ -318,7 +314,6 @@
       box-shadow: 0 4px 10px rgba(11, 29, 58, 0.25);
     }
 
-    /* FORMULAIRES & INPUTS */
     label {
       display: flex;
       align-items: center;
@@ -362,7 +357,6 @@
       line-height: 1.45;
     }
 
-    /* BOUTONS */
     .btn-row {
       display: flex;
       gap: 8px;
@@ -428,7 +422,6 @@
       background: #b91c1c;
     }
 
-    /* MODULE DE DICTÉE CONTINUE */
     .btn-vocal {
       background: #f8fafc;
       color: var(--gn-blue);
@@ -463,7 +456,6 @@
       100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
     }
 
-    /* CHIPS & PHRASES TYPES */
     .quick-tags {
       display: flex;
       flex-wrap: wrap;
@@ -493,7 +485,6 @@
       border-color: #94a3b8;
     }
 
-    /* GALLERIES PHOTOS */
     .section-photos {
       margin-top: 14px;
       border-top: 1px dashed var(--border-strong);
@@ -520,7 +511,6 @@
       border: 1px solid rgba(0, 0, 0, 0.1);
     }
 
-    /* SIGNATURE TACTILE */
     #sig-preview {
       width: 100%;
       height: 100px;
@@ -545,7 +535,6 @@
       max-width: 90%;
     }
 
-    /* MODAL SIGNATURE */
     #modal-signature {
       display: none;
       position: fixed;
@@ -585,7 +574,6 @@
       display: block;
     }
 
-    /* MODAL COTES */
     .modal {
       display: none;
       position: fixed;
@@ -610,7 +598,6 @@
       border: 1px solid var(--border-subtle);
     }
 
-    /* TAB BAR BASSE TACTIQUE */
     .tactical-tab-bar {
       position: fixed;
       bottom: 0;
@@ -657,7 +644,6 @@
 
   <header>
     <div class="brand-group">
-      <!-- INSIGNE OFFICIEL GENDCONSTAT -->
       <svg class="brand-logo-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect width="100" height="100" rx="22" fill="#061225"/>
         <path d="M50 14 C74 14 84 25 84 55 C84 75 58 87 50 90 C42 87 16 75 16 55 C16 25 26 14 50 14 Z" stroke="#38bdf8" stroke-width="2.5" fill="#0b1d3a" stroke-dasharray="1 1"/>
@@ -705,7 +691,6 @@
     </div>
   </header>
 
-  <!-- BANDEAU OPÉRATIONNEL -->
   <div class="tactical-meta-banner">
     <div class="meta-item-tag">
       <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -718,7 +703,6 @@
 
   <div class="container">
 
-    <!-- CONFIGURATION PROFIL (MASQUÉE PAR DÉFAUT) -->
     <div class="card" id="config-card" style="display:none;">
       <div class="card-header-bar">
         <div class="card-title">
@@ -1035,7 +1019,6 @@
 
   </div>
 
-  <!-- BARRE D'ONGLETS BASSE ADAPTÉE -->
   <div class="tactical-tab-bar">
     <a href="#section-situation" class="tab-item">
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
@@ -1696,9 +1679,18 @@
         y += introLines.length * 4.2 + 4;
 
         function ajouterRubrique(titre, texte, listePhotos) {
-          if (y > pageHeight - 35) { doc.addPage(); y = 14; }
-
           var bannerH = 6;
+          var lines = doc.splitTextToSize(texte, usableWidth);
+          var textH = lines.length * 4.2;
+          
+          var estimFirstPhotoH = (listePhotos && listePhotos.length > 0) ? 55 : 0;
+          var neededH = bannerH + textH + estimFirstPhotoH + 10;
+          
+          if (y + neededH > pageHeight - 15 && y > pageHeight - 50) {
+            doc.addPage();
+            y = 14;
+          }
+
           doc.setFillColor(242, 242, 242);
           doc.setDrawColor(0, 0, 0);
           doc.setLineWidth(0.2);
@@ -1713,7 +1705,6 @@
 
           doc.setFont("times", "normal");
           doc.setFontSize(9.5);
-          var lines = doc.splitTextToSize(texte, usableWidth);
           lines.forEach(function(line) {
             if (y > pageHeight - 15) { doc.addPage(); y = 14; }
             doc.text(line, leftMargin, y);
@@ -1727,49 +1718,59 @@
               var p1 = listePhotos[i];
               var p2 = (i + 1 < listePhotos.length) ? listePhotos[i + 1] : null;
 
-              var r1 = p1.aspectRatio || 1.33;
-              var isPaysage1 = r1 >= 1.2;
-              var r2 = p2 ? (p2.aspectRatio || 1.33) : 1.33;
-              var isPaysage2 = p2 ? (r2 >= 1.2) : false;
+              if (p2) {
+                var r1 = p1.aspectRatio || 1.33;
+                var r2 = p2.aspectRatio || 1.33;
 
-              if (p2 && isPaysage1 && isPaysage2) {
-                var wDuo = 88;
-                var h1 = wDuo / r1;
-                var h2 = wDuo / r2;
-                var maxH = Math.max(h1, h2);
-                var blockHDuo = maxH + 12;
+                var targetH = 60;
+                var w1 = targetH * r1;
+                var w2 = targetH * r2;
 
-                if (y + blockHDuo > pageHeight - 15) { doc.addPage(); y = 14; }
+                var maxColW = 88;
+                if (w1 > maxColW) { w1 = maxColW; }
+                if (w2 > maxColW) { w2 = maxColW; }
 
-                var x1 = leftMargin;
-                var x2 = leftMargin + wDuo + 10;
+                var h1 = w1 / r1;
+                var h2 = w2 / r2;
+                var blockH = Math.max(h1, h2) + 11;
+
+                if (y + blockH > pageHeight - 15) { doc.addPage(); y = 14; }
+
+                var x1 = leftMargin + (maxColW - w1) / 2;
+                var x2 = leftMargin + maxColW + 10 + (maxColW - w2) / 2;
 
                 try {
-                  doc.addImage(p1.data, 'JPEG', x1, y, wDuo, h1);
+                  doc.addImage(p1.data, 'JPEG', x1, y, w1, h1);
                   doc.setFontSize(7.5);
                   doc.setFont("times", "italic");
                   var leg1 = p1.legende ? ("Cliché n° " + (i + 1) + " : " + p1.legende) : ("Cliché n° " + (i + 1) + " (" + p1.date + " à " + p1.heure + ")");
-                  var legLines1 = doc.splitTextToSize(leg1, wDuo);
-                  doc.text(legLines1, x1, y + h1 + 3.5);
+                  var legLines1 = doc.splitTextToSize(leg1, maxColW);
+                  doc.text(legLines1, leftMargin, y + h1 + 3.5);
                 } catch (e) {}
 
                 try {
-                  doc.addImage(p2.data, 'JPEG', x2, y, wDuo, h2);
+                  doc.addImage(p2.data, 'JPEG', x2, y, w2, h2);
                   doc.setFontSize(7.5);
                   doc.setFont("times", "italic");
                   var leg2 = p2.legende ? ("Cliché n° " + (i + 2) + " : " + p2.legende) : ("Cliché n° " + (i + 2) + " (" + p2.date + " à " + p2.heure + ")");
-                  var legLines2 = doc.splitTextToSize(leg2, wDuo);
-                  doc.text(legLines2, x2, y + h2 + 3.5);
+                  var legLines2 = doc.splitTextToSize(leg2, maxColW);
+                  doc.text(legLines2, leftMargin + maxColW + 10, y + h2 + 3.5);
                 } catch (e) {}
 
-                y += blockHDuo + 2;
+                y += blockH + 3;
                 i += 2;
               } else {
-                var imgW = 105;
-                var imgH = imgW / r1;
-                var blockH = imgH + 11;
+                var r = p1.aspectRatio || 1.33;
+                var imgH = 65;
+                var imgW = imgH * r;
 
-                if (y + blockH > pageHeight - 15) { doc.addPage(); y = 14; }
+                if (imgW > 92) {
+                  imgW = 92;
+                  imgH = imgW / r;
+                }
+
+                var blockHSolo = imgH + 11;
+                if (y + blockHSolo > pageHeight - 15) { doc.addPage(); y = 14; }
 
                 var posX = leftMargin + (usableWidth - imgW) / 2;
                 try {
@@ -1778,8 +1779,8 @@
                   doc.setFontSize(8);
                   doc.setFont("times", "italic");
                   var legTxt = p1.legende ? ("Cliché n° " + (i + 1) + " : " + p1.legende) : ("Cliché n° " + (i + 1) + " (" + p1.date + " à " + p1.heure + ")");
-                  var legLinesSolo = doc.splitTextToSize(legTxt, imgW);
-                  doc.text(legLinesSolo, posX, y);
+                  var legLinesSolo = doc.splitTextToSize(legTxt, 110);
+                  doc.text(legLinesSolo, leftMargin + (usableWidth - 110) / 2, y);
                   y += (legLinesSolo.length * 3.5) + 3;
                 } catch (e) {
                   y += 6;
