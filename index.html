@@ -663,16 +663,16 @@
         <line x1="50" y1="40" x2="50" y2="68" stroke="#38bdf8" stroke-width="1.2"/>
         <line x1="36" y1="54" x2="64" y2="54" stroke="#38bdf8" stroke-width="1.2"/>
         <rect x="36" y="71" width="28" height="9" rx="4.5" fill="#1d4ed8" stroke="#60a5fa" stroke-width="1"/>
-        <text x="50" y="77.5" fill="#ffffff" font-size="6.5" font-weight="900" font-family="sans-serif" text-anchor="middle" letter-spacing="1">OPJ</text>
+        <text id="header-badge-qualite-txt" x="50" y="77.5" fill="#ffffff" font-size="6.5" font-weight="900" font-family="sans-serif" text-anchor="middle" letter-spacing="1">OPJ</text>
       </svg>
       <div class="brand-texts">
         <div class="brand-title-row">
           <h1>GEND<span>CONSTAT</span></h1>
-          <span class="badge-header-opj">OPJ</span>
+          <span class="badge-header-opj" id="header-badge-tag">OPJ</span>
         </div>
         <div class="brand-sub">
           <span class="brand-sub-dot"></span>
-          OPJ EN MISSION • CRYPTO SEC
+          MISSION JUDICIAIRE • TERRAIN
         </div>
       </div>
     </div>
@@ -703,13 +703,14 @@
 
   <div class="container">
 
+    <!-- CONFIGURATION PROFIL -->
     <div class="card" id="config-card" style="display:none;">
       <div class="card-header-bar">
         <div class="card-title">
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
           Profils & Unité
         </div>
-        <span class="card-tag-pill">OPJ ENQUÊTEUR</span>
+        <span class="card-tag-pill" id="cfg-tag-qualite">RÉDACTEUR</span>
       </div>
       
       <label>Compagnie</label>
@@ -726,7 +727,7 @@
       <input type="text" id="cfg-email" value="" oninput="sauvegarderEtat()">
 
       <div style="margin-top:14px; border-top:1px solid #cbd5e1; padding-top:8px; font-weight:800; color:var(--gn-blue); font-size:11.5px; letter-spacing:0.5px; text-transform:uppercase;">
-        Officier rédacteur (OPJ)
+        Militaire rédacteur du procès-verbal
       </div>
       <div style="display:flex; gap:8px;">
         <div style="flex:1;">
@@ -738,17 +739,25 @@
           <input type="text" id="cfg-nom" value="Jean GROGA" oninput="sauvegarderEtat()">
         </div>
       </div>
-      <label>Qualité</label>
-      <input type="text" id="cfg-qualite" value="Officier de Police Judiciaire" oninput="sauvegarderEtat()">
+
+      <label>Qualité juridique du rédacteur</label>
+      <select id="cfg-qualite" onchange="ajusterLabelsSelonQualite(); sauvegarderEtat();">
+        <option value="OPJ" selected>OPJ (Officier de Police Judiciaire - Art. 16 CPP)</option>
+        <option value="APJ">APJ (Agent de Police Judiciaire - Art. 20 CPP)</option>
+        <option value="APJA">APJA (Agent de Police Judiciaire Adjoint - Art. 21 CPP)</option>
+      </select>
 
       <div style="margin-top:14px; border-top:1px solid #cbd5e1; padding-top:8px;">
         <label style="display:inline-flex; align-items:center; gap:8px; font-weight:700; color:var(--gn-blue); cursor:pointer; text-transform:none;">
           <input type="checkbox" id="cfg-adjoint-actif" onchange="toggleAdjointForm(); sauvegarderEtat();" style="width:auto; margin:0;">
-          Ajouter un collègue / adjoint d'enquête
+          <span id="lbl-adjoint-toggle">Ajouter un collègue / adjoint d'enquête</span>
         </label>
       </div>
 
       <div id="box-adjoint" style="display:none; background:#f8fafc; padding:10px; border-radius:8px; margin-top:8px; border:1px solid #e2e8f0;">
+        <div style="font-size:10px; font-weight:800; text-transform:uppercase; color:var(--text-muted); margin-bottom:6px;" id="box-adj-title">
+          Militaire adjoint / contrôle
+        </div>
         <div style="display:flex; gap:8px;">
           <div style="flex:1;">
             <label>Grade</label>
@@ -995,12 +1004,12 @@
       </div>
     </div>
 
-    <!-- 9. SIGNATURE DE L'OPJ & CLÔTURE -->
+    <!-- 9. SIGNATURE DU RÉDACTEUR & CLÔTURE -->
     <div class="card" id="section-signature">
       <div class="card-header-bar">
         <div class="card-title">
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-          Signature OPJ & Clôture
+          <span id="card-sig-title">Signature du Rédacteur & Clôture</span>
         </div>
         <span class="card-tag-pill">HORODATÉ</span>
       </div>
@@ -1043,7 +1052,7 @@
   <div id="modal-signature">
     <div class="sig-top-bar">
       <button type="button" class="btn btn-secondary" style="padding: 5px 10px; font-size: 11px;" onclick="fermerModalSignature()">Annuler</button>
-      <span style="font-size:12px; font-weight:700; letter-spacing:0.3px;">Signature de l'Officier Rédacteur</span>
+      <span style="font-size:12px; font-weight:700; letter-spacing:0.3px;">Signature du Rédacteur</span>
       <div style="display: flex; gap: 6px;">
         <button type="button" class="btn btn-danger" style="padding: 5px 10px; font-size: 11px;" onclick="effacerSignaturePleinEcran()">Effacer</button>
         <button type="button" class="btn btn-primary" style="padding: 5px 12px; font-size: 11px;" onclick="validerSignaturePleinEcran()">Valider</button>
@@ -1093,6 +1102,7 @@
         }, 3000);
       }
       chargerEtat();
+      ajusterLabelsSelonQualite();
       initSignaturePleinEcran();
     });
 
@@ -1105,6 +1115,40 @@
       var el = document.getElementById(id);
       if (el && val !== undefined) el.value = val;
     }
+
+    window.ajusterLabelsSelonQualite = function() {
+      var q = getVal('cfg-qualite');
+      var badgeH = document.getElementById('header-badge-tag');
+      var badgeSvg = document.getElementById('header-badge-qualite-txt');
+      var cfgTag = document.getElementById('cfg-tag-qualite');
+      var lblAdj = document.getElementById('lbl-adjoint-toggle');
+      var boxAdjTitle = document.getElementById('box-adj-title');
+      var selAdjQ = document.getElementById('cfg-adj-qualite');
+      var cardSigTitle = document.getElementById('card-sig-title');
+
+      var qualiteCode = (q === 'APJ' || q === 'APJA') ? q : 'OPJ';
+
+      if (badgeH) badgeH.innerText = qualiteCode;
+      if (badgeSvg) badgeSvg.textContent = qualiteCode;
+      if (cfgTag) cfgTag.innerText = qualiteCode + ' RÉDACTEUR';
+
+      if (qualiteCode === 'OPJ') {
+        if (lblAdj) lblAdj.innerText = "Ajouter un collègue / adjoint d'enquête";
+        if (boxAdjTitle) boxAdjTitle.innerText = "Adjoint d'enquête";
+        if (cardSigTitle) cardSigTitle.innerText = "Signature de l'OPJ & Clôture";
+        if (selAdjQ) {
+          selAdjQ.disabled = false;
+        }
+      } else {
+        if (lblAdj) lblAdj.innerText = "Agissant sous le contrôle d'un OPJ";
+        if (boxAdjTitle) boxAdjTitle.innerText = "Officier de Police Judiciaire superviseur";
+        if (cardSigTitle) cardSigTitle.innerText = "Signature du Rédacteur (" + qualiteCode + ") & Clôture";
+        if (selAdjQ) {
+          selAdjQ.value = 'OPJ';
+          selAdjQ.disabled = true;
+        }
+      }
+    };
 
     window.sauvegarderEtat = function() {
       try {
@@ -1156,7 +1200,16 @@
         setVal('cfg-email', e.email);
         setVal('cfg-grade', e.grade);
         setVal('cfg-nom', e.nom);
-        setVal('cfg-qualite', e.qualite);
+
+        if (e.qualite) {
+          if (e.qualite === 'OPJ' || e.qualite === 'APJ' || e.qualite === 'APJA') {
+            setVal('cfg-qualite', e.qualite);
+          } else if (e.qualite.indexOf('Agent') !== -1) {
+            setVal('cfg-qualite', 'APJ');
+          } else {
+            setVal('cfg-qualite', 'OPJ');
+          }
+        }
 
         var chkAdj = document.getElementById('cfg-adjoint-actif');
         if (chkAdj && e.adjointActif !== undefined) {
@@ -1540,9 +1593,20 @@
       var residenceU = getVal('cfg-residence');
       var destEmail = getVal('cfg-email');
 
-      var gradeOpj = getVal('cfg-grade');
-      var nomOpj = getVal('cfg-nom');
-      var qualiteOpj = getVal('cfg-qualite');
+      var gradeRedacteur = getVal('cfg-grade');
+      var nomRedacteur = getVal('cfg-nom');
+      var qualiteRedacteurCode = getVal('cfg-qualite') || 'OPJ';
+
+      var libelleQualiteRedacteur = "Officier de Police Judiciaire";
+      var libelleQualiteCloture = "L'Officier de Police Judiciaire";
+
+      if (qualiteRedacteurCode === 'APJ') {
+        libelleQualiteRedacteur = "Agent de Police Judiciaire";
+        libelleQualiteCloture = "L'Agent de Police Judiciaire";
+      } else if (qualiteRedacteurCode === 'APJA') {
+        libelleQualiteRedacteur = "Agent de Police Judiciaire Adjoint";
+        libelleQualiteCloture = "L'Agent de Police Judiciaire Adjoint";
+      }
 
       var chkAdj = document.getElementById('cfg-adjoint-actif');
       var adjointActif = chkAdj ? chkAdj.checked : false;
@@ -1556,12 +1620,18 @@
       if (adjQualiteCode === 'OPJ') adjQualiteLibelle = "Officier de Police Judiciaire";
 
       var articles = "";
-      if (!adjointActif || adjQualiteCode === 'OPJ') {
-        articles = cadreActif === 'FLAGRANCE' ? "16 à 19 et 53 à 67" : "16 à 19 et 75 à 78";
-      } else if (adjQualiteCode === 'APJ') {
-        articles = cadreActif === 'FLAGRANCE' ? "16 à 19, 20 et 53 à 67" : "16 à 19, 20 et 75 à 78";
-      } else if (adjQualiteCode === 'APJA') {
-        articles = cadreActif === 'FLAGRANCE' ? "16 à 19, 21 1° bis, 21-1 et 53 à 67" : "16 à 19, 21 1° bis, 21-1 et 75 à 78";
+      if (qualiteRedacteurCode === 'OPJ') {
+        if (!adjointActif || adjQualiteCode === 'OPJ') {
+          articles = cadreActif === 'FLAGRANCE' ? "16 à 19 et 53 à 67" : "16 à 19 et 75 à 78";
+        } else if (adjQualiteCode === 'APJ') {
+          articles = cadreActif === 'FLAGRANCE' ? "16 à 19, 20 et 53 à 67" : "16 à 19, 20 et 75 à 78";
+        } else if (adjQualiteCode === 'APJA') {
+          articles = cadreActif === 'FLAGRANCE' ? "16 à 19, 21 1° bis, 21-1 et 53 à 67" : "16 à 19, 21 1° bis, 21-1 et 75 à 78";
+        }
+      } else if (qualiteRedacteurCode === 'APJ') {
+        articles = cadreActif === 'FLAGRANCE' ? "20 et 53 à 67" : "20 et 75 à 78";
+      } else if (qualiteRedacteurCode === 'APJA') {
+        articles = cadreActif === 'FLAGRANCE' ? "21 1° bis, 21-1 et 53 à 67" : "21 1° bis, 21-1 et 75 à 78";
       }
 
       var arriveeTime = getVal('f-arrivee-time') || dateFormatee;
@@ -1668,10 +1738,16 @@
         doc.setFont("times", "normal");
         doc.setFontSize(9.5);
 
-        var intro = "Le " + dateFormatee + "\nNous soussigné " + gradeOpj + " " + nomOpj + ", " + qualiteOpj + " en résidence à " + residenceU;
+        var intro = "Le " + dateFormatee + "\nNous soussigné " + gradeRedacteur + " " + nomRedacteur + ", " + libelleQualiteRedacteur + " en résidence à " + residenceU;
+
         if (adjointActif) {
-          intro += "\nAssisté du " + adjGrade + " " + adjNom + ", " + adjQualiteLibelle + " en résidence à " + adjResidence;
+          if (qualiteRedacteurCode === 'OPJ') {
+            intro += "\nAssisté du " + adjGrade + " " + adjNom + ", " + adjQualiteLibelle + " en résidence à " + adjResidence;
+          } else {
+            intro += "\nAgissant sous le contrôle et les instructions de " + adjGrade + " " + adjNom + ", Officier de Police Judiciaire en résidence à " + adjResidence;
+          }
         }
+
         intro += "\nVu les articles " + articles + " du Code de Procédure Pénale.\nNous trouvant au bureau de notre unité à " + residenceU + ", rapportons les opérations suivantes :";
 
         var introLines = doc.splitTextToSize(intro, usableWidth);
@@ -1830,10 +1906,10 @@
         y += 7;
 
         doc.setFont("times", "bold");
-        doc.text("L'Officier de Police Judiciaire", leftMargin + (usableWidth / 2), y, { align: "center" });
+        doc.text(libelleQualiteCloture, leftMargin + (usableWidth / 2), y, { align: "center" });
         y += 4.5;
         doc.setFont("times", "normal");
-        doc.text(gradeOpj + " " + nomOpj, leftMargin + (usableWidth / 2), y, { align: "center" });
+        doc.text(gradeRedacteur + " " + nomRedacteur, leftMargin + (usableWidth / 2), y, { align: "center" });
 
         if (signatureBlobData) {
           doc.addImage(signatureBlobData, 'PNG', leftMargin + (usableWidth / 2) - 25, y + 2, 50, 22);
