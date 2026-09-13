@@ -6,19 +6,26 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     :root {
-      --gn-deep: #0b1d3a;
-      --gn-blue: #1e3a8a;
-      --gn-light: #2563eb;
-      --bg-main: #f8fafc;
+      --gn-deep: #071326;
+      --gn-header: #0b1d3a;
+      --gn-blue: #163673;
+      --gn-accent: #2563eb;
+      --gn-accent-soft: #eff6ff;
+      --gn-glow: rgba(37, 99, 235, 0.35);
+      --bg-main: #f1f5f9;
       --surface: #ffffff;
+      --surface-muted: #f8fafc;
       --border-subtle: #e2e8f0;
-      --border-focus: #94a3b8;
+      --border-strong: #cbd5e1;
       --text-main: #0f172a;
       --text-muted: #64748b;
-      --text-label: #334155;
+      --text-label: #475569;
+      --badge-bg: #e0e7ff;
+      --badge-txt: #1e40af;
+      --badge-green-bg: #dcfce7;
+      --badge-green-txt: #15803d;
       --danger: #dc2626;
-      --danger-dark: #b91c1c;
-      --success: #16a34a;
+      --danger-soft: #fef2f2;
     }
 
     * {
@@ -27,11 +34,15 @@
       -webkit-tap-highlight-color: transparent;
     }
 
+    html {
+      scroll-behavior: smooth;
+    }
+
     body {
       margin: 0;
       background: var(--bg-main);
       color: var(--text-main);
-      padding-bottom: 80px;
+      padding-bottom: 90px;
       -webkit-font-smoothing: antialiased;
     }
 
@@ -40,93 +51,310 @@
       color: #ffffff;
       text-align: center;
       font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.3px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
       padding: 6px 12px;
       display: none;
       transition: opacity 0.6s ease, transform 0.6s ease;
       position: sticky;
       top: 0;
-      z-index: 60;
+      z-index: 70;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     }
 
+    /* HEADER TACTIQUE */
     header {
-      background: linear-gradient(180deg, var(--gn-deep) 0%, var(--gn-blue) 100%);
+      background: linear-gradient(180deg, var(--gn-deep) 0%, var(--gn-header) 100%);
       color: #ffffff;
-      padding: 12px 16px;
+      padding: 10px 16px;
       position: sticky;
       top: 0;
       z-index: 50;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      box-shadow: 0 4px 12px rgba(11, 29, 58, 0.15);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 4px 16px rgba(7, 19, 38, 0.4);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo-svg {
+      width: 38px;
+      height: 38px;
+      flex-shrink: 0;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+    }
+
+    .brand-texts {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand-title-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
     header h1 {
       margin: 0;
       font-size: 14px;
-      font-weight: 700;
+      font-weight: 800;
+      letter-spacing: 1px;
       text-transform: uppercase;
-      letter-spacing: 0.8px;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
     }
 
+    header h1 span {
+      color: #38bdf8;
+    }
+
+    .badge-header-opj {
+      background: linear-space;
+      background: rgba(37, 99, 235, 0.3);
+      border: 1px solid #38bdf8;
+      color: #e0f2fe;
+      font-size: 9.5px;
+      font-weight: 800;
+      padding: 1px 6px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+
+    .brand-sub {
+      font-size: 9.5px;
+      color: #94a3b8;
+      letter-spacing: 0.4px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 1px;
+    }
+
+    .brand-sub-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 6px #22c55e;
+      display: inline-block;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-icon-tactical {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #e2e8f0;
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      padding: 0;
+    }
+
+    .btn-icon-tactical:hover {
+      background: rgba(255, 255, 255, 0.18);
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .btn-icon-tactical.danger:hover {
+      background: rgba(220, 38, 38, 0.25);
+      border-color: #f87171;
+      color: #fca5a5;
+    }
+
+    .btn-icon-tactical svg {
+      width: 17px;
+      height: 17px;
+    }
+
+    /* BANDEAU SUPÉRIEUR OPÉRATIONNEL */
+    .tactical-meta-banner {
+      background: #ffffff;
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 8px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    }
+
+    .meta-item-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--gn-blue);
+      letter-spacing: 0.3px;
+    }
+
+    .meta-badge-unit {
+      background: var(--badge-bg);
+      color: var(--badge-txt);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      border: 1px solid rgba(30, 64, 175, 0.15);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    /* CONTAINER & CARDS */
     .container {
-      padding: 12px;
+      padding: 12px 14px;
       max-width: 640px;
       margin: 0 auto;
     }
 
     .card {
       background: var(--surface);
-      border-radius: 10px;
+      border-radius: 12px;
       padding: 16px;
       margin-bottom: 14px;
-      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(15, 23, 42, 0.02);
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05), 0 1px 2px rgba(15, 23, 42, 0.02);
       border: 1px solid var(--border-subtle);
+      scroll-margin-top: 70px;
     }
 
-    .card-title {
-      font-weight: 700;
-      font-size: 12.5px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: var(--gn-blue);
-      margin-bottom: 12px;
-      border-bottom: 2px solid #e2e8f0;
-      padding-bottom: 6px;
+    .card-header-bar {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      margin-bottom: 12px;
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 8px;
     }
 
+    .card-title {
+      font-weight: 800;
+      font-size: 12.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--gn-header);
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .card-title svg {
+      width: 15px;
+      height: 15px;
+      color: var(--gn-accent);
+    }
+
+    .card-tag-pill {
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: var(--badge-bg);
+      color: var(--badge-txt);
+      border: 1px solid rgba(37, 99, 235, 0.15);
+      letter-spacing: 0.3px;
+    }
+
+    .card-tag-pill.green {
+      background: var(--badge-green-bg);
+      color: var(--badge-green-txt);
+      border-color: rgba(22, 163, 74, 0.2);
+    }
+
+    /* CADRE SEGMENTED SWITCH */
+    .switch-cadre-container {
+      background: #e2e8f0;
+      padding: 3px;
+      border-radius: 10px;
+      display: flex;
+      gap: 3px;
+      margin-bottom: 14px;
+      border: 1px solid var(--border-strong);
+    }
+
+    .switch-cadre {
+      display: contents;
+    }
+
+    .switch-cadre button {
+      flex: 1;
+      padding: 11px 12px;
+      border: none;
+      background: transparent;
+      color: #475569;
+      font-weight: 800;
+      font-size: 12px;
+      letter-spacing: 0.6px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .switch-cadre button.active {
+      background: var(--gn-header);
+      color: #ffffff;
+      box-shadow: 0 4px 10px rgba(11, 29, 58, 0.25);
+    }
+
+    /* FORMULAIRES & INPUTS */
     label {
-      display: block;
-      font-size: 11px;
-      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10.5px;
+      font-weight: 700;
       margin-top: 10px;
-      margin-bottom: 4px;
+      margin-bottom: 5px;
       color: var(--text-label);
       text-transform: uppercase;
-      letter-spacing: 0.3px;
+      letter-spacing: 0.4px;
+    }
+
+    label svg {
+      width: 12px;
+      height: 12px;
+      color: var(--text-muted);
     }
 
     input[type="text"], select, textarea {
       width: 100%;
-      padding: 10px 12px;
-      border: 1px solid var(--border-subtle);
-      border-radius: 6px;
+      padding: 11px 12px;
+      border: 1px solid var(--border-strong);
+      border-radius: 8px;
       font-size: 13.5px;
       background: #ffffff;
       color: var(--text-main);
-      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      transition: all 0.2s ease;
       outline: none;
     }
 
     input[type="text"]:focus, select:focus, textarea:focus {
-      border-color: var(--gn-blue);
-      box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+      border-color: var(--gn-accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+      background: #ffffff;
     }
 
     textarea {
@@ -135,24 +363,26 @@
       line-height: 1.45;
     }
 
+    /* BOUTONS D'ACTION */
     .btn-row {
       display: flex;
       gap: 8px;
-      margin-top: 8px;
+      margin-top: 10px;
     }
 
     .btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      padding: 9px 14px;
+      gap: 6px;
+      padding: 10px 14px;
       border: none;
-      border-radius: 6px;
-      font-weight: 600;
+      border-radius: 8px;
+      font-weight: 700;
       font-size: 12px;
       cursor: pointer;
       text-decoration: none;
-      transition: background-color 0.15s ease, opacity 0.15s ease;
+      transition: all 0.15s ease;
     }
 
     .btn:active {
@@ -160,21 +390,34 @@
     }
 
     .btn-primary {
-      background: var(--gn-blue);
+      background: linear-gradient(180deg, #1e3a8a 0%, var(--gn-header) 100%);
       color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 2px 6px rgba(11, 29, 58, 0.2);
     }
 
     .btn-primary:hover {
       background: var(--gn-deep);
     }
 
-    .btn-secondary {
-      background: #475569;
+    .btn-tactical-gps {
+      background: linear-gradient(180deg, #1e3a8a 0%, #0b1d3a 100%);
       color: #ffffff;
+      border: 1px solid #2563eb;
+      box-shadow: 0 3px 10px rgba(11, 29, 58, 0.25);
+      font-size: 13px;
+      letter-spacing: 0.4px;
+    }
+
+    .btn-secondary {
+      background: #f1f5f9;
+      color: var(--text-label);
+      border: 1px solid var(--border-strong);
     }
 
     .btn-secondary:hover {
-      background: #334155;
+      background: #e2e8f0;
+      color: var(--text-main);
     }
 
     .btn-danger {
@@ -183,42 +426,45 @@
     }
 
     .btn-danger:hover {
-      background: var(--danger-dark);
+      background: #b91c1c;
     }
 
+    /* MODULE DE DICTÉE CONTINUE */
     .btn-vocal {
-      background: #f1f5f9;
+      background: #f8fafc;
       color: var(--gn-blue);
-      border: 1px solid #cbd5e1;
-      padding: 7px 12px;
+      border: 1px solid var(--border-strong);
+      padding: 8px 14px;
       font-size: 11.5px;
-      margin-top: 6px;
-      border-radius: 6px;
+      margin-top: 8px;
+      border-radius: 8px;
       cursor: pointer;
-      font-weight: 600;
+      font-weight: 700;
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: 6px;
       transition: all 0.2s ease;
     }
 
     .btn-vocal:hover {
-      background: #e2e8f0;
+      background: #eff6ff;
+      border-color: #bfdbfe;
     }
 
     .btn-vocal.recording {
-      background: var(--danger);
+      background: #dc2626;
       color: #ffffff;
-      border-color: var(--danger);
-      animation: pulseVocal 1.2s infinite ease-in-out;
+      border-color: #b91c1c;
+      animation: pulseRecording 1.4s infinite ease-in-out;
     }
 
-    @keyframes pulseVocal {
-      0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
-      70% { box-shadow: 0 0 0 8px rgba(220, 38, 38, 0); }
+    @keyframes pulseRecording {
+      0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.45); }
+      70% { box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
       100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
     }
 
+    /* CHIPS & TAGS ERGONOMIQUES */
     .quick-tags {
       display: flex;
       flex-wrap: wrap;
@@ -230,99 +476,77 @@
     .tag-btn {
       background: #f1f5f9;
       border: 1px solid #cbd5e1;
-      border-radius: 16px;
+      border-radius: 18px;
       font-size: 11px;
-      padding: 4px 10px;
+      padding: 5px 11px;
       cursor: pointer;
-      font-weight: 500;
+      font-weight: 600;
       color: #334155;
       transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
     }
 
     .tag-btn:hover {
       background: #e2e8f0;
-      color: var(--gn-deep);
+      color: var(--gn-header);
       border-color: #94a3b8;
     }
 
-    .switch-cadre {
-      display: flex;
-      background: #e2e8f0;
-      padding: 3px;
-      border-radius: 8px;
-      margin-bottom: 14px;
-      border: 1px solid #cbd5e1;
-    }
-
-    .switch-cadre button {
-      flex: 1;
-      padding: 10px 8px;
-      border: none;
-      background: transparent;
-      color: #475569;
-      font-weight: 700;
-      font-size: 12px;
-      letter-spacing: 0.4px;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .switch-cadre button.active {
-      background: var(--gn-blue);
-      color: #ffffff;
-      box-shadow: 0 2px 4px rgba(15, 23, 42, 0.12);
-    }
-
+    /* GALLERIES PHOTOS */
     .section-photos {
-      margin-top: 12px;
-      border-top: 1px dashed var(--border-subtle);
-      padding-top: 10px;
+      margin-top: 14px;
+      border-top: 1px dashed var(--border-strong);
+      padding-top: 12px;
     }
 
     .photo-item {
       border: 1px solid var(--border-subtle);
-      border-radius: 8px;
-      padding: 8px;
-      margin-top: 8px;
-      background: #f8fafc;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+      border-radius: 10px;
+      padding: 10px;
+      margin-top: 10px;
+      background: var(--surface-muted);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
     }
 
     .photo-item img {
       max-width: 100%;
-      height: 140px;
+      height: 145px;
       object-fit: contain;
-      background: #0f172a;
-      border-radius: 6px;
+      background: #071326;
+      border-radius: 8px;
       display: block;
       margin: 4px auto 8px auto;
+      border: 1px solid rgba(0, 0, 0, 0.1);
     }
 
+    /* SIGNATURE TACTILE */
     #sig-preview {
       width: 100%;
-      height: 96px;
+      height: 100px;
       border: 2px dashed #94a3b8;
-      border-radius: 8px;
+      border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
       background: #ffffff;
       cursor: pointer;
       margin-top: 8px;
-      transition: border-color 0.2s ease, background-color 0.2s ease;
+      transition: all 0.2s ease;
     }
 
     #sig-preview:hover {
-      border-color: var(--gn-blue);
-      background-color: #f8fafc;
+      border-color: var(--gn-accent);
+      background-color: var(--gn-accent-soft);
     }
 
     #sig-preview img {
-      max-height: 84px;
+      max-height: 85px;
       max-width: 90%;
     }
 
+    /* MODAL SIGNATURE FULLSCREEN */
     #modal-signature {
       display: none;
       position: fixed;
@@ -352,7 +576,7 @@
       position: relative;
       width: 100%;
       height: calc(100vh - 52px);
-      background: #fafafa;
+      background: #f8fafc;
     }
 
     #sig-fullscreen-canvas {
@@ -362,6 +586,7 @@
       display: block;
     }
 
+    /* MODAL NUMÉROTATION */
     .modal {
       display: none;
       position: fixed;
@@ -369,8 +594,8 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(11, 29, 58, 0.55);
-      backdrop-filter: blur(2px);
+      background: rgba(7, 19, 38, 0.65);
+      backdrop-filter: blur(4px);
       z-index: 100;
       align-items: center;
       justify-content: center;
@@ -378,29 +603,132 @@
 
     .modal-content {
       background: #ffffff;
-      padding: 20px;
-      border-radius: 10px;
+      padding: 22px;
+      border-radius: 14px;
       width: 90%;
       max-width: 440px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 20px 35px rgba(0, 0, 0, 0.3);
       border: 1px solid var(--border-subtle);
+    }
+
+    /* BOTTOM TAB BAR NATIVE */
+    .tactical-tab-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 64px;
+      background: #ffffff;
+      border-top: 1px solid var(--border-strong);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 45;
+      box-shadow: 0 -4px 12px rgba(15, 23, 42, 0.06);
+    }
+
+    .tab-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      color: #64748b;
+      text-decoration: none;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      padding: 6px 0;
+      transition: color 0.15s ease;
+    }
+
+    .tab-item svg {
+      width: 20px;
+      height: 20px;
+      stroke-width: 2;
+    }
+
+    .tab-item:active, .tab-item:hover {
+      color: var(--gn-accent);
     }
   </style></head><body>
 
   <div id="diag-bar">✓ APPLICATION CHARGÉE SANS ERREUR</div>
 
   <header>
-    <h1>GendConstat</h1>
-    <div style="display:flex; gap:6px;">
-      <button type="button" class="btn btn-danger" onclick="demanderReinitialisation()" style="font-size: 11px; padding: 5px 9px;">🔄 Tout effacer</button>
-      <button type="button" class="btn btn-secondary" onclick="toggleConfig()" style="font-size: 11px; padding: 5px 9px;">Profils</button>
+    <div class="brand-group">
+      <!-- INSIGNE OFFICIEL GENDCONSTAT VECTORIEL -->
+      <svg class="brand-logo-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="100" height="100" rx="22" fill="#061225"/>
+        <path d="M50 14 C74 14 84 25 84 55 C84 75 58 87 50 90 C42 87 16 75 16 55 C16 25 26 14 50 14 Z" stroke="#38bdf8" stroke-width="2.5" fill="#0b1d3a" stroke-dasharray="1 1"/>
+        <path d="M50 17 C71 17 80 27 80 54 C80 72 56 83 50 86 C44 83 20 72 20 54 C20 27 29 17 50 17 Z" stroke="#94a3b8" stroke-width="1.8" fill="none"/>
+        <g stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" opacity="0.9">
+          <line x1="50" y1="36" x2="50" y2="24"/>
+          <line x1="50" y1="36" x2="60" y2="26"/>
+          <line x1="50" y1="36" x2="67" y2="33"/>
+          <line x1="50" y1="36" x2="40" y2="26"/>
+          <line x1="50" y1="36" x2="33" y2="33"/>
+          <line x1="50" y1="36" x2="70" y2="42" stroke="#38bdf8"/>
+          <line x1="50" y1="36" x2="30" y2="42" stroke="#38bdf8"/>
+        </g>
+        <circle cx="50" cy="54" r="16" fill="#06183a" stroke="#2563eb" stroke-width="2.2"/>
+        <circle cx="50" cy="54" r="11" fill="none" stroke="#38bdf8" stroke-width="1.2" stroke-dasharray="2 2"/>
+        <circle cx="50" cy="54" r="2.5" fill="#38bdf8"/>
+        <line x1="50" y1="40" x2="50" y2="68" stroke="#38bdf8" stroke-width="1.2"/>
+        <line x1="36" y1="54" x2="64" y2="54" stroke="#38bdf8" stroke-width="1.2"/>
+        <rect x="36" y="71" width="28" height="9" rx="4.5" fill="#1d4ed8" stroke="#60a5fa" stroke-width="1"/>
+        <text x="50" y="77.5" fill="#ffffff" font-size="6.5" font-weight="900" font-family="sans-serif" text-anchor="middle" letter-spacing="1">OPJ</text>
+      </svg>
+      <div class="brand-texts">
+        <div class="brand-title-row">
+          <h1>GEND<span>CONSTAT</span></h1>
+          <span class="badge-header-opj">OPJ</span>
+        </div>
+        <div class="brand-sub">
+          <span class="brand-sub-dot"></span>
+          OPJ EN MISSION • CRYPTO SEC
+        </div>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <!-- BOUTONS TACTIQUES ENTIÈREMENT INTÉGRÉS -->
+      <button type="button" class="btn-icon-tactical danger" onclick="demanderReinitialisation()" title="Tout réinitialiser">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+        </svg>
+      </button>
+      <button type="button" class="btn-icon-tactical" onclick="toggleConfig()" title="Profils & Unité">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+        </svg>
+      </button>
     </div>
   </header>
 
+  <!-- BANDEAU OPÉRATIONNEL SOUS HEADER -->
+  <div class="tactical-meta-banner">
+    <div class="meta-item-tag">
+      <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+      </svg>
+      PROCÉDURE JUDICIAIRE TACTIQUE
+    </div>
+    <div class="meta-badge-unit" id="display-cadre-ref">ART. 53 OU CPP</div>
+  </div>
+
   <div class="container">
 
+    <!-- CARTE DE CONFIGURATION PROFIL -->
     <div class="card" id="config-card" style="display:none;">
-      <div class="card-title">Profils & Unité</div>
+      <div class="card-header-bar">
+        <div class="card-title">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          Profils & Unité
+        </div>
+        <span class="card-tag-pill">OPJ ENQUÊTEUR</span>
+      </div>
       
       <label>Compagnie</label>
       <input type="text" id="cfg-compagnie" value="Compagnie de Gendarmerie départementale d'AMBOISE" oninput="sauvegarderEtat()">
@@ -415,7 +743,7 @@
       <label>Courriel de réception</label>
       <input type="text" id="cfg-email" value="" oninput="sauvegarderEtat()">
 
-      <div style="margin-top:14px; border-top:1px solid #cbd5e1; padding-top:8px; font-weight:bold; color:var(--gn-blue); font-size:12px; letter-spacing:0.4px; text-transform:uppercase;">
+      <div style="margin-top:14px; border-top:1px solid #cbd5e1; padding-top:8px; font-weight:800; color:var(--gn-blue); font-size:11.5px; letter-spacing:0.5px; text-transform:uppercase;">
         Officier rédacteur (OPJ)
       </div>
       <div style="display:flex; gap:8px;">
@@ -432,13 +760,13 @@
       <input type="text" id="cfg-qualite" value="Officier de Police Judiciaire" oninput="sauvegarderEtat()">
 
       <div style="margin-top:14px; border-top:1px solid #cbd5e1; padding-top:8px;">
-        <label style="display:inline-flex; align-items:center; gap:8px; font-weight:bold; color:var(--gn-blue); cursor:pointer; text-transform:none;">
+        <label style="display:inline-flex; align-items:center; gap:8px; font-weight:700; color:var(--gn-blue); cursor:pointer; text-transform:none;">
           <input type="checkbox" id="cfg-adjoint-actif" onchange="toggleAdjointForm(); sauvegarderEtat();" style="width:auto; margin:0;">
           Ajouter un collègue / adjoint d'enquête
         </label>
       </div>
 
-      <div id="box-adjoint" style="display:none; background:#f8fafc; padding:10px; border-radius:6px; margin-top:8px; border:1px solid #e2e8f0;">
+      <div id="box-adjoint" style="display:none; background:#f8fafc; padding:10px; border-radius:8px; margin-top:8px; border:1px solid #e2e8f0;">
         <div style="display:flex; gap:8px;">
           <div style="flex:1;">
             <label>Grade</label>
@@ -468,58 +796,127 @@
       <button type="button" class="btn btn-primary" style="margin-top: 14px; width: 100%;" onclick="toggleConfig()">Fermer les réglages</button>
     </div>
 
-    <div class="switch-cadre">
-      <button type="button" id="btn-flagrance" class="active" onclick="setCadre('FLAGRANCE')">FLAGRANCE</button>
-      <button type="button" id="btn-preliminaire" onclick="setCadre('PRELIMINAIRE')">PRÉLIMINAIRE</button>
-    </div>
-
-    <div class="card">
-      <div class="card-title">Arrivée sur les lieux</div>
-      <button type="button" class="btn btn-primary" style="width: 100%;" onclick="declencherArrivee()">
-        📍 Enregistrer l'arrivée et le GPS
-      </button>
-      <div style="display: flex; gap: 8px; margin-top: 6px;">
-        <div style="flex: 1;">
-          <label>Date & Heure</label>
-          <input type="text" id="f-arrivee-time" readonly style="background:#f8fafc;">
+    <!-- COMMUTATEUR DE CADRE PROCÉDURAL -->
+    <div class="card" style="padding: 12px 14px; margin-bottom: 12px;">
+      <div class="card-header-bar" style="margin-bottom:8px; padding-bottom:6px; border-bottom:none;">
+        <div class="card-title">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>
+          Cadre Procédural d'Enquête
         </div>
-        <div style="flex: 1;">
-          <label>GPS</label>
-          <input type="text" id="f-arrivee-gps" readonly style="background:#f8fafc;">
+        <span class="card-tag-pill" id="badge-cadre-display">FLAGRANCE</span>
+      </div>
+      <div class="switch-cadre-container">
+        <div class="switch-cadre">
+          <button type="button" id="btn-flagrance" class="active" onclick="setCadre('FLAGRANCE')">
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            FLAGRANCE
+          </button>
+          <button type="button" id="btn-preliminaire" onclick="setCadre('PRELIMINAIRE')">
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+            PRÉLIMINAIRE
+          </button>
         </div>
       </div>
-      <label>Adresse constatée</label>
-      <input type="text" id="f-adresse" placeholder="Adresse résolue ou saisie" oninput="sauvegarderEtat()">
-      <button type="button" class="btn-vocal" id="btn-voc-adresse" onclick="dicter('f-adresse', 'btn-voc-adresse')">🎤 Dictée continue</button>
     </div>
 
-    <div class="card">
-      <div class="card-title">Saisine</div>
+    <!-- SECTION ARRIVÉE SUR LES LIEUX -->
+    <div class="card" id="section-arrivee">
+      <div class="card-header-bar">
+        <div class="card-title">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          Arrivée sur les lieux
+        </div>
+        <span class="card-tag-pill green" id="gps-status-pill">GPS PRÊT</span>
+      </div>
+
+      <button type="button" class="btn btn-primary btn-tactical-gps" style="width: 100%; padding: 12px;" onclick="declencherArrivee()">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Actualiser GPS & Horodatage
+      </button>
+
+      <div style="display: flex; gap: 8px; margin-top: 8px;">
+        <div style="flex: 1;">
+          <label>
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Date et heure d'arrivée
+          </label>
+          <input type="text" id="f-arrivee-time" readonly style="background:#f8fafc; font-weight:600;">
+        </div>
+        <div style="flex: 1;">
+          <label>
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+            Coordonnées GPS WGS84
+          </label>
+          <input type="text" id="f-arrivee-gps" readonly style="background:#f8fafc; font-weight:600;">
+        </div>
+      </div>
+
+      <label>
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        Adresse constatée (résolue ou saisie)
+      </label>
+      <input type="text" id="f-adresse" placeholder="Adresse résolue ou saisie..." oninput="sauvegarderEtat()">
+      <button type="button" class="btn-vocal" id="btn-voc-adresse" onclick="dicter('f-adresse', 'btn-voc-adresse')">
+        <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
+        Dictée continue
+      </button>
+    </div>
+
+    <!-- SECTION SAISINE -->
+    <div class="card" id="section-constats">
+      <div class="card-header-bar">
+        <div class="card-title">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+          Saisine & Cadre de Mission
+        </div>
+        <span class="card-tag-pill">OPÉRATIONNEL</span>
+      </div>
       <textarea id="f-saisine" placeholder="Ex. : Sollicités par le CORG Tours..." oninput="sauvegarderEtat()"></textarea>
       <div class="quick-tags">
         <button type="button" class="tag-btn" onclick="insererTexte('f-saisine', 'Le centre d\'opérations et de renseignements de la gendarmerie de TOURS sollicite notre intervention pour des faits de vol par effraction. Nous nous transportons immédiatement sur les lieux.')">+ Saisine Cambriolage</button>
         <button type="button" class="tag-btn" onclick="insererTexte('f-saisine', 'Le centre d\'opérations et de renseignements de la gendarmerie de TOURS sollicite notre intervention pour un différend intrafamilial. Nous nous transportons immédiatement sur les lieux.')">+ Saisine Différend familial</button>
       </div>
-      <button type="button" class="btn-vocal" id="btn-voc-saisine" onclick="dicter('f-saisine', 'btn-voc-saisine')">🎤 Dictée continue</button>
+      <button type="button" class="btn-vocal" id="btn-voc-saisine" onclick="dicter('f-saisine', 'btn-voc-saisine')">
+        <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
+        Dictée continue
+      </button>
     </div>
 
+    <!-- SECTION SITUATION -->
     <div class="card">
-      <div class="card-title">Situation à l'arrivée des enquêteurs</div>
+      <div class="card-header-bar">
+        <div class="card-title">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+          Situation à l'arrivée des enquêteurs
+        </div>
+      </div>
       <textarea id="f-situation" placeholder="Accueil, personnes présentes, modifications..." oninput="sauvegarderEtat()"></textarea>
       <div class="quick-tags">
         <button type="button" class="tag-btn" onclick="insererTexte('f-situation', 'Nous sommes accueillis par la victime qui nous indique ne pas avoir apporté de modification à la scène d\'infraction avant notre arrivée.')">+ Accueil Victime (Scène préservée)</button>
         <button type="button" class="tag-btn" onclick="insererTexte('f-situation', 'Nous sommes reçus par le voisin qui a constaté les dégradations en l\'absence des propriétaires.')">+ Reçus par Voisin</button>
       </div>
-      <button type="button" class="btn-vocal" id="btn-voc-situation" onclick="dicter('f-situation', 'btn-voc-situation')">🎤 Dictée continue</button>
+      <button type="button" class="btn-vocal" id="btn-voc-situation" onclick="dicter('f-situation', 'btn-voc-situation')">
+        <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
+        Dictée continue
+      </button>
 
       <div class="section-photos">
-        <button type="button" class="btn btn-secondary" style="font-size:11px; padding:6px 10px;" onclick="declencherPhotoSection('situation')">📷 + Cliché Situation / Abords</button>
+        <button type="button" class="btn btn-secondary" style="font-size:11.5px; padding:6px 12px;" onclick="declencherPhotoSection('situation')">
+          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          + Cliché Situation / Abords
+        </button>
         <div id="photos-situation"></div>
       </div>
     </div>
 
+    <!-- SECTION MESURES PRISES -->
     <div class="card">
-      <div class="card-title">Mesures prises</div>
+      <div class="card-header-bar">
+        <div class="card-title">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          Mesures prises & Gel des lieux
+        </div>
+      </div>
       <textarea id="f-mesures" placeholder="Gel des lieux, PTS, avis..." oninput="sauvegarderEtat()"></textarea>
       <div class="quick-tags">
         <button type="button" class="tag-btn" onclick="insererTexte('f-mesures', 'Un compte-rendu téléphonique est effectué au gradé de permanence de la brigade.')">+ CR Gradé</button>
@@ -527,31 +924,55 @@
         <button type="button" class="tag-btn" onclick="insererTexte('f-mesures', 'Les opérations de recherches de traces papillaires et biologiques se révèlent négatives.')">+ PTS négative</button>
         <button type="button" class="tag-btn" onclick="insererTexte('f-mesures', 'Une enquête de voisinage est immédiatement diligentée aux abords.')">+ Enquête voisinage</button>
       </div>
-      <button type="button" class="btn-vocal" id="btn-voc-mesures" onclick="dicter('f-mesures', 'btn-voc-mesures')">🎤 Dictée continue</button>
+      <button type="button" class="btn-vocal" id="btn-voc-mesures" onclick="dicter('f-mesures', 'btn-voc-mesures')">
+        <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
+        Dictée continue
+      </button>
 
       <div class="section-photos">
-        <button type="button" class="btn btn-secondary" style="font-size:11px; padding:6px 10px;" onclick="declencherPhotoSection('mesures')">📷 + Cliché Mesures / Dispositif</button>
+        <button type="button" class="btn btn-secondary" style="font-size:11.5px; padding:6px 12px;" onclick="declencherPhotoSection('mesures')">
+          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          + Cliché Mesures / Dispositif
+        </button>
         <div id="photos-mesures"></div>
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-title">État des lieux</div>
+    <!-- SECTION ÉTAT DES LIEUX -->
+    <div class="card" id="section-photos">
+      <div class="card-header-bar">
+        <div class="card-title">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+          État des lieux
+        </div>
+      </div>
       <textarea id="f-etat-lieux" placeholder="Configuration des lieux, environnement..." oninput="sauvegarderEtat()"></textarea>
       <div class="quick-tags">
         <button type="button" class="tag-btn" onclick="insererTexte('f-etat-lieux', 'Il s\'agit d\'une maison individuelle implantée en zone pavillonnaire. Le terrain est ceinturé par une clôture grillagée et fermé par un portillon.')">+ Pavillon individuel clos</button>
         <button type="button" class="tag-btn" onclick="insererTexte('f-etat-lieux', 'L\'appartement est situé au deuxième étage d\'une résidence collective.')">+ Appartement collectif</button>
       </div>
-      <button type="button" class="btn-vocal" id="btn-voc-etat" onclick="dicter('f-etat-lieux', 'btn-voc-etat')">🎤 Dictée continue</button>
+      <button type="button" class="btn-vocal" id="btn-voc-etat" onclick="dicter('f-etat-lieux', 'btn-voc-etat')">
+        <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
+        Dictée continue
+      </button>
 
       <div class="section-photos">
-        <button type="button" class="btn btn-secondary" style="font-size:11px; padding:6px 10px;" onclick="declencherPhotoSection('etat')">📷 + Cliché Plan / Façade / Clôture</button>
+        <button type="button" class="btn btn-secondary" style="font-size:11.5px; padding:6px 12px;" onclick="declencherPhotoSection('etat')">
+          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          + Cliché Plan / Façade / Clôture
+        </button>
         <div id="photos-etat"></div>
       </div>
     </div>
 
+    <!-- SECTION CORPS DU DÉLIT -->
     <div class="card">
-      <div class="card-title">Corps du délit</div>
+      <div class="card-header-bar">
+        <div class="card-title">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+          Corps du délit & Constatations matérielles
+        </div>
+      </div>
       <textarea id="f-corps-delit" placeholder="Traces, effraction, pesées, désordre constaté..." oninput="sauvegarderEtat()"></textarea>
       <div class="quick-tags">
         <button type="button" class="tag-btn" onclick="insererTexte('f-corps-delit', 'Constatons des traces de pesées d\'une largeur d\'1 cm au niveau de la menuiserie, compatibles avec l\'usage d\'un outil plat.')">+ Pesée 1 cm</button>
@@ -559,35 +980,81 @@
         <button type="button" class="tag-btn" onclick="insererTexte('f-corps-delit', 'Le barillet de la porte d\'accès a été rompu par un outil contondant.')">+ Barillet fracturé</button>
         <button type="button" class="tag-btn" onclick="insererTexte('f-corps-delit', 'Toutes les pièces de l\'habitation ont été fouillées. Les tiroirs ont été ouverts et vidés sur les lits dans le but manifeste de dérober bijoux et numéraire.')">+ Fouille chambres / Bijoux</button>
       </div>
-      <button type="button" class="btn-vocal" id="btn-voc-corps" onclick="dicter('f-corps-delit', 'btn-voc-corps')">🎤 Dictée continue</button>
+      <button type="button" class="btn-vocal" id="btn-voc-corps" onclick="dicter('f-corps-delit', 'btn-voc-corps')">
+        <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
+        Dictée continue
+      </button>
 
       <div class="section-photos">
-        <button type="button" class="btn btn-secondary" style="font-size:11px; padding:6px 10px;" onclick="declencherPhotoSection('corps')">📷 + Cliché Effraction / Pesée / Fouille</button>
+        <button type="button" class="btn btn-secondary" style="font-size:11.5px; padding:6px 12px;" onclick="declencherPhotoSection('corps')">
+          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          + Cliché Effraction / Pesée / Fouille
+        </button>
         <div id="photos-corps"></div>
       </div>
     </div>
 
+    <!-- SECTION MESURES DIVERSES -->
     <div class="card">
-      <div class="card-title">Mesures diverses</div>
+      <div class="card-header-bar">
+        <div class="card-title">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Mesures diverses
+        </div>
+      </div>
       <textarea id="f-mesures-div" placeholder="Plainte, conseils..." oninput="sauvegarderEtat()"></textarea>
       <div class="quick-tags">
         <button type="button" class="tag-btn" onclick="insererTexte('f-mesures-div', 'Nous invitons la victime à venir déposer plainte à notre unité munie d\'un état estimatif et descriptif précis des objets dérobés.')">+ Invitation Plainte</button>
         <button type="button" class="tag-btn" onclick="insererTexte('f-mesures-div', 'Nous conseillons à la victime de contacter sans délai son assurance afin de faire sécuriser les ouvertures dégradées.')">+ Conseil Assurance/Serrurier</button>
       </div>
-      <button type="button" class="btn-vocal" id="btn-voc-div" onclick="dicter('f-mesures-div', 'btn-voc-div')">🎤 Dictée continue</button>
-    </div>
-
-    <div class="card">
-      <div class="card-title">Signature de l'OPJ</div>
-      <div id="sig-preview" onclick="ouvrirModalSignature()">
-        <span id="sig-preview-placeholder" style="font-size: 12px; color: var(--text-muted); font-weight: 500;">✍️ Toucher ici pour signer au doigt</span>
-        <img id="sig-preview-img" style="display:none;" alt="Aperçu signature">
-      </div>
-      <button type="button" class="btn btn-primary" style="width: 100%; margin-top: 14px; padding: 13px; font-size: 13.5px;" onclick="ouvrirModalControle()">
-        📄 Finaliser & Transmettre le PV
+      <button type="button" class="btn-vocal" id="btn-voc-div" onclick="dicter('f-mesures-div', 'btn-voc-div')">
+        <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
+        Dictée continue
       </button>
     </div>
 
+    <!-- SECTION SIGNATURE & FINALISATION -->
+    <div class="card" id="section-signature">
+      <div class="card-header-bar">
+        <div class="card-title">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+          Signature OPJ & Clôture
+        </div>
+        <span class="card-tag-pill">HORODATÉ</span>
+      </div>
+      <div id="sig-preview" onclick="ouvrirModalSignature()">
+        <span id="sig-preview-placeholder" style="font-size: 12px; color: var(--text-muted); font-weight: 600; display:flex; align-items:center; gap:6px;">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+          Toucher ici pour signer au doigt
+        </span>
+        <img id="sig-preview-img" style="display:none;" alt="Aperçu signature">
+      </div>
+      <button type="button" class="btn btn-primary" style="width: 100%; margin-top: 14px; padding: 14px; font-size: 13.5px;" onclick="ouvrirModalControle()">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        Générer & Transmettre le Procès-Verbal
+      </button>
+    </div>
+
+  </div>
+
+  <!-- BARRE D'ONGLETS BASSE TYPE NEOGEND -->
+  <div class="tactical-tab-bar">
+    <a href="#section-arrivee" class="tab-item">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      ARRIVÉE
+    </a>
+    <a href="#section-constats" class="tab-item">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      CONSTATS
+    </a>
+    <a href="#section-photos" class="tab-item">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      CLICHÉS
+    </a>
+    <a href="#section-signature" class="tab-item">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+      PV / ENVOI
+    </a>
   </div>
 
   <input type="file" id="global-camera-input" accept="image/*" capture="environment" style="display:none;" onchange="traiterPhotoPrise(event)">
@@ -595,7 +1062,7 @@
   <div id="modal-signature">
     <div class="sig-top-bar">
       <button type="button" class="btn btn-secondary" style="padding: 5px 10px; font-size: 11px;" onclick="fermerModalSignature()">Annuler</button>
-      <span style="font-size:12px; font-weight:600; letter-spacing:0.3px;">Signature de l'OPJ</span>
+      <span style="font-size:12px; font-weight:700; letter-spacing:0.3px;">Signature de l'Officier Rédacteur</span>
       <div style="display: flex; gap: 6px;">
         <button type="button" class="btn btn-danger" style="padding: 5px 10px; font-size: 11px;" onclick="effacerSignaturePleinEcran()">Effacer</button>
         <button type="button" class="btn btn-primary" style="padding: 5px 12px; font-size: 11px;" onclick="validerSignaturePleinEcran()">Valider</button>
@@ -608,14 +1075,16 @@
 
   <div id="modal-cotes" class="modal">
     <div class="modal-content">
-      <h3 style="margin-top:0; color:var(--gn-blue); font-size:14px; text-transform:uppercase; letter-spacing:0.5px;">Numérotation procédurale</h3>
+      <h3 style="margin-top:0; color:var(--gn-header); font-size:14px; text-transform:uppercase; letter-spacing:0.6px; font-weight:800; border-bottom:1px solid var(--border-subtle); padding-bottom:8px;">
+        Numérotation & Scellés
+      </h3>
       <label>P.V. N° (ex. 2525)</label>
       <input type="text" id="m-pv-num" value="[ En cours ]">
       <label>N° Pièce</label>
       <input type="text" id="m-piece-num" value="1">
       <label>Nmr Dossier Justice</label>
       <input type="text" id="m-dossier-num" value="[ En cours ]">
-      <div class="btn-row" style="margin-top: 16px;">
+      <div class="btn-row" style="margin-top: 18px;">
         <button type="button" class="btn btn-secondary" style="flex:1;" onclick="fermerModal()">Retour</button>
         <button type="button" class="btn btn-primary" style="flex:1;" onclick="genererEtEnvoyer()">Générer le PDF</button>
       </div>
@@ -764,8 +1233,14 @@
       cadreActif = type;
       var btnF = document.getElementById('btn-flagrance');
       var btnP = document.getElementById('btn-preliminaire');
+      var badge = document.getElementById('badge-cadre-display');
+      var metaRef = document.getElementById('display-cadre-ref');
+
       if (btnF) btnF.className = type === 'FLAGRANCE' ? 'active' : '';
       if (btnP) btnP.className = type === 'PRELIMINAIRE' ? 'active' : '';
+      if (badge) badge.innerText = type === 'FLAGRANCE' ? 'FLAGRANCE' : 'PRÉLIMINAIRE';
+      if (metaRef) metaRef.innerText = type === 'FLAGRANCE' ? 'ART. 53 OU CPP' : 'ART. 75 CPP';
+
       sauvegarderEtat();
     };
 
@@ -782,7 +1257,10 @@
       var dateStr = now.toLocaleDateString('fr-FR');
       var timeStr = String(now.getHours()).padStart(2, '0') + ' heures ' + String(now.getMinutes()).padStart(2, '0') + ' minutes';
       var elTime = document.getElementById('f-arrivee-time');
+      var pill = document.getElementById('gps-status-pill');
+
       if (elTime) elTime.value = dateStr + ' à ' + timeStr;
+      if (pill) { pill.innerText = "CALCUL GPS..."; pill.className = "card-tag-pill"; }
 
       if ('geolocation' in navigator) {
         navigator.geolocation.getCurrentPosition(
@@ -791,12 +1269,14 @@
             var lon = pos.coords.longitude.toFixed(5);
             var elGps = document.getElementById('f-arrivee-gps');
             if (elGps) elGps.value = lat + ', ' + lon;
+            if (pill) { pill.innerText = "GPS FIXÉ"; pill.className = "card-tag-pill green"; }
             sauvegarderEtat();
             resoudreAdresse(pos.coords.latitude, pos.coords.longitude);
           },
           function() {
             var elGps = document.getElementById('f-arrivee-gps');
             if (elGps) elGps.value = 'Signal GPS indisponible';
+            if (pill) { pill.innerText = "GPS NON FIXÉ"; pill.className = "card-tag-pill"; }
             sauvegarderEtat();
           },
           { enableHighAccuracy: true, timeout: 8000 }
@@ -829,7 +1309,7 @@
     window.dicter = function(targetId, btnId) {
       var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) {
-        alert("Reconnaissance vocale non supportée.");
+        alert("Reconnaissance vocale non supportée sur ce terminal.");
         return;
       }
 
@@ -841,7 +1321,7 @@
         if (recognition) recognition.stop();
         if (btn) {
           btn.classList.remove('recording');
-          btn.innerText = '🎤 Dictée continue';
+          btn.innerHTML = '<svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg> Dictée continue';
         }
         return;
       }
@@ -849,7 +1329,7 @@
       shouldKeepListening = true;
       if (btn) {
         btn.classList.add('recording');
-        btn.innerText = '⏹️ Arrêter';
+        btn.innerHTML = '⏹️ Arrêter enregistrement';
       }
 
       function lancer() {
@@ -955,11 +1435,14 @@
         card.className = 'photo-item';
         card.innerHTML = 
           '<img src="' + p.data + '">' +
-          '<div style="font-size:10.5px; color:var(--text-muted); font-weight:500;">Cliché ' + (idx + 1) + ' — ' + p.date + ' à ' + p.heure + '</div>' +
-          '<input type="text" id="leg-' + p.id + '" value="' + p.legende + '" placeholder="Légende du cliché..." onchange="majLegendeSection(\'' + section + '\', ' + p.id + ', this.value)" style="margin-top:4px;">' +
+          '<div style="font-size:10.5px; color:var(--text-muted); font-weight:700; display:flex; justify-content:space-between;">' +
+            '<span>CLICHÉ ' + (idx + 1) + '</span>' +
+            '<span>' + p.date + ' • ' + p.heure + '</span>' +
+          '</div>' +
+          '<input type="text" id="leg-' + p.id + '" value="' + p.legende + '" placeholder="Légende et constatations sur le cliché..." onchange="majLegendeSection(\'' + section + '\', ' + p.id + ', this.value)" style="margin-top:6px;">' +
           '<div class="btn-row">' +
-            '<button type="button" class="btn-vocal" id="voc-leg-' + p.id + '" onclick="dicter(\'leg-' + p.id + '\', \'voc-leg-' + p.id + '\')">🎤 Dictée</button>' +
-            '<button type="button" class="btn btn-danger" style="font-size:11px; padding:4px 8px;" onclick="supprimerPhotoSection(\'' + section + '\', ' + p.id + ')">Supprimer</button>' +
+            '<button type="button" class="btn-vocal" id="voc-leg-' + p.id + '" onclick="dicter(\'leg-' + p.id + '\', \'voc-leg-' + p.id + '\')" style="margin-top:0;">🎤 Dictée</button>' +
+            '<button type="button" class="btn btn-danger" style="font-size:11px; padding:6px 10px;" onclick="supprimerPhotoSection(\'' + section + '\', ' + p.id + ')">Supprimer</button>' +
           '</div>';
         cont.appendChild(card);
       });
