@@ -1683,10 +1683,10 @@
           var lines = doc.splitTextToSize(texte, usableWidth);
           var textH = lines.length * 4.2;
           
-          var estimFirstPhotoH = (listePhotos && listePhotos.length > 0) ? 55 : 0;
-          var neededH = bannerH + textH + estimFirstPhotoH + 10;
+          var estimFirstPhotoH = (listePhotos && listePhotos.length > 0) ? 68 : 0;
+          var neededH = bannerH + textH + estimFirstPhotoH + 8;
           
-          if (y + neededH > pageHeight - 15 && y > pageHeight - 50) {
+          if (y + neededH > pageHeight - 15 && y > pageHeight - 55) {
             doc.addPage();
             y = 14;
           }
@@ -1722,66 +1722,85 @@
                 var r1 = p1.aspectRatio || 1.33;
                 var r2 = p2.aspectRatio || 1.33;
 
-                var targetH = 60;
+                var targetH = 58;
                 var w1 = targetH * r1;
                 var w2 = targetH * r2;
 
-                var maxColW = 88;
-                if (w1 > maxColW) { w1 = maxColW; }
-                if (w2 > maxColW) { w2 = maxColW; }
+                var colW = 88;
+                if (w1 > colW) { w1 = colW; }
+                if (w2 > colW) { w2 = colW; }
 
                 var h1 = w1 / r1;
                 var h2 = w2 / r2;
-                var blockH = Math.max(h1, h2) + 11;
+
+                var legTxt1 = p1.legende ? ("Cliché n° " + (i + 1) + " : " + p1.legende) : ("Cliché n° " + (i + 1) + " (" + p1.date + " à " + p1.heure + ")");
+                var legTxt2 = p2.legende ? ("Cliché n° " + (i + 2) + " : " + p2.legende) : ("Cliché n° " + (i + 2) + " (" + p2.date + " à " + p2.heure + ")");
+
+                doc.setFontSize(7.5);
+                doc.setFont("times", "italic");
+                var legLines1 = doc.splitTextToSize(legTxt1, colW);
+                var legLines2 = doc.splitTextToSize(legTxt2, colW);
+
+                var totalH1 = h1 + 3 + (legLines1.length * 3.4);
+                var totalH2 = h2 + 3 + (legLines2.length * 3.4);
+                var blockH = Math.max(totalH1, totalH2);
 
                 if (y + blockH > pageHeight - 15) { doc.addPage(); y = 14; }
 
-                var x1 = leftMargin + (maxColW - w1) / 2;
-                var x2 = leftMargin + maxColW + 10 + (maxColW - w2) / 2;
+                var xCol1 = leftMargin;
+                var xCol2 = leftMargin + colW + 10;
+
+                var xImg1 = xCol1 + (colW - w1) / 2;
+                var xImg2 = xCol2 + (colW - w2) / 2;
 
                 try {
-                  doc.addImage(p1.data, 'JPEG', x1, y, w1, h1);
+                  doc.addImage(p1.data, 'JPEG', xImg1, y, w1, h1);
+                  doc.setDrawColor(180, 180, 180);
+                  doc.setLineWidth(0.1);
+                  doc.rect(xImg1, y, w1, h1);
                   doc.setFontSize(7.5);
                   doc.setFont("times", "italic");
-                  var leg1 = p1.legende ? ("Cliché n° " + (i + 1) + " : " + p1.legende) : ("Cliché n° " + (i + 1) + " (" + p1.date + " à " + p1.heure + ")");
-                  var legLines1 = doc.splitTextToSize(leg1, maxColW);
-                  doc.text(legLines1, leftMargin, y + h1 + 3.5);
+                  doc.text(legLines1, xCol1, y + h1 + 3.2);
                 } catch (e) {}
 
                 try {
-                  doc.addImage(p2.data, 'JPEG', x2, y, w2, h2);
+                  doc.addImage(p2.data, 'JPEG', xImg2, y, w2, h2);
+                  doc.setDrawColor(180, 180, 180);
+                  doc.setLineWidth(0.1);
+                  doc.rect(xImg2, y, w2, h2);
                   doc.setFontSize(7.5);
                   doc.setFont("times", "italic");
-                  var leg2 = p2.legende ? ("Cliché n° " + (i + 2) + " : " + p2.legende) : ("Cliché n° " + (i + 2) + " (" + p2.date + " à " + p2.heure + ")");
-                  var legLines2 = doc.splitTextToSize(leg2, maxColW);
-                  doc.text(legLines2, leftMargin + maxColW + 10, y + h2 + 3.5);
+                  doc.text(legLines2, xCol2, y + h2 + 3.2);
                 } catch (e) {}
 
-                y += blockH + 3;
+                y += blockH + 4;
                 i += 2;
               } else {
                 var r = p1.aspectRatio || 1.33;
-                var imgH = 65;
+                var imgH = 62;
                 var imgW = imgH * r;
 
-                if (imgW > 92) {
-                  imgW = 92;
+                if (imgW > 95) {
+                  imgW = 95;
                   imgH = imgW / r;
                 }
 
-                var blockHSolo = imgH + 11;
+                var legTxt = p1.legende ? ("Cliché n° " + (i + 1) + " : " + p1.legende) : ("Cliché n° " + (i + 1) + " (" + p1.date + " à " + p1.heure + ")");
+                doc.setFontSize(8);
+                doc.setFont("times", "italic");
+                var legLinesSolo = doc.splitTextToSize(legTxt, 110);
+                var blockHSolo = imgH + 3 + (legLinesSolo.length * 3.5);
+
                 if (y + blockHSolo > pageHeight - 15) { doc.addPage(); y = 14; }
 
                 var posX = leftMargin + (usableWidth - imgW) / 2;
                 try {
                   doc.addImage(p1.data, 'JPEG', posX, y, imgW, imgH);
-                  y += imgH + 3.5;
-                  doc.setFontSize(8);
-                  doc.setFont("times", "italic");
-                  var legTxt = p1.legende ? ("Cliché n° " + (i + 1) + " : " + p1.legende) : ("Cliché n° " + (i + 1) + " (" + p1.date + " à " + p1.heure + ")");
-                  var legLinesSolo = doc.splitTextToSize(legTxt, 110);
-                  doc.text(legLinesSolo, leftMargin + (usableWidth - 110) / 2, y);
-                  y += (legLinesSolo.length * 3.5) + 3;
+                  doc.setDrawColor(180, 180, 180);
+                  doc.setLineWidth(0.1);
+                  doc.rect(posX, y, imgW, imgH);
+                  doc.text(legLinesSolo, leftMargin + (usableWidth - 110) / 2, y + imgH + 3.2);
+                  y += blockHSolo + 4;
                 } catch (e) {
                   y += 6;
                 }
@@ -1790,7 +1809,7 @@
             }
           }
 
-          y += 3;
+          y += 2;
         }
 
         ajouterRubrique("SAISINE", saisine, []);
