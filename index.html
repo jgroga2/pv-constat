@@ -117,7 +117,6 @@
     }
 
     .badge-header-opj {
-      background: linear-space;
       background: rgba(37, 99, 235, 0.3);
       border: 1px solid #38bdf8;
       color: #e0f2fe;
@@ -287,7 +286,7 @@
       border-radius: 10px;
       display: flex;
       gap: 3px;
-      margin-bottom: 14px;
+      margin-bottom: 6px;
       border: 1px solid var(--border-strong);
     }
 
@@ -363,7 +362,7 @@
       line-height: 1.45;
     }
 
-    /* BOUTONS D'ACTION */
+    /* BOUTONS */
     .btn-row {
       display: flex;
       gap: 8px;
@@ -464,7 +463,7 @@
       100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
     }
 
-    /* CHIPS & TAGS ERGONOMIQUES */
+    /* CHIPS & PHRASES TYPES */
     .quick-tags {
       display: flex;
       flex-wrap: wrap;
@@ -546,7 +545,7 @@
       max-width: 90%;
     }
 
-    /* MODAL SIGNATURE FULLSCREEN */
+    /* MODAL SIGNATURE */
     #modal-signature {
       display: none;
       position: fixed;
@@ -586,7 +585,7 @@
       display: block;
     }
 
-    /* MODAL NUMÉROTATION */
+    /* MODAL COTES */
     .modal {
       display: none;
       position: fixed;
@@ -611,7 +610,7 @@
       border: 1px solid var(--border-subtle);
     }
 
-    /* BOTTOM TAB BAR NATIVE */
+    /* TAB BAR BASSE TACTIQUE */
     .tactical-tab-bar {
       position: fixed;
       bottom: 0;
@@ -658,7 +657,7 @@
 
   <header>
     <div class="brand-group">
-      <!-- INSIGNE OFFICIEL GENDCONSTAT VECTORIEL -->
+      <!-- INSIGNE OFFICIEL GENDCONSTAT -->
       <svg class="brand-logo-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect width="100" height="100" rx="22" fill="#061225"/>
         <path d="M50 14 C74 14 84 25 84 55 C84 75 58 87 50 90 C42 87 16 75 16 55 C16 25 26 14 50 14 Z" stroke="#38bdf8" stroke-width="2.5" fill="#0b1d3a" stroke-dasharray="1 1"/>
@@ -693,7 +692,6 @@
     </div>
 
     <div class="header-actions">
-      <!-- BOUTONS TACTIQUES ENTIÈREMENT INTÉGRÉS -->
       <button type="button" class="btn-icon-tactical danger" onclick="demanderReinitialisation()" title="Tout réinitialiser">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
@@ -707,7 +705,7 @@
     </div>
   </header>
 
-  <!-- BANDEAU OPÉRATIONNEL SOUS HEADER -->
+  <!-- BANDEAU OPÉRATIONNEL -->
   <div class="tactical-meta-banner">
     <div class="meta-item-tag">
       <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -715,12 +713,12 @@
       </svg>
       PROCÉDURE JUDICIAIRE TACTIQUE
     </div>
-    <div class="meta-badge-unit" id="display-cadre-ref">ART. 53 OU CPP</div>
+    <div class="meta-badge-unit" id="display-cadre-ref">ART. 53 CPP</div>
   </div>
 
   <div class="container">
 
-    <!-- CARTE DE CONFIGURATION PROFIL -->
+    <!-- CONFIGURATION PROFIL (MASQUÉE PAR DÉFAUT) -->
     <div class="card" id="config-card" style="display:none;">
       <div class="card-header-bar">
         <div class="card-title">
@@ -796,30 +794,27 @@
       <button type="button" class="btn btn-primary" style="margin-top: 14px; width: 100%;" onclick="toggleConfig()">Fermer les réglages</button>
     </div>
 
-    <!-- COMMUTATEUR DE CADRE PROCÉDURAL -->
-    <div class="card" style="padding: 12px 14px; margin-bottom: 12px;">
-      <div class="card-header-bar" style="margin-bottom:8px; padding-bottom:6px; border-bottom:none;">
+    <!-- 1. SAISINE -->
+    <div class="card" id="section-saisine">
+      <div class="card-header-bar">
         <div class="card-title">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>
-          Cadre Procédural d'Enquête
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+          SAISINE
         </div>
-        <span class="card-tag-pill" id="badge-cadre-display">FLAGRANCE</span>
+        <span class="card-tag-pill">OPÉRATIONNEL</span>
       </div>
-      <div class="switch-cadre-container">
-        <div class="switch-cadre">
-          <button type="button" id="btn-flagrance" class="active" onclick="setCadre('FLAGRANCE')">
-            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-            FLAGRANCE
-          </button>
-          <button type="button" id="btn-preliminaire" onclick="setCadre('PRELIMINAIRE')">
-            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
-            PRÉLIMINAIRE
-          </button>
-        </div>
+      <textarea id="f-saisine" placeholder="Ex. : Sollicités par le CORG Tours..." oninput="sauvegarderEtat()"></textarea>
+      <div class="quick-tags">
+        <button type="button" class="tag-btn" onclick="insererTexte('f-saisine', 'Le centre d\'opérations et de renseignements de la gendarmerie de TOURS sollicite notre intervention pour des faits de vol par effraction. Nous nous transportons immédiatement sur les lieux.')">+ Saisine Cambriolage</button>
+        <button type="button" class="tag-btn" onclick="insererTexte('f-saisine', 'Le centre d\'opérations et de renseignements de la gendarmerie de TOURS sollicite notre intervention pour un différend intrafamilial. Nous nous transportons immédiatement sur les lieux.')">+ Saisine Différend familial</button>
       </div>
+      <button type="button" class="btn-vocal" id="btn-voc-saisine" onclick="dicter('f-saisine', 'btn-voc-saisine')">
+        <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
+        Dictée continue
+      </button>
     </div>
 
-    <!-- SECTION ARRIVÉE SUR LES LIEUX -->
+    <!-- 2. ARRIVÉE SUR LES LIEUX -->
     <div class="card" id="section-arrivee">
       <div class="card-header-bar">
         <div class="card-title">
@@ -862,28 +857,8 @@
       </button>
     </div>
 
-    <!-- SECTION SAISINE -->
-    <div class="card" id="section-constats">
-      <div class="card-header-bar">
-        <div class="card-title">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
-          Saisine & Cadre de Mission
-        </div>
-        <span class="card-tag-pill">OPÉRATIONNEL</span>
-      </div>
-      <textarea id="f-saisine" placeholder="Ex. : Sollicités par le CORG Tours..." oninput="sauvegarderEtat()"></textarea>
-      <div class="quick-tags">
-        <button type="button" class="tag-btn" onclick="insererTexte('f-saisine', 'Le centre d\'opérations et de renseignements de la gendarmerie de TOURS sollicite notre intervention pour des faits de vol par effraction. Nous nous transportons immédiatement sur les lieux.')">+ Saisine Cambriolage</button>
-        <button type="button" class="tag-btn" onclick="insererTexte('f-saisine', 'Le centre d\'opérations et de renseignements de la gendarmerie de TOURS sollicite notre intervention pour un différend intrafamilial. Nous nous transportons immédiatement sur les lieux.')">+ Saisine Différend familial</button>
-      </div>
-      <button type="button" class="btn-vocal" id="btn-voc-saisine" onclick="dicter('f-saisine', 'btn-voc-saisine')">
-        <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
-        Dictée continue
-      </button>
-    </div>
-
-    <!-- SECTION SITUATION -->
-    <div class="card">
+    <!-- 3. SITUATION À L'ARRIVÉE DES ENQUÊTEURS -->
+    <div class="card" id="section-situation">
       <div class="card-header-bar">
         <div class="card-title">
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
@@ -909,12 +884,12 @@
       </div>
     </div>
 
-    <!-- SECTION MESURES PRISES -->
-    <div class="card">
+    <!-- 4. MESURES PRISES -->
+    <div class="card" id="section-mesures">
       <div class="card-header-bar">
         <div class="card-title">
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-          Mesures prises & Gel des lieux
+          MESURES PRISES
         </div>
       </div>
       <textarea id="f-mesures" placeholder="Gel des lieux, PTS, avis..." oninput="sauvegarderEtat()"></textarea>
@@ -938,8 +913,8 @@
       </div>
     </div>
 
-    <!-- SECTION ÉTAT DES LIEUX -->
-    <div class="card" id="section-photos">
+    <!-- 5. ÉTAT DES LIEUX -->
+    <div class="card" id="section-etat">
       <div class="card-header-bar">
         <div class="card-title">
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
@@ -965,12 +940,12 @@
       </div>
     </div>
 
-    <!-- SECTION CORPS DU DÉLIT -->
-    <div class="card">
+    <!-- 6. CORPS DU DÉLIT -->
+    <div class="card" id="section-corps">
       <div class="card-header-bar">
         <div class="card-title">
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-          Corps du délit & Constatations matérielles
+          CORPS DU DÉLIT
         </div>
       </div>
       <textarea id="f-corps-delit" placeholder="Traces, effraction, pesées, désordre constaté..." oninput="sauvegarderEtat()"></textarea>
@@ -994,8 +969,8 @@
       </div>
     </div>
 
-    <!-- SECTION MESURES DIVERSES -->
-    <div class="card">
+    <!-- 7. MESURES DIVERSES -->
+    <div class="card" id="section-mesures-div">
       <div class="card-header-bar">
         <div class="card-title">
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -1013,7 +988,30 @@
       </button>
     </div>
 
-    <!-- SECTION SIGNATURE & FINALISATION -->
+    <!-- 8. CADRE PROCÉDURAL D'ENQUÊTE -->
+    <div class="card" id="section-cadre" style="padding: 14px 16px; margin-bottom: 14px;">
+      <div class="card-header-bar" style="margin-bottom:8px; padding-bottom:6px; border-bottom:none;">
+        <div class="card-title">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>
+          Cadre Procédural d'Enquête
+        </div>
+        <span class="card-tag-pill" id="badge-cadre-display">FLAGRANCE</span>
+      </div>
+      <div class="switch-cadre-container">
+        <div class="switch-cadre">
+          <button type="button" id="btn-flagrance" class="active" onclick="setCadre('FLAGRANCE')">
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            FLAGRANCE
+          </button>
+          <button type="button" id="btn-preliminaire" onclick="setCadre('PRELIMINAIRE')">
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+            PRÉLIMINAIRE
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 9. SIGNATURE DE L'OPJ & CLÔTURE -->
     <div class="card" id="section-signature">
       <div class="card-header-bar">
         <div class="card-title">
@@ -1037,23 +1035,23 @@
 
   </div>
 
-  <!-- BARRE D'ONGLETS BASSE TYPE NEOGEND -->
+  <!-- BARRE D'ONGLETS BASSE ADAPTÉE -->
   <div class="tactical-tab-bar">
-    <a href="#section-arrivee" class="tab-item">
-      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    <a href="#section-situation" class="tab-item">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
       ARRIVÉE
     </a>
-    <a href="#section-constats" class="tab-item">
-      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-      CONSTATS
+    <a href="#section-mesures" class="tab-item">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+      MESURES
     </a>
-    <a href="#section-photos" class="tab-item">
-      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-      CLICHÉS
+    <a href="#section-corps" class="tab-item">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      CONSTATS
     </a>
     <a href="#section-signature" class="tab-item">
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-      PV / ENVOI
+      SIGNATURE
     </a>
   </div>
 
@@ -1239,7 +1237,7 @@
       if (btnF) btnF.className = type === 'FLAGRANCE' ? 'active' : '';
       if (btnP) btnP.className = type === 'PRELIMINAIRE' ? 'active' : '';
       if (badge) badge.innerText = type === 'FLAGRANCE' ? 'FLAGRANCE' : 'PRÉLIMINAIRE';
-      if (metaRef) metaRef.innerText = type === 'FLAGRANCE' ? 'ART. 53 OU CPP' : 'ART. 75 CPP';
+      if (metaRef) metaRef.innerText = type === 'FLAGRANCE' ? 'ART. 53 CPP' : 'ART. 75 CPP';
 
       sauvegarderEtat();
     };
