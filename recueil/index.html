@@ -3,7 +3,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>GendConstat — Recueil ODT</title>
   <meta name="apple-mobile-web-app-title" content="GendRecueil">
-  <!-- Librairie JSZip pour l'assemblage de l'archive OpenDocument .odt en local -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <style>
     :root {
@@ -155,7 +154,6 @@
       margin-bottom: 14px;
       box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
       border: 1px solid var(--border-subtle);
-      scroll-margin-top: 70px;
     }
 
     .card-header-bar {
@@ -178,7 +176,6 @@
       align-items: center;
       gap: 7px;
     }
-    .card-title svg { width: 15px; height: 15px; color: var(--gn-accent); }
 
     .card-tag-pill {
       font-size: 10px;
@@ -219,7 +216,30 @@
     }
     textarea { min-height: 80px; resize: vertical; line-height: 1.45; }
 
-    .btn-row { display: flex; gap: 8px; margin-top: 10px; }
+    .quick-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+      margin-bottom: 6px;
+    }
+
+    .tag-btn {
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      border-radius: 16px;
+      font-size: 10.5px;
+      padding: 4px 10px;
+      cursor: pointer;
+      font-weight: 600;
+      color: #334155;
+      transition: all 0.15s ease;
+    }
+    .tag-btn:hover {
+      background: #e2e8f0;
+      color: var(--gn-header);
+    }
+
     .btn {
       display: inline-flex;
       align-items: center;
@@ -290,14 +310,12 @@
       100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
     }
 
-    /* Cartouche répétable stylisé */
     .dynamic-item-box {
       background: var(--surface-muted);
       border: 1px solid var(--border-subtle);
       border-radius: 10px;
       padding: 12px;
       margin-bottom: 12px;
-      position: relative;
     }
     .dynamic-item-head {
       display: flex;
@@ -323,7 +341,6 @@
       border: 1px solid var(--border-subtle);
       border-radius: 6px;
       padding: 6px;
-      position: relative;
     }
     .photo-card img {
       width: 100%;
@@ -351,6 +368,30 @@
       padding: 0 16px;
       z-index: 45;
       box-shadow: 0 -4px 12px rgba(15, 23, 42, 0.08);
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(7, 19, 38, 0.65);
+      backdrop-filter: blur(3px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-content {
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 480px;
+      box-shadow: 0 20px 35px rgba(0, 0, 0, 0.3);
+      max-height: 90vh;
+      overflow-y: auto;
     }
   </style></head><body>
 
@@ -380,7 +421,7 @@
       <button type="button" class="btn-icon-tactical danger" onclick="demanderReinitialisation()" title="Tout réinitialiser">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
       </button>
-      <button type="button" class="btn-icon-tactical" onclick="toggleConfig()" title="Configuration Unité">
+      <button type="button" class="btn-icon-tactical" onclick="ouvrirModalProfil()" title="Profil & Unité">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
       </button>
     </div>
@@ -391,32 +432,10 @@
       <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
       SAISIE STRUCTURÉE POUR BUREAUTIQUE
     </div>
-    <div class="meta-badge-unit">FORMAT .ODT</div>
+    <div class="meta-badge-unit" id="display-badge-qualite">OPJ • ODT</div>
   </div>
 
   <div class="container">
-
-    <!-- CONFIGURATION DU MILITAIRE -->
-    <div class="card" id="config-card" style="display:none;">
-      <div class="card-header-bar">
-        <div class="card-title">Configuration Unité & Rédacteur</div>
-      </div>
-      <label>Unité de rattachement</label>
-      <input type="text" id="cfg-unite" value="BP VOUVRAY" oninput="sauvegarderEtat()">
-      <label>Courriel d'envoi du recueil</label>
-      <input type="text" id="cfg-email" placeholder="cob.montlouis-sur-loire@gendarmerie.interieur.gouv.fr" oninput="sauvegarderEtat()">
-      <div style="display:flex; gap:8px;">
-        <div style="flex:1;">
-          <label>Grade</label>
-          <input type="text" id="cfg-grade" value="Adjudant" oninput="sauvegarderEtat()">
-        </div>
-        <div style="flex:2;">
-          <label>Nom & Prénom</label>
-          <input type="text" id="cfg-nom" value="Jean GROGA" oninput="sauvegarderEtat()">
-        </div>
-      </div>
-      <button type="button" class="btn btn-primary" style="width:100%; margin-top:12px;" onclick="toggleConfig()">Fermer</button>
-    </div>
 
     <!-- 1. ARRIVÉE & SAISINE -->
     <div class="card">
@@ -439,8 +458,14 @@
       </div>
       <label>Adresse d'intervention</label>
       <input type="text" id="f-adresse" placeholder="Adresse résolue ou saisie..." oninput="sauvegarderEtat()">
+      
       <label>Cadre de la saisine / Motif de l'engagement</label>
-      <textarea id="f-saisine" placeholder="Ex. : Sollicités par le CORG pour cambriolage en cours..." oninput="sauvegarderEtat()"></textarea>
+      <textarea id="f-saisine" placeholder="Ex. : Sollicités par le CORG pour vol par effraction..." oninput="sauvegarderEtat()"></textarea>
+      <div class="quick-tags">
+        <button type="button" class="tag-btn" onclick="insererTexte('f-saisine', 'Le centre d\'opérations et de renseignements de la gendarmerie sollicite notre intervention pour des faits de vol par effraction en cours ou constatés. Nous nous transportons immédiatement sur les lieux.')">+ Saisine Cambriolage</button>
+        <button type="button" class="tag-btn" onclick="insererTexte('f-saisine', 'Sollicités par le centre d\'opérations pour un différend intrafamilial. Nous nous transportons immédiatement sur place afin de sécuriser les lieux et entendre les parties.')">+ Différend familial</button>
+        <button type="button" class="tag-btn" onclick="insererTexte('f-saisine', 'Engagés sur un accident corporel de la circulation routière. Nous procédons au transport immédiat, balisage et premières constatations.')">+ Accident circulation</button>
+      </div>
       <button type="button" class="btn-vocal" id="btn-voc-saisine" onclick="dicter('f-saisine', 'btn-voc-saisine')">🎤 Dictée continue</button>
     </div>
 
@@ -452,7 +477,7 @@
       </div>
       <div id="container-personnes"></div>
       <button type="button" class="btn btn-outline-action" onclick="ajouterFichePersonne()">
-        + Ajouter une identité (Victime, Témoin, Voisin, Déclarant)
+        + Ajouter une identité (Victime, Témoin, Conducteur...)
       </button>
     </div>
 
@@ -473,26 +498,130 @@
       <div class="card-header-bar">
         <div class="card-title">4. Mesures Prises & Dispositif</div>
       </div>
-      <textarea id="f-mesures" placeholder="Gel des lieux, prélèvements effectués, avis hiérarchie, démarches d'assurance..." oninput="sauvegarderEtat()"></textarea>
+      <textarea id="f-mesures" placeholder="Gel des lieux, prélèvements effectués, avis gradé, démarches assurance..." oninput="sauvegarderEtat()"></textarea>
+      <div class="quick-tags">
+        <button type="button" class="tag-btn" onclick="insererTexte('f-mesures', 'Munis de gants de protection, nous procédons au gel des lieux. Recherches de traces papillaires et biologiques effectuées.')">+ Gel des lieux & PTS</button>
+        <button type="button" class="tag-btn" onclick="insererTexte('f-mesures', 'Compte-rendu d\'intervention et de situation immédiatement effectué au gradé de permanence de l\'unité.')">+ Avis Gradé</button>
+        <button type="button" class="tag-btn" onclick="insererTexte('f-mesures', 'Enquête de voisinage diligentée aux abords immédiats.')">+ Enquête voisinage</button>
+        <button type="button" class="tag-btn" onclick="insererTexte('f-mesures', 'Victime invitée à se présenter à la brigade munie d\'un état descriptif et estimatif précis du préjudice.')">+ Invitation Plainte</button>
+      </div>
       <button type="button" class="btn-vocal" id="btn-voc-mesures" onclick="dicter('f-mesures', 'btn-voc-mesures')">🎤 Dictée continue</button>
     </div>
 
   </div>
 
   <div class="tactical-footer-bar">
-    <button type="button" class="btn btn-primary" style="width:100%; padding:14px; font-size:13.5px;" onclick="exporterRecueilODT()">
+    <button type="button" class="btn btn-primary" style="width:100%; padding:14px; font-size:13.5px;" onclick="demanderExportODT()">
       💾 Exporter le Recueil (.ODT LibreOffice)
     </button>
+  </div>
+
+  <!-- MODAL DE CONFIGURATION DU PROFIL -->
+  <div id="modal-profil" class="modal">
+    <div class="modal-content">
+      <h3 style="margin-top:0; color:var(--gn-header); font-size:14px; text-transform:uppercase; border-bottom:1px solid var(--border-subtle); padding-bottom:8px;">
+        Profil de l'Enquêteur & Unité
+      </h3>
+      <label>Unité de rattachement</label>
+      <input type="text" id="cfg-unite" value="BP VOUVRAY">
+      <label>Courriel destinataire (Boîte brigade / personnelle)</label>
+      <input type="text" id="cfg-email" placeholder="cob.montlouis-sur-loire@gendarmerie.interieur.gouv.fr">
+
+      <div style="display:flex; gap:8px;">
+        <div style="flex:1;">
+          <label>Grade</label>
+          <input type="text" id="cfg-grade" value="Adjudant">
+        </div>
+        <div style="flex:2;">
+          <label>Prénom & Nom</label>
+          <input type="text" id="cfg-nom" value="Jean GROGA">
+        </div>
+      </div>
+
+      <label>Qualité juridique</label>
+      <select id="cfg-qualite" onchange="ajusterAdjointForm()">
+        <option value="OPJ" selected>OPJ (Officier de Police Judiciaire - Art. 16 CPP)</option>
+        <option value="APJ">APJ (Agent de Police Judiciaire - Art. 20 CPP)</option>
+        <option value="APJA">APJA (Agent de Police Judiciaire Adjoint - Art. 21 CPP)</option>
+      </select>
+
+      <div style="margin-top:14px; border-top:1px solid #cbd5e1; padding-top:8px;">
+        <label style="display:inline-flex; align-items:center; gap:8px; font-weight:700; color:var(--gn-blue); cursor:pointer; text-transform:none;">
+          <input type="checkbox" id="cfg-adjoint-actif" onchange="toggleAdjointBox()" style="width:auto; margin:0;">
+          <span id="lbl-adjoint-toggle">Ajouter un collègue / adjoint d'enquête</span>
+        </label>
+      </div>
+
+      <div id="box-adjoint" style="display:none; background:#f8fafc; padding:10px; border-radius:8px; margin-top:8px; border:1px solid #e2e8f0;">
+        <div style="font-size:10px; font-weight:800; text-transform:uppercase; color:var(--text-muted); margin-bottom:6px;" id="box-adj-title">
+          Militaire adjoint
+        </div>
+        <div style="display:flex; gap:8px;">
+          <div style="flex:1;">
+            <label>Grade</label>
+            <input type="text" id="cfg-adj-grade" value="Gendarme">
+          </div>
+          <div style="flex:2;">
+            <label>Prénom & Nom</label>
+            <input type="text" id="cfg-adj-nom" value="">
+          </div>
+        </div>
+        <label>Qualité juridique</label>
+        <select id="cfg-adj-qualite">
+          <option value="APJ">APJ (Agent de Police Judiciaire - Art. 20)</option>
+          <option value="APJA" selected>APJA (Agent de Police Judiciaire Adjoint - Art. 21)</option>
+          <option value="OPJ">OPJ (Officier de Police Judiciaire - Art. 16)</option>
+        </select>
+        <label>Résidence</label>
+        <input type="text" id="cfg-adj-residence" value="VOUVRAY 37210">
+      </div>
+
+      <button type="button" class="btn btn-primary" style="width:100%; margin-top:16px;" onclick="validerProfilModal()">
+        Enregistrer le profil
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL TRANSMISSION ET GESTION DE PURGE -->
+  <div id="modal-export" class="modal">
+    <div class="modal-content">
+      <h3 style="margin-top:0; color:var(--gn-header); font-size:14px; text-transform:uppercase; border-bottom:1px solid var(--border-subtle); padding-bottom:8px;">
+        Génération du Recueil ODT
+      </h3>
+      <div style="background:#f8fafc; border:1px solid var(--border-subtle); border-radius:8px; padding:10px; margin:10px 0; font-size:12px; line-height:1.4;">
+        <strong>Destinataire :</strong> <span id="export-dest-email" style="color:var(--gn-blue); font-weight:bold;"></span><br>
+        <strong>Document :</strong> Fichier bureautique natif modifiable sous LibreOffice / OpenOffice avec clichés intégrés.
+      </div>
+      <p style="font-size:11.5px; color:#475569; margin:8px 0;">
+        Le fichier va être généré et ouvert dans vos applications de messagerie ou téléchargé localement.
+      </p>
+      <button type="button" class="btn btn-primary" style="width:100%; padding:12px;" onclick="executerExportODT(false)">
+        Envoyer / Télécharger (Conserver les données)
+      </button>
+      <button type="button" class="btn btn-secondary" style="width:100%; padding:12px; margin-top:8px; background:#fee2e2; color:#b91c1c; border-color:#fca5a5;" onclick="executerExportODT(true)">
+        Envoyer & PURGER le terminal
+      </button>
+      <button type="button" class="btn btn-secondary" style="width:100%; margin-top:8px;" onclick="fermerModalExport()">
+        Annuler
+      </button>
+    </div>
   </div>
 
   <input type="file" id="global-camera-input" accept="image/*" capture="environment" style="display:none;" onchange="traiterPhotoPrise(event)">
 
   <script>
     var donneesRecueil = {
+      profilInitialise: false,
       unite: 'BP VOUVRAY',
       email: '',
       grade: 'Adjudant',
       nom: 'Jean GROGA',
+      qualite: 'OPJ',
+      adjointActif: false,
+      adjGrade: 'Gendarme',
+      adjNom: '',
+      adjQualite: 'APJA',
+      adjResidence: 'VOUVRAY 37210',
       arriveeTime: '',
       arriveeGps: '',
       adresse: '',
@@ -509,49 +638,118 @@
 
     window.addEventListener('load', function() {
       chargerEtat();
+      if (!donneesRecueil.profilInitialise) {
+        ouvrirModalProfil();
+      }
       mettreAJourBadges();
     });
 
     function getVal(id) { var el = document.getElementById(id); return el ? el.value : ''; }
     function setVal(id, val) { var el = document.getElementById(id); if (el && val !== undefined) el.value = val; }
 
-    window.toggleConfig = function() {
-      var c = document.getElementById('config-card');
-      if (c) c.style.display = (c.style.display === 'none' || c.style.display === '') ? 'block' : 'none';
+    window.ouvrirModalProfil = function() {
+      setVal('cfg-unite', donneesRecueil.unite);
+      setVal('cfg-email', donneesRecueil.email);
+      setVal('cfg-grade', donneesRecueil.grade);
+      setVal('cfg-nom', donneesRecueil.nom);
+      setVal('cfg-qualite', donneesRecueil.qualite);
+      
+      var chkAdj = document.getElementById('cfg-adjoint-actif');
+      if (chkAdj) chkAdj.checked = donneesRecueil.adjointActif;
+      setVal('cfg-adj-grade', donneesRecueil.adjGrade);
+      setVal('cfg-adj-nom', donneesRecueil.adjNom);
+      setVal('cfg-adj-qualite', donneesRecueil.adjQualite);
+      setVal('cfg-adj-residence', donneesRecueil.adjResidence);
+
+      ajusterAdjointForm();
+      toggleAdjointBox();
+      var m = document.getElementById('modal-profil');
+      if (m) m.style.display = 'flex';
+    };
+
+    window.ajusterAdjointForm = function() {
+      var q = getVal('cfg-qualite');
+      var lbl = document.getElementById('lbl-adjoint-toggle');
+      var title = document.getElementById('box-adj-title');
+      var selAdjQ = document.getElementById('cfg-adj-qualite');
+
+      if (q === 'OPJ') {
+        if (lbl) lbl.innerText = "Ajouter un collègue / adjoint d'enquête";
+        if (title) title.innerText = "Militaire adjoint";
+        if (selAdjQ) selAdjQ.disabled = false;
+      } else {
+        if (lbl) lbl.innerText = "Agissant sous le contrôle d'un OPJ";
+        if (title) title.innerText = "Officier de Police Judiciaire superviseur";
+        if (selAdjQ) {
+          selAdjQ.value = 'OPJ';
+          selAdjQ.disabled = true;
+        }
+      }
+    };
+
+    window.toggleAdjointBox = function() {
+      var chk = document.getElementById('cfg-adjoint-actif');
+      var box = document.getElementById('box-adjoint');
+      if (box && chk) box.style.display = chk.checked ? 'block' : 'none';
+    };
+
+    window.validerProfilModal = function() {
+      donneesRecueil.profilInitialise = true;
+      donneesRecueil.unite = getVal('cfg-unite');
+      donneesRecueil.email = getVal('cfg-email');
+      donneesRecueil.grade = getVal('cfg-grade');
+      donneesRecueil.nom = getVal('cfg-nom');
+      donneesRecueil.qualite = getVal('cfg-qualite');
+
+      var chkAdj = document.getElementById('cfg-adjoint-actif');
+      donneesRecueil.adjointActif = chkAdj ? chkAdj.checked : false;
+      donneesRecueil.adjGrade = getVal('cfg-adj-grade');
+      donneesRecueil.adjNom = getVal('cfg-adj-nom');
+      donneesRecueil.adjQualite = getVal('cfg-adj-qualite');
+      donneesRecueil.adjResidence = getVal('cfg-adj-residence');
+
+      var b = document.getElementById('display-badge-qualite');
+      if (b) b.innerText = donneesRecueil.qualite + " • ODT";
+
+      sauvegarderEtat();
+      var m = document.getElementById('modal-profil');
+      if (m) m.style.display = 'none';
     };
 
     window.sauvegarderEtat = function() {
       try {
-        donneesRecueil.unite = getVal('cfg-unite');
-        donneesRecueil.email = getVal('cfg-email');
-        donneesRecueil.grade = getVal('cfg-grade');
-        donneesRecueil.nom = getVal('cfg-nom');
         donneesRecueil.arriveeTime = getVal('f-arrivee-time');
         donneesRecueil.arriveeGps = getVal('f-arrivee-gps');
         donneesRecueil.adresse = getVal('f-adresse');
         donneesRecueil.saisine = getVal('f-saisine');
         donneesRecueil.mesures = getVal('f-mesures');
-        localStorage.setItem('gn_recueil_odt_clean', JSON.stringify(donneesRecueil));
+        localStorage.setItem('gn_recueil_odt_clean_v2', JSON.stringify(donneesRecueil));
       } catch (e) {}
     };
 
     window.chargerEtat = function() {
       try {
-        var raw = localStorage.getItem('gn_recueil_odt_clean');
+        var raw = localStorage.getItem('gn_recueil_odt_clean_v2');
         if (!raw) return;
         donneesRecueil = JSON.parse(raw);
-        setVal('cfg-unite', donneesRecueil.unite);
-        setVal('cfg-email', donneesRecueil.email);
-        setVal('cfg-grade', donneesRecueil.grade);
-        setVal('cfg-nom', donneesRecueil.nom);
         setVal('f-arrivee-time', donneesRecueil.arriveeTime);
         setVal('f-arrivee-gps', donneesRecueil.arriveeGps);
         setVal('f-adresse', donneesRecueil.adresse);
         setVal('f-saisine', donneesRecueil.saisine);
         setVal('f-mesures', donneesRecueil.mesures);
+        var b = document.getElementById('display-badge-qualite');
+        if (b) b.innerText = (donneesRecueil.qualite || 'OPJ') + " • ODT";
         rendrePersonnes();
         rendreConstats();
       } catch (e) {}
+    };
+
+    window.insererTexte = function(champId, texte) {
+      var el = document.getElementById(champId);
+      if (el) {
+        el.value = el.value ? (el.value + '\n' + texte) : texte;
+        sauvegarderEtat();
+      }
     };
 
     window.declencherArrivee = function() {
@@ -587,13 +785,15 @@
       sauvegarderEtat();
     };
 
-    /* GESTION DES FICHES PERSONNES (RÉPÉTABLE) */
+    /* FICHES PERSONNES */
     window.ajouterFichePersonne = function() {
       donneesRecueil.personnes.push({
         id: Date.now(),
         qualite: 'Victime',
         nomPrenom: '',
         telephone: '',
+        adresse: '',
+        vehicule: '',
         declaration: ''
       });
       rendrePersonnes();
@@ -614,11 +814,13 @@
           '</div>' +
           '<div style="display:flex; gap:8px;">' +
             '<div style="flex:1;">' +
-              '<label>Rôle</label>' +
+              '<label>Rôle / Statut</label>' +
               '<select onchange="majPersonne(' + p.id + ', \'qualite\', this.value)">' +
                 '<option value="Victime"' + (p.qualite==='Victime'?' selected':'') + '>Victime</option>' +
                 '<option value="Déclarant"' + (p.qualite==='Déclarant'?' selected':'') + '>Déclarant</option>' +
                 '<option value="Témoin"' + (p.qualite==='Témoin'?' selected':'') + '>Témoin</option>' +
+                '<option value="Conducteur"' + (p.qualite==='Conducteur'?' selected':'') + '>Conducteur</option>' +
+                '<option value="Passager"' + (p.qualite==='Passager'?' selected':'') + '>Passager</option>' +
                 '<option value="Voisin"' + (p.qualite==='Voisin'?' selected':'') + '>Voisin</option>' +
                 '<option value="Mis en cause"' + (p.qualite==='Mis en cause'?' selected':'') + '>Mis en cause</option>' +
               '</select>' +
@@ -628,8 +830,18 @@
               '<input type="text" value="' + (p.nomPrenom || '') + '" placeholder="DUPONT Jean" oninput="majPersonne(' + p.id + ', \'nomPrenom\', this.value)">' +
             '</div>' +
           '</div>' +
-          '<label>Contact / Téléphone</label>' +
-          '<input type="text" value="' + (p.telephone || '') + '" placeholder="06..." oninput="majPersonne(' + p.id + ', \'telephone\', this.value)">' +
+          '<div style="display:flex; gap:8px;">' +
+            '<div style="flex:1;">' +
+              '<label>Téléphone</label>' +
+              '<input type="text" value="' + (p.telephone || '') + '" placeholder="06..." oninput="majPersonne(' + p.id + ', \'telephone\', this.value)">' +
+            '</div>' +
+            '<div style="flex:1;">' +
+              '<label>Véhicule (Immat / Modèle)</label>' +
+              '<input type="text" value="' + (p.vehicule || '') + '" placeholder="AA-123-BB (Renault Clio)" oninput="majPersonne(' + p.id + ', \'vehicule\', this.value)">' +
+            '</div>' +
+          '</div>' +
+          '<label>Adresse de résidence</label>' +
+          '<input type="text" value="' + (p.adresse || '') + '" placeholder="Numéro, rue, commune..." oninput="majPersonne(' + p.id + ', \'adresse\', this.value)">' +
           '<label>Déclarations sommaires / Éléments fournis</label>' +
           '<textarea placeholder="Précisions sur les horaires, préjudice estimé, suspects aperçus..." oninput="majPersonne(' + p.id + ', \'declaration\', this.value)">' + (p.declaration || '') + '</textarea>';
         c.appendChild(box);
@@ -648,7 +860,7 @@
       sauvegarderEtat();
     };
 
-    /* GESTION DES FICHES CONSTATATIONS (RÉPÉTABLE AVEC CLICHÉS DÉDIÉS) */
+    /* FICHES CONSTATATIONS */
     window.ajouterFicheConstat = function() {
       donneesRecueil.constats.push({
         id: Date.now(),
@@ -668,7 +880,7 @@
         var box = document.createElement('div');
         box.className = 'dynamic-item-box';
         var photosHtml = '';
-        ct.photos.forEach(function(ph, pIdx) {
+        ct.photos.forEach(function(ph) {
           photosHtml +=
             '<div class="photo-card">' +
               '<img src="' + ph.data + '">' +
@@ -679,13 +891,13 @@
 
         box.innerHTML =
           '<div class="dynamic-item-head">' +
-            '<span class="dynamic-item-title">Constatation #' + (idx + 1) + '</span>' +
+            '<span class="dynamic-item-title">Zone #' + (idx + 1) + '</span>' +
             '<button type="button" class="btn-danger-sm" onclick="supprimerFicheConstat(' + ct.id + ')">Supprimer</button>' +
           '</div>' +
-          '<label>Lieu / Pièce / Support</label>' +
-          '<input type="text" value="' + (ct.localisation || '') + '" placeholder="Ex. : Fenêtre cuisine, Chambre parentale..." oninput="majConstat(' + ct.id + ', \'localisation\', this.value)">' +
-          '<label>Description des traces / Désordre / Effraction</label>' +
-          '<textarea placeholder="Pesées constatées, tiroirs fouillés, objets déplacés..." oninput="majConstat(' + ct.id + ', \'description\', this.value)">' + (ct.description || '') + '</textarea>' +
+          '<label>Lieu / Pièce / Point d\'impact</label>' +
+          '<input type="text" value="' + (ct.localisation || '') + '" placeholder="Fenêtre salon, portière AVG, barillet..." oninput="majConstat(' + ct.id + ', \'localisation\', this.value)">' +
+          '<label>Description des traces / Désordre / Dégradations</label>' +
+          '<textarea placeholder="Pesée 1cm, vitre brisée, fouille..." oninput="majConstat(' + ct.id + ', \'description\', this.value)">' + (ct.description || '') + '</textarea>' +
           '<div style="margin-top:8px;">' +
             '<button type="button" class="btn btn-secondary" style="font-size:11px;" onclick="declencherPhotoConstat(' + ct.id + ')">📷 + Cliché pour cette zone</button>' +
             '<div class="photo-grid">' + photosHtml + '</div>' +
@@ -772,7 +984,7 @@
       if (bc) bc.innerText = donneesRecueil.constats.length + ' Zone(s)';
     }
 
-    /* DICTÉE VOCALE */
+    /* DICTÉE CONTINUE */
     window.dicter = function(targetId, btnId) {
       var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) { alert("Reconnaissance vocale non disponible."); return; }
@@ -809,146 +1021,153 @@
       lancer();
     };
 
-    /* GÉNÉRATION NATIVE DU FICHIER ODT (OPENDOCUMENT) AVEC JSZIP */
-    window.exporterRecueilODT = async function() {
+    /* EXPORT ET PURGE SÉCURISÉE */
+    window.demanderExportODT = function() {
       sauvegarderEtat();
-      var zip = new JSZip();
+      var dest = document.getElementById('export-dest-email');
+      if (dest) dest.innerText = donneesRecueil.email || "(Aucune boîte configurée - Partage direct)";
+      var m = document.getElementById('modal-export');
+      if (m) m.style.display = 'flex';
+    };
 
-      // 1. Spécification MIME OpenDocument
-      zip.file('mimetype', 'application/vnd.oasis.opendocument.text', { compression: 'STORE' });
+    window.fermerModalExport = function() {
+      var m = document.getElementById('modal-export');
+      if (m) m.style.display = 'none';
+    };
 
-      // 2. META-INF/manifest.xml
-      var manifestXml = '<?xml version="1.0" encoding="UTF-8"?>\n' +
-        '<manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0" manifest:version="1.2">\n' +
-        '  <manifest:file-entry manifest:full-path="/" manifest:version="1.2" manifest:media-type="application/vnd.oasis.opendocument.text"/>\n' +
-        '  <manifest:file-entry manifest:full-path="content.xml" manifest:media-type="text/xml"/>\n';
+    window.executerExportODT = async function(purgerApres) {
+      fermerModalExport();
+      try {
+        var zip = new JSZip();
+        zip.file('mimetype', 'application/vnd.oasis.opendocument.text', { compression: 'STORE' });
 
-      // 3. Construction du contenu textuel et insertion des images
-      var bodyXml = '<office:text>\n';
-      bodyXml += '<text:h text:outline-level="1">RECUEIL D\'INTERVENTION ET CONSTATATIONS TERRAIN</text:h>\n';
-      bodyXml += '<text:p text:style-name="Sub">Unité : ' + escapeXml(donneesRecueil.unite) + ' | Rédacteur : ' + escapeXml(donneesRecueil.grade + ' ' + donneesRecueil.nom) + '</text:p>\n';
-      bodyXml += '<text:p></text:p>\n';
+        var manifestXml = '<?xml version="1.0" encoding="UTF-8"?>\n' +
+          '<manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0" manifest:version="1.2">\n' +
+          '  <manifest:file-entry manifest:full-path="/" manifest:version="1.2" manifest:media-type="application/vnd.oasis.opendocument.text"/>\n' +
+          '  <manifest:file-entry manifest:full-path="content.xml" manifest:media-type="text/xml"/>\n';
 
-      bodyXml += '<text:h text:outline-level="2">1. TRANSPORT &amp; CADRE DE MISSION</text:h>\n';
-      bodyXml += '<text:p><text:span text:style-name="Bold">Arrivée sur les lieux : </text:span>' + escapeXml(donneesRecueil.arriveeTime || 'Non précisé') + '</text:p>\n';
-      bodyXml += '<text:p><text:span text:style-name="Bold">Coordonnées GPS : </text:span>' + escapeXml(donneesRecueil.arriveeGps || 'Non précisé') + '</text:p>\n';
-      bodyXml += '<text:p><text:span text:style-name="Bold">Adresse constatée : </text:span>' + escapeXml(donneesRecueil.adresse || 'Non précisé') + '</text:p>\n';
-      bodyXml += '<text:p><text:span text:style-name="Bold">Saisine : </text:span>' + escapeXml(donneesRecueil.saisine || 'Néant') + '</text:p>\n';
-      bodyXml += '<text:p></text:p>\n';
-
-      bodyXml += '<text:h text:outline-level="2">2. ÉLÉMENTS SUR LES PERSONNES (VICTIMES / TÉMOINS / VOISINS)</text:h>\n';
-      if (donneesRecueil.personnes.length === 0) {
-        bodyXml += '<text:p>Aucune personne répertoriée lors du recueil.</text:p>\n';
-      } else {
-        donneesRecueil.personnes.forEach(function(p, i){
-          bodyXml += '<text:p><text:span text:style-name="Bold">#' + (i+1) + ' [' + escapeXml(p.qualite) + '] </text:span>' + escapeXml(p.nomPrenom || 'Identité non précisée') + ' — Tél : ' + escapeXml(p.telephone || 'Non renseigné') + '</text:p>\n';
-          if (p.declaration) {
-            bodyXml += '<text:p><text:span text:style-name="Italic">Déclarations : </text:span>« ' + escapeXml(p.declaration) + ' »</text:p>\n';
-          }
-        });
-      }
-      bodyXml += '<text:p></text:p>\n';
-
-      bodyXml += '<text:h text:outline-level="2">3. CONSTATATIONS MATÉRIELLES, EFFRACTIONS &amp; TRACES PTS</text:h>\n';
-      if (donneesRecueil.constats.length === 0) {
-        bodyXml += '<text:p>Aucune constatation zonée enregistrée.</text:p>\n';
-      } else {
-        var photoGlobalIdx = 1;
-        donneesRecueil.constats.forEach(function(ct, i){
-          bodyXml += '<text:p><text:span text:style-name="Bold">Zone #' + (i+1) + ' (' + escapeXml(ct.localisation || 'Emplacement non précisé') + ') : </text:span>' + escapeXml(ct.description || 'Néant') + '</text:p>\n';
-
-          if (ct.photos && ct.photos.length > 0) {
-            ct.photos.forEach(function(ph){
-              var imgPath = 'Pictures/cliche_' + photoGlobalIdx + '.jpg';
-              zip.file(imgPath, ph.base64Payload, { base64: true });
-              manifestXml += '  <manifest:file-entry manifest:full-path="' + imgPath + '" manifest:media-type="image/jpeg"/>\n';
-
-              bodyXml += '<text:p><draw:frame draw:name="Img_' + photoGlobalIdx + '" svg:width="12cm" svg:height="8.5cm" text:anchor-type="paragraph">' +
-                '<draw:image xlink:href="' + imgPath + '" xlink:type="simple" xlink:show="embed" xlink:actuate="onLoad"/>' +
-                '</draw:frame></text:p>\n';
-              bodyXml += '<text:p text:style-name="Legende"><text:span text:style-name="Italic">Cliché n° ' + photoGlobalIdx + ' : ' + escapeXml(ph.legende || ct.localisation || 'Sans légende') + '</text:span></text:p>\n';
-              photoGlobalIdx++;
-            });
-          }
-        });
-      }
-      bodyXml += '<text:p></text:p>\n';
-
-      bodyXml += '<text:h text:outline-level="2">4. MESURES PRISES &amp; PRÉSERVATION DES TRACES</text:h>\n';
-      bodyXml += '<text:p>' + escapeXml(donneesRecueil.mesures || 'Néant') + '</text:p>\n';
-      bodyXml += '</office:text>\n';
-
-      // 4. content.xml complet
-      var contentXml = '<?xml version="1.0" encoding="UTF-8"?>\n' +
-        '<office:document-content xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" ' +
-        'xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" ' +
-        'xmlns:draw="urn:oasis:names:tc:opendocument:xmlns:drawing:1.0" ' +
-        'xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0" ' +
-        'xmlns:xlink="http://www.w3.org/1999/xlink" ' +
-        'office:version="1.2">\n' +
-        '<office:automatic-styles>\n' +
-        '  <style:style xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0" style:name="Bold" style:family="text"><style:text-properties fo:font-weight="bold" xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0"/></style:style>\n' +
-        '  <style:style xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0" style:name="Italic" style:family="text"><style:text-properties fo:font-style="italic" xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0"/></style:style>\n' +
-        '  <style:style xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0" style:name="Sub" style:family="paragraph"><style:text-properties fo:font-size="10pt" fo:color="#475569" xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0"/></style:style>\n' +
-        '  <style:style xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0" style:name="Legende" style:family="paragraph"><style:text-properties fo:font-size="9pt" fo:color="#334155" xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0"/></style:style>\n' +
-        '</office:automatic-styles>\n' +
-        '<office:body>\n' + bodyXml + '</office:body>\n' +
-        '</office:document-content>';
-
-      manifestXml += '</manifest:manifest>';
-
-      zip.file('content.xml', contentXml);
-      zip.file('META-INF/manifest.xml', manifestXml);
-
-      // Génération du blob binaire ODT
-      var odtBlob = await zip.generateAsync({ type: 'blob', mimeType: 'application/vnd.oasis.opendocument.text' });
-      var nomFichier = 'Recueil_Intervention_' + new Date().toISOString().slice(0,10) + '.odt';
-      var fichierOdt = new File([odtBlob], nomFichier, { type: 'application/vnd.oasis.opendocument.text' });
-
-      // Partage direct mobile ou téléchargement
-      if (navigator.canShare && navigator.canShare({ files: [fichierOdt] })) {
-        await navigator.share({
-          title: "Recueil d'intervention — " + donneesRecueil.unite,
-          text: "Fiche recueil pour mise en forme du PV sous LibreOffice. Destinataire : " + donneesRecueil.email,
-          files: [fichierOdt]
-        });
-      } else {
-        var url = URL.createObjectURL(odtBlob);
-        var a = document.createElement('a');
-        a.href = url;
-        a.download = nomFichier;
-        a.click();
-        URL.revokeObjectURL(url);
-        alert('Le fichier .ODT modifiable a été généré et téléchargé.');
-      }
-
-      setTimeout(function() {
-        if (confirm("Transmission effectuée.\n\nSouhaitez-vous PURGER DÉFINITIVEMENT les notes et clichés de ce recueil sur le téléphone ?")) {
-          purgerRecueil();
+        var bodyXml = '<office:text>\n';
+        bodyXml += '<text:h text:outline-level="1">RECUEIL DE CONSTATATIONS TERRAIN — ' + escapeXml(donneesRecueil.unite) + '</text:h>\n';
+        bodyXml += '<text:p text:style-name="Sub">Rédacteur : ' + escapeXml(donneesRecueil.grade + ' ' + donneesRecueil.nom + ' (' + donneesRecueil.qualite + ')') ;
+        if (donneesRecueil.adjointActif) {
+          bodyXml += (donneesRecueil.qualite === 'OPJ' ? ' — Assisté de : ' : ' — Sous le contrôle de : ') + escapeXml(donneesRecueil.adjGrade + ' ' + donneesRecueil.adjNom + ' (' + donneesRecueil.adjQualite + ')');
         }
-      }, 1200);
+        bodyXml += '</text:p>\n<text:p></text:p>\n';
+
+        bodyXml += '<text:h text:outline-level="2">1. TRANSPORT &amp; ENGAGEMENT</text:h>\n';
+        bodyXml += '<text:p><text:span text:style-name="Bold">Date et heure : </text:span>' + escapeXml(donneesRecueil.arriveeTime || 'Non précisé') + '</text:p>\n';
+        bodyXml += '<text:p><text:span text:style-name="Bold">Coordonnées GPS : </text:span>' + escapeXml(donneesRecueil.arriveeGps || 'Non précisé') + '</text:p>\n';
+        bodyXml += '<text:p><text:span text:style-name="Bold">Adresse constatée : </text:span>' + escapeXml(donneesRecueil.adresse || 'Non précisé') + '</text:p>\n';
+        bodyXml += '<text:p><text:span text:style-name="Bold">Saisine : </text:span>' + escapeXml(donneesRecueil.saisine || 'Néant') + '</text:p>\n<text:p></text:p>\n';
+
+        bodyXml += '<text:h text:outline-level="2">2. ÉLÉMENTS SUR LES PERSONNES</text:h>\n';
+        if (donneesRecueil.personnes.length === 0) {
+          bodyXml += '<text:p>Néant.</text:p>\n';
+        } else {
+          donneesRecueil.personnes.forEach(function(p, i){
+            bodyXml += '<text:p><text:span text:style-name="Bold">#' + (i+1) + ' [' + escapeXml(p.qualite) + '] </text:span>' + escapeXml(p.nomPrenom || 'Identité non précisée') + '</text:p>\n';
+            if (p.telephone) bodyXml += '<text:p>• Téléphone : ' + escapeXml(p.telephone) + '</text:p>\n';
+            if (p.adresse) bodyXml += '<text:p>• Résidence : ' + escapeXml(p.adresse) + '</text:p>\n';
+            if (p.vehicule) bodyXml += '<text:p>• Véhicule : ' + escapeXml(p.vehicule) + '</text:p>\n';
+            if (p.declaration) bodyXml += '<text:p><text:span text:style-name="Italic">Déclarations : </text:span>« ' + escapeXml(p.declaration) + ' »</text:p>\n';
+          });
+        }
+        bodyXml += '<text:p></text:p>\n';
+
+        bodyXml += '<text:h text:outline-level="2">3. CONSTATATIONS MATÉRIELLES &amp; CLICHÉS</text:h>\n';
+        if (donneesRecueil.constats.length === 0) {
+          bodyXml += '<text:p>Néant.</text:p>\n';
+        } else {
+          var photoIdx = 1;
+          donneesRecueil.constats.forEach(function(ct, i){
+            bodyXml += '<text:p><text:span text:style-name="Bold">Zone #' + (i+1) + ' (' + escapeXml(ct.localisation || 'Sans précision') + ') : </text:span>' + escapeXml(ct.description || 'Néant') + '</text:p>\n';
+            if (ct.photos && ct.photos.length > 0) {
+              ct.photos.forEach(function(ph){
+                var imgPath = 'Pictures/cliche_' + photoIdx + '.jpg';
+                zip.file(imgPath, ph.base64Payload, { base64: true });
+                manifestXml += '  <manifest:file-entry manifest:full-path="' + imgPath + '" manifest:media-type="image/jpeg"/>\n';
+                bodyXml += '<text:p><draw:frame draw:name="Img_' + photoIdx + '" svg:width="11cm" svg:height="7.5cm" text:anchor-type="paragraph">' +
+                  '<draw:image xlink:href="' + imgPath + '" xlink:type="simple" xlink:show="embed" xlink:actuate="onLoad"/>' +
+                  '</draw:frame></text:p>\n';
+                bodyXml += '<text:p text:style-name="Legende"><text:span text:style-name="Italic">Cliché n° ' + photoIdx + ' : ' + escapeXml(ph.legende || ct.localisation || 'Sans légende') + '</text:span></text:p>\n';
+                photoIdx++;
+              });
+            }
+          });
+        }
+        bodyXml += '<text:p></text:p>\n';
+
+        bodyXml += '<text:h text:outline-level="2">4. MESURES PRISES</text:h>\n';
+        bodyXml += '<text:p>' + escapeXml(donneesRecueil.mesures || 'Néant') + '</text:p>\n';
+        bodyXml += '</office:text>\n';
+
+        var contentXml = '<?xml version="1.0" encoding="UTF-8"?>\n' +
+          '<office:document-content xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" ' +
+          'xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" xmlns:draw="urn:oasis:names:tc:opendocument:xmlns:drawing:1.0" ' +
+          'xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0" xmlns:xlink="http://www.w3.org/1999/xlink" office:version="1.2">\n' +
+          '<office:automatic-styles>\n' +
+          '  <style:style xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0" style:name="Bold" style:family="text"><style:text-properties fo:font-weight="bold" xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0"/></style:style>\n' +
+          '  <style:style xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0" style:name="Italic" style:family="text"><style:text-properties fo:font-style="italic" xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0"/></style:style>\n' +
+          '  <style:style xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0" style:name="Sub" style:family="paragraph"><style:text-properties fo:font-size="10pt" fo:color="#475569" xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0"/></style:style>\n' +
+          '  <style:style xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0" style:name="Legende" style:family="paragraph"><style:text-properties fo:font-size="9pt" fo:color="#334155" xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0"/></style:style>\n' +
+          '</office:automatic-styles>\n' +
+          '<office:body>\n' + bodyXml + '</office:body>\n' +
+          '</office:document-content>';
+
+        manifestXml += '</manifest:manifest>';
+        zip.file('content.xml', contentXml);
+        zip.file('META-INF/manifest.xml', manifestXml);
+
+        var odtBlob = await zip.generateAsync({ type: 'blob', mimeType: 'application/vnd.oasis.opendocument.text' });
+        var nomFichier = 'Recueil_' + (donneesRecueil.unite.replace(/\s+/g,'_')) + '_' + new Date().toISOString().slice(0,10) + '.odt';
+        var fichierOdt = new File([odtBlob], nomFichier, { type: 'application/vnd.oasis.opendocument.text' });
+
+        if (navigator.canShare && navigator.canShare({ files: [fichierOdt] })) {
+          await navigator.share({
+            title: "Recueil d'intervention — " + donneesRecueil.unite,
+            text: "Recueil pour mise en forme du PV sur LibreOffice. Boîte : " + donneesRecueil.email,
+            files: [fichierOdt]
+          });
+        } else {
+          var url = URL.createObjectURL(odtBlob);
+          var a = document.createElement('a');
+          a.href = url;
+          a.download = nomFichier;
+          a.click();
+          URL.revokeObjectURL(url);
+          alert('Fichier .ODT généré. Téléchargement effectué.');
+        }
+
+        if (purgerApres) {
+          purgerRecueil();
+        } else {
+          alert('Transmission effectuée. Les données et clichés restent enregistrés sur votre téléphone (vous pourrez purger plus tard).');
+        }
+
+      } catch (err) {
+        alert('Erreur lors de la génération du fichier ODT : ' + err.message);
+      }
     };
 
     function escapeXml(str) {
       if (!str) return '';
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&apos;');
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
     }
 
     window.demanderReinitialisation = function() {
-      if (confirm("ATTENTION : Réinitialiser complètement ce recueil d'intervention ?")) {
+      if (confirm("ATTENTION : Supprimer toutes les données en cours de ce recueil ?")) {
         purgerRecueil();
       }
     };
 
     function purgerRecueil() {
-      localStorage.removeItem('gn_recueil_odt_clean');
       donneesRecueil.personnes = [];
       donneesRecueil.constats = [];
+      donneesRecueil.arriveeTime = '';
+      donneesRecueil.arriveeGps = '';
+      donneesRecueil.adresse = '';
+      donneesRecueil.saisine = '';
+      donneesRecueil.mesures = '';
       setVal('f-arrivee-time', '');
       setVal('f-arrivee-gps', '');
       setVal('f-adresse', '');
@@ -957,6 +1176,6 @@
       rendrePersonnes();
       rendreConstats();
       sauvegarderEtat();
-      alert('Mémoire locale et clichés purgés.');
+      alert('Mémoire locale et clichés du recueil purgés.');
     }
   </script></body></html>
