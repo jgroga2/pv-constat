@@ -1,0 +1,962 @@
+<!DOCTYPE html><html lang="fr"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>GendConstat — Recueil ODT</title>
+  <meta name="apple-mobile-web-app-title" content="GendRecueil">
+  <!-- Librairie JSZip pour l'assemblage de l'archive OpenDocument .odt en local -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <style>
+    :root {
+      --gn-deep: #071326;
+      --gn-header: #0b1d3a;
+      --gn-blue: #163673;
+      --gn-accent: #2563eb;
+      --gn-accent-soft: #eff6ff;
+      --bg-main: #f1f5f9;
+      --surface: #ffffff;
+      --surface-muted: #f8fafc;
+      --border-subtle: #e2e8f0;
+      --border-strong: #cbd5e1;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --text-label: #475569;
+      --badge-bg: #e0e7ff;
+      --badge-txt: #1e40af;
+      --badge-green-bg: #dcfce7;
+      --badge-green-txt: #15803d;
+      --danger: #dc2626;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg-main);
+      color: var(--text-main);
+      padding-bottom: 95px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    header {
+      background: linear-gradient(180deg, var(--gn-deep) 0%, var(--gn-header) 100%);
+      color: #ffffff;
+      padding: 10px 16px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 16px rgba(7, 19, 38, 0.4);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .brand-group { display: flex; align-items: center; gap: 12px; }
+    .brand-logo-svg { width: 36px; height: 36px; flex-shrink: 0; }
+    .brand-texts { display: flex; flex-direction: column; }
+    .brand-title-row { display: flex; align-items: center; gap: 6px; }
+    header h1 {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #ffffff;
+    }
+    header h1 span { color: #38bdf8; }
+    .badge-header-mode {
+      background: rgba(37, 99, 235, 0.3);
+      border: 1px solid #38bdf8;
+      color: #e0f2fe;
+      font-size: 9px;
+      font-weight: 800;
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+    .brand-sub {
+      font-size: 9px;
+      color: #94a3b8;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 1px;
+    }
+    .brand-sub-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #38bdf8;
+      box-shadow: 0 0 6px #38bdf8;
+    }
+
+    .header-actions { display: flex; align-items: center; gap: 8px; }
+    .btn-icon-tactical {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #e2e8f0;
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      padding: 0;
+    }
+    .btn-icon-tactical.danger:hover {
+      background: rgba(220, 38, 38, 0.25);
+      border-color: #f87171;
+    }
+    .btn-icon-tactical svg { width: 17px; height: 17px; }
+
+    .tactical-meta-banner {
+      background: #ffffff;
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 8px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    }
+    .meta-item-tag {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--gn-blue);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .meta-badge-unit {
+      background: #dbeafe;
+      color: #1e40af;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 6px;
+      text-transform: uppercase;
+    }
+
+    .container {
+      padding: 12px 14px;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 14px;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+      border: 1px solid var(--border-subtle);
+      scroll-margin-top: 70px;
+    }
+
+    .card-header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 8px;
+    }
+
+    .card-title {
+      font-weight: 800;
+      font-size: 12.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--gn-header);
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .card-title svg { width: 15px; height: 15px; color: var(--gn-accent); }
+
+    .card-tag-pill {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 6px;
+      background: var(--badge-bg);
+      color: var(--badge-txt);
+    }
+    .card-tag-pill.green { background: var(--badge-green-bg); color: var(--badge-green-txt); }
+
+    label {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10.5px;
+      font-weight: 700;
+      margin-top: 10px;
+      margin-bottom: 5px;
+      color: var(--text-label);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    input[type="text"], select, textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border-strong);
+      border-radius: 8px;
+      font-size: 13.5px;
+      background: #ffffff;
+      color: var(--text-main);
+      outline: none;
+    }
+    input[type="text"]:focus, select:focus, textarea:focus {
+      border-color: var(--gn-accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+    textarea { min-height: 80px; resize: vertical; line-height: 1.45; }
+
+    .btn-row { display: flex; gap: 8px; margin-top: 10px; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 14px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 12px;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn-primary {
+      background: linear-gradient(180deg, #1e3a8a 0%, var(--gn-header) 100%);
+      color: #ffffff;
+      box-shadow: 0 2px 6px rgba(11, 29, 58, 0.2);
+    }
+    .btn-secondary {
+      background: #f1f5f9;
+      color: var(--text-label);
+      border: 1px solid var(--border-strong);
+    }
+    .btn-outline-action {
+      background: #ffffff;
+      color: var(--gn-accent);
+      border: 1.5px dashed var(--gn-accent);
+      width: 100%;
+      padding: 11px;
+      font-size: 12.5px;
+      margin-top: 8px;
+    }
+    .btn-outline-action:hover { background: var(--gn-accent-soft); }
+    .btn-danger-sm {
+      background: #fee2e2;
+      color: var(--danger);
+      border: 1px solid #fca5a5;
+      padding: 4px 8px;
+      font-size: 10.5px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .btn-vocal {
+      background: #f8fafc;
+      color: var(--gn-blue);
+      border: 1px solid var(--border-strong);
+      padding: 7px 12px;
+      font-size: 11px;
+      margin-top: 6px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-vocal.recording {
+      background: #dc2626;
+      color: #ffffff;
+      border-color: #b91c1c;
+      animation: pulseRecording 1.4s infinite ease-in-out;
+    }
+    @keyframes pulseRecording {
+      0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.45); }
+      70% { box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+    }
+
+    /* Cartouche répétable stylisé */
+    .dynamic-item-box {
+      background: var(--surface-muted);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 12px;
+      position: relative;
+    }
+    .dynamic-item-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .dynamic-item-title {
+      font-size: 11.5px;
+      font-weight: 800;
+      color: var(--gn-blue);
+      text-transform: uppercase;
+    }
+
+    .photo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .photo-card {
+      background: #ffffff;
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      padding: 6px;
+      position: relative;
+    }
+    .photo-card img {
+      width: 100%;
+      height: 90px;
+      object-fit: cover;
+      border-radius: 4px;
+      background: #000;
+    }
+    .photo-card input {
+      font-size: 10px;
+      padding: 4px;
+      margin-top: 4px;
+    }
+
+    .tactical-footer-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 68px;
+      background: #ffffff;
+      border-top: 1px solid var(--border-strong);
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      z-index: 45;
+      box-shadow: 0 -4px 12px rgba(15, 23, 42, 0.08);
+    }
+  </style></head><body>
+
+  <header>
+    <div class="brand-group">
+      <svg class="brand-logo-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="100" height="100" rx="22" fill="#061225"/>
+        <path d="M50 14 C74 14 84 25 84 55 C84 75 58 87 50 90 C42 87 16 75 16 55 C16 25 26 14 50 14 Z" stroke="#38bdf8" stroke-width="2.5" fill="#0b1d3a" stroke-dasharray="1 1"/>
+        <circle cx="50" cy="54" r="16" fill="#06183a" stroke="#2563eb" stroke-width="2.2"/>
+        <circle cx="50" cy="54" r="2.5" fill="#38bdf8"/>
+        <rect x="34" y="71" width="32" height="9" rx="4.5" fill="#1d4ed8"/>
+        <text x="50" y="77.5" fill="#ffffff" font-size="6" font-weight="900" font-family="sans-serif" text-anchor="middle">RECUEIL</text>
+      </svg>
+      <div class="brand-texts">
+        <div class="brand-title-row">
+          <h1>GEND<span>RECUEIL</span></h1>
+          <span class="badge-header-mode">ODT</span>
+        </div>
+        <div class="brand-sub">
+          <span class="brand-sub-dot"></span>
+          FICHE D'INTERVENTION TERRAIN
+        </div>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button type="button" class="btn-icon-tactical danger" onclick="demanderReinitialisation()" title="Tout réinitialiser">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+      </button>
+      <button type="button" class="btn-icon-tactical" onclick="toggleConfig()" title="Configuration Unité">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="tactical-meta-banner">
+    <div class="meta-item-tag">
+      <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      SAISIE STRUCTURÉE POUR BUREAUTIQUE
+    </div>
+    <div class="meta-badge-unit">FORMAT .ODT</div>
+  </div>
+
+  <div class="container">
+
+    <!-- CONFIGURATION DU MILITAIRE -->
+    <div class="card" id="config-card" style="display:none;">
+      <div class="card-header-bar">
+        <div class="card-title">Configuration Unité & Rédacteur</div>
+      </div>
+      <label>Unité de rattachement</label>
+      <input type="text" id="cfg-unite" value="BP VOUVRAY" oninput="sauvegarderEtat()">
+      <label>Courriel d'envoi du recueil</label>
+      <input type="text" id="cfg-email" placeholder="cob.montlouis-sur-loire@gendarmerie.interieur.gouv.fr" oninput="sauvegarderEtat()">
+      <div style="display:flex; gap:8px;">
+        <div style="flex:1;">
+          <label>Grade</label>
+          <input type="text" id="cfg-grade" value="Adjudant" oninput="sauvegarderEtat()">
+        </div>
+        <div style="flex:2;">
+          <label>Nom & Prénom</label>
+          <input type="text" id="cfg-nom" value="Jean GROGA" oninput="sauvegarderEtat()">
+        </div>
+      </div>
+      <button type="button" class="btn btn-primary" style="width:100%; margin-top:12px;" onclick="toggleConfig()">Fermer</button>
+    </div>
+
+    <!-- 1. ARRIVÉE & SAISINE -->
+    <div class="card">
+      <div class="card-header-bar">
+        <div class="card-title">1. Transport & Saisine</div>
+        <span class="card-tag-pill green" id="gps-pill">GPS PRÊT</span>
+      </div>
+      <button type="button" class="btn btn-primary" style="width:100%;" onclick="declencherArrivee()">
+        📍 Actualiser Horodatage & GPS
+      </button>
+      <div style="display:flex; gap:8px; margin-top:8px;">
+        <div style="flex:1;">
+          <label>Horodatage arrivée</label>
+          <input type="text" id="f-arrivee-time" readonly style="background:#f8fafc; font-weight:600;">
+        </div>
+        <div style="flex:1;">
+          <label>Point GPS WGS84</label>
+          <input type="text" id="f-arrivee-gps" readonly style="background:#f8fafc; font-weight:600;">
+        </div>
+      </div>
+      <label>Adresse d'intervention</label>
+      <input type="text" id="f-adresse" placeholder="Adresse résolue ou saisie..." oninput="sauvegarderEtat()">
+      <label>Cadre de la saisine / Motif de l'engagement</label>
+      <textarea id="f-saisine" placeholder="Ex. : Sollicités par le CORG pour cambriolage en cours..." oninput="sauvegarderEtat()"></textarea>
+      <button type="button" class="btn-vocal" id="btn-voc-saisine" onclick="dicter('f-saisine', 'btn-voc-saisine')">🎤 Dictée continue</button>
+    </div>
+
+    <!-- 2. PERSONNES RENCONTRÉES / IDENTITÉS (RÉPÉTABLE) -->
+    <div class="card">
+      <div class="card-header-bar">
+        <div class="card-title">2. Personnes & Auditions Sommaires</div>
+        <span class="card-tag-pill" id="badge-count-personnes">0 Fiche</span>
+      </div>
+      <div id="container-personnes"></div>
+      <button type="button" class="btn btn-outline-action" onclick="ajouterFichePersonne()">
+        + Ajouter une identité (Victime, Témoin, Voisin, Déclarant)
+      </button>
+    </div>
+
+    <!-- 3. CONSTATATIONS, EFFRACTIONS & CLICHÉS (RÉPÉTABLE) -->
+    <div class="card">
+      <div class="card-header-bar">
+        <div class="card-title">3. Constatations & Traces Relevées</div>
+        <span class="card-tag-pill" id="badge-count-constats">0 Zone</span>
+      </div>
+      <div id="container-constats"></div>
+      <button type="button" class="btn btn-outline-action" onclick="ajouterFicheConstat()">
+        + Ajouter une zone de constatation (Pièce, Effraction, Traces PTS)
+      </button>
+    </div>
+
+    <!-- 4. MESURES PRISES & SÉCURISATION -->
+    <div class="card">
+      <div class="card-header-bar">
+        <div class="card-title">4. Mesures Prises & Dispositif</div>
+      </div>
+      <textarea id="f-mesures" placeholder="Gel des lieux, prélèvements effectués, avis hiérarchie, démarches d'assurance..." oninput="sauvegarderEtat()"></textarea>
+      <button type="button" class="btn-vocal" id="btn-voc-mesures" onclick="dicter('f-mesures', 'btn-voc-mesures')">🎤 Dictée continue</button>
+    </div>
+
+  </div>
+
+  <div class="tactical-footer-bar">
+    <button type="button" class="btn btn-primary" style="width:100%; padding:14px; font-size:13.5px;" onclick="exporterRecueilODT()">
+      💾 Exporter le Recueil (.ODT LibreOffice)
+    </button>
+  </div>
+
+  <input type="file" id="global-camera-input" accept="image/*" capture="environment" style="display:none;" onchange="traiterPhotoPrise(event)">
+
+  <script>
+    var donneesRecueil = {
+      unite: 'BP VOUVRAY',
+      email: '',
+      grade: 'Adjudant',
+      nom: 'Jean GROGA',
+      arriveeTime: '',
+      arriveeGps: '',
+      adresse: '',
+      saisine: '',
+      mesures: '',
+      personnes: [],
+      constats: []
+    };
+
+    var indexConstatCiblePhoto = null;
+    var recognition = null;
+    var shouldKeepListening = false;
+    var restartTimeout = null;
+
+    window.addEventListener('load', function() {
+      chargerEtat();
+      mettreAJourBadges();
+    });
+
+    function getVal(id) { var el = document.getElementById(id); return el ? el.value : ''; }
+    function setVal(id, val) { var el = document.getElementById(id); if (el && val !== undefined) el.value = val; }
+
+    window.toggleConfig = function() {
+      var c = document.getElementById('config-card');
+      if (c) c.style.display = (c.style.display === 'none' || c.style.display === '') ? 'block' : 'none';
+    };
+
+    window.sauvegarderEtat = function() {
+      try {
+        donneesRecueil.unite = getVal('cfg-unite');
+        donneesRecueil.email = getVal('cfg-email');
+        donneesRecueil.grade = getVal('cfg-grade');
+        donneesRecueil.nom = getVal('cfg-nom');
+        donneesRecueil.arriveeTime = getVal('f-arrivee-time');
+        donneesRecueil.arriveeGps = getVal('f-arrivee-gps');
+        donneesRecueil.adresse = getVal('f-adresse');
+        donneesRecueil.saisine = getVal('f-saisine');
+        donneesRecueil.mesures = getVal('f-mesures');
+        localStorage.setItem('gn_recueil_odt_clean', JSON.stringify(donneesRecueil));
+      } catch (e) {}
+    };
+
+    window.chargerEtat = function() {
+      try {
+        var raw = localStorage.getItem('gn_recueil_odt_clean');
+        if (!raw) return;
+        donneesRecueil = JSON.parse(raw);
+        setVal('cfg-unite', donneesRecueil.unite);
+        setVal('cfg-email', donneesRecueil.email);
+        setVal('cfg-grade', donneesRecueil.grade);
+        setVal('cfg-nom', donneesRecueil.nom);
+        setVal('f-arrivee-time', donneesRecueil.arriveeTime);
+        setVal('f-arrivee-gps', donneesRecueil.arriveeGps);
+        setVal('f-adresse', donneesRecueil.adresse);
+        setVal('f-saisine', donneesRecueil.saisine);
+        setVal('f-mesures', donneesRecueil.mesures);
+        rendrePersonnes();
+        rendreConstats();
+      } catch (e) {}
+    };
+
+    window.declencherArrivee = function() {
+      var now = new Date();
+      var d = now.toLocaleDateString('fr-FR');
+      var h = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+      setVal('f-arrivee-time', d + ' à ' + h);
+      var pill = document.getElementById('gps-pill');
+      if (pill) { pill.innerText = 'CALCUL...'; pill.className = 'card-tag-pill'; }
+
+      if ('geolocation' in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          function(pos) {
+            var lat = pos.coords.latitude.toFixed(5);
+            var lon = pos.coords.longitude.toFixed(5);
+            setVal('f-arrivee-gps', lat + ', ' + lon);
+            if (pill) { pill.innerText = 'GPS FIXÉ'; pill.className = 'card-tag-pill green'; }
+            sauvegarderEtat();
+            fetch('https://nominatim.openstreetmap.org/reverse?lat=' + lat + '&lon=' + lon + '&format=json')
+              .then(function(r){ return r.json(); })
+              .then(function(res){
+                if (res && res.display_name) { setVal('f-adresse', res.display_name); sauvegarderEtat(); }
+              }).catch(function(){});
+          },
+          function() {
+            setVal('f-arrivee-gps', 'Non disponible');
+            if (pill) { pill.innerText = 'GPS NON FIXÉ'; pill.className = 'card-tag-pill'; }
+            sauvegarderEtat();
+          },
+          { enableHighAccuracy: true, timeout: 8000 }
+        );
+      }
+      sauvegarderEtat();
+    };
+
+    /* GESTION DES FICHES PERSONNES (RÉPÉTABLE) */
+    window.ajouterFichePersonne = function() {
+      donneesRecueil.personnes.push({
+        id: Date.now(),
+        qualite: 'Victime',
+        nomPrenom: '',
+        telephone: '',
+        declaration: ''
+      });
+      rendrePersonnes();
+      sauvegarderEtat();
+    };
+
+    function rendrePersonnes() {
+      var c = document.getElementById('container-personnes');
+      if (!c) return;
+      c.innerHTML = '';
+      donneesRecueil.personnes.forEach(function(p, idx) {
+        var box = document.createElement('div');
+        box.className = 'dynamic-item-box';
+        box.innerHTML =
+          '<div class="dynamic-item-head">' +
+            '<span class="dynamic-item-title">Personne #' + (idx + 1) + '</span>' +
+            '<button type="button" class="btn-danger-sm" onclick="supprimerFichePersonne(' + p.id + ')">Supprimer</button>' +
+          '</div>' +
+          '<div style="display:flex; gap:8px;">' +
+            '<div style="flex:1;">' +
+              '<label>Rôle</label>' +
+              '<select onchange="majPersonne(' + p.id + ', \'qualite\', this.value)">' +
+                '<option value="Victime"' + (p.qualite==='Victime'?' selected':'') + '>Victime</option>' +
+                '<option value="Déclarant"' + (p.qualite==='Déclarant'?' selected':'') + '>Déclarant</option>' +
+                '<option value="Témoin"' + (p.qualite==='Témoin'?' selected':'') + '>Témoin</option>' +
+                '<option value="Voisin"' + (p.qualite==='Voisin'?' selected':'') + '>Voisin</option>' +
+                '<option value="Mis en cause"' + (p.qualite==='Mis en cause'?' selected':'') + '>Mis en cause</option>' +
+              '</select>' +
+            '</div>' +
+            '<div style="flex:2;">' +
+              '<label>Nom & Prénom</label>' +
+              '<input type="text" value="' + (p.nomPrenom || '') + '" placeholder="DUPONT Jean" oninput="majPersonne(' + p.id + ', \'nomPrenom\', this.value)">' +
+            '</div>' +
+          '</div>' +
+          '<label>Contact / Téléphone</label>' +
+          '<input type="text" value="' + (p.telephone || '') + '" placeholder="06..." oninput="majPersonne(' + p.id + ', \'telephone\', this.value)">' +
+          '<label>Déclarations sommaires / Éléments fournis</label>' +
+          '<textarea placeholder="Précisions sur les horaires, préjudice estimé, suspects aperçus..." oninput="majPersonne(' + p.id + ', \'declaration\', this.value)">' + (p.declaration || '') + '</textarea>';
+        c.appendChild(box);
+      });
+      mettreAJourBadges();
+    }
+
+    window.majPersonne = function(id, champ, val) {
+      var p = donneesRecueil.personnes.find(function(x){ return x.id === id; });
+      if (p) { p[champ] = val; sauvegarderEtat(); }
+    };
+
+    window.supprimerFichePersonne = function(id) {
+      donneesRecueil.personnes = donneesRecueil.personnes.filter(function(x){ return x.id !== id; });
+      rendrePersonnes();
+      sauvegarderEtat();
+    };
+
+    /* GESTION DES FICHES CONSTATATIONS (RÉPÉTABLE AVEC CLICHÉS DÉDIÉS) */
+    window.ajouterFicheConstat = function() {
+      donneesRecueil.constats.push({
+        id: Date.now(),
+        localisation: '',
+        description: '',
+        photos: []
+      });
+      rendreConstats();
+      sauvegarderEtat();
+    };
+
+    function rendreConstats() {
+      var c = document.getElementById('container-constats');
+      if (!c) return;
+      c.innerHTML = '';
+      donneesRecueil.constats.forEach(function(ct, idx) {
+        var box = document.createElement('div');
+        box.className = 'dynamic-item-box';
+        var photosHtml = '';
+        ct.photos.forEach(function(ph, pIdx) {
+          photosHtml +=
+            '<div class="photo-card">' +
+              '<img src="' + ph.data + '">' +
+              '<input type="text" value="' + (ph.legende || '') + '" placeholder="Légende..." oninput="majLegendePhoto(' + ct.id + ', ' + ph.id + ', this.value)">' +
+              '<button type="button" class="btn-danger-sm" style="width:100%; margin-top:4px;" onclick="supprimerPhotoConstat(' + ct.id + ', ' + ph.id + ')">Retirer</button>' +
+            '</div>';
+        });
+
+        box.innerHTML =
+          '<div class="dynamic-item-head">' +
+            '<span class="dynamic-item-title">Constatation #' + (idx + 1) + '</span>' +
+            '<button type="button" class="btn-danger-sm" onclick="supprimerFicheConstat(' + ct.id + ')">Supprimer</button>' +
+          '</div>' +
+          '<label>Lieu / Pièce / Support</label>' +
+          '<input type="text" value="' + (ct.localisation || '') + '" placeholder="Ex. : Fenêtre cuisine, Chambre parentale..." oninput="majConstat(' + ct.id + ', \'localisation\', this.value)">' +
+          '<label>Description des traces / Désordre / Effraction</label>' +
+          '<textarea placeholder="Pesées constatées, tiroirs fouillés, objets déplacés..." oninput="majConstat(' + ct.id + ', \'description\', this.value)">' + (ct.description || '') + '</textarea>' +
+          '<div style="margin-top:8px;">' +
+            '<button type="button" class="btn btn-secondary" style="font-size:11px;" onclick="declencherPhotoConstat(' + ct.id + ')">📷 + Cliché pour cette zone</button>' +
+            '<div class="photo-grid">' + photosHtml + '</div>' +
+          '</div>';
+        c.appendChild(box);
+      });
+      mettreAJourBadges();
+    }
+
+    window.majConstat = function(id, champ, val) {
+      var ct = donneesRecueil.constats.find(function(x){ return x.id === id; });
+      if (ct) { ct[champ] = val; sauvegarderEtat(); }
+    };
+
+    window.supprimerFicheConstat = function(id) {
+      donneesRecueil.constats = donneesRecueil.constats.filter(function(x){ return x.id !== id; });
+      rendreConstats();
+      sauvegarderEtat();
+    };
+
+    window.declencherPhotoConstat = function(constatId) {
+      indexConstatCiblePhoto = constatId;
+      var inp = document.getElementById('global-camera-input');
+      if (inp) inp.click();
+    };
+
+    window.traiterPhotoPrise = function(event) {
+      var file = event.target.files[0];
+      if (!file || indexConstatCiblePhoto === null) return;
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        var img = new Image();
+        img.onload = function() {
+          var maxDim = 1200;
+          var w = img.width, h = img.height;
+          if (w > maxDim || h > maxDim) {
+            if (w > h) { h = Math.round((h * maxDim) / w); w = maxDim; }
+            else { w = Math.round((w * maxDim) / h); h = maxDim; }
+          }
+          var canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          var ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          var compressed = canvas.toDataURL('image/jpeg', 0.82);
+
+          var ct = donneesRecueil.constats.find(function(x){ return x.id === indexConstatCiblePhoto; });
+          if (ct) {
+            ct.photos.push({
+              id: Date.now(),
+              data: compressed,
+              base64Payload: compressed.split(',')[1],
+              legende: ''
+            });
+            rendreConstats();
+            sauvegarderEtat();
+          }
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    };
+
+    window.majLegendePhoto = function(constatId, photoId, val) {
+      var ct = donneesRecueil.constats.find(function(x){ return x.id === constatId; });
+      if (ct) {
+        var ph = ct.photos.find(function(p){ return p.id === photoId; });
+        if (ph) { ph.legende = val; sauvegarderEtat(); }
+      }
+    };
+
+    window.supprimerPhotoConstat = function(constatId, photoId) {
+      var ct = donneesRecueil.constats.find(function(x){ return x.id === constatId; });
+      if (ct) {
+        ct.photos = ct.photos.filter(function(p){ return p.id !== photoId; });
+        rendreConstats();
+        sauvegarderEtat();
+      }
+    };
+
+    function mettreAJourBadges() {
+      var bp = document.getElementById('badge-count-personnes');
+      if (bp) bp.innerText = donneesRecueil.personnes.length + ' Fiche(s)';
+      var bc = document.getElementById('badge-count-constats');
+      if (bc) bc.innerText = donneesRecueil.constats.length + ' Zone(s)';
+    }
+
+    /* DICTÉE VOCALE */
+    window.dicter = function(targetId, btnId) {
+      var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) { alert("Reconnaissance vocale non disponible."); return; }
+      var btn = document.getElementById(btnId);
+      if (shouldKeepListening) {
+        shouldKeepListening = false;
+        clearTimeout(restartTimeout);
+        if (recognition) recognition.stop();
+        if (btn) { btn.classList.remove('recording'); btn.innerText = '🎤 Dictée continue'; }
+        return;
+      }
+      shouldKeepListening = true;
+      if (btn) { btn.classList.add('recording'); btn.innerText = '⏹️ Arrêter'; }
+      function lancer() {
+        if (!shouldKeepListening) return;
+        recognition = new SpeechRecognition();
+        recognition.lang = 'fr-FR';
+        recognition.continuous = true;
+        recognition.interimResults = false;
+        var el = document.getElementById(targetId);
+        recognition.onresult = function(evt) {
+          for (var i = evt.resultIndex; i < evt.results.length; ++i) {
+            if (evt.results[i].isFinal) {
+              var t = evt.results[i][0].transcript.trim();
+              if (t.length > 0 && el) { el.value = el.value ? (el.value + ' ' + t) : t; sauvegarderEtat(); }
+            }
+          }
+        };
+        recognition.onend = function() {
+          if (shouldKeepListening) restartTimeout = setTimeout(function(){ try{ lancer(); }catch(e){} }, 1200);
+        };
+        try { recognition.start(); } catch(e){}
+      }
+      lancer();
+    };
+
+    /* GÉNÉRATION NATIVE DU FICHIER ODT (OPENDOCUMENT) AVEC JSZIP */
+    window.exporterRecueilODT = async function() {
+      sauvegarderEtat();
+      var zip = new JSZip();
+
+      // 1. Spécification MIME OpenDocument
+      zip.file('mimetype', 'application/vnd.oasis.opendocument.text', { compression: 'STORE' });
+
+      // 2. META-INF/manifest.xml
+      var manifestXml = '<?xml version="1.0" encoding="UTF-8"?>\n' +
+        '<manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0" manifest:version="1.2">\n' +
+        '  <manifest:file-entry manifest:full-path="/" manifest:version="1.2" manifest:media-type="application/vnd.oasis.opendocument.text"/>\n' +
+        '  <manifest:file-entry manifest:full-path="content.xml" manifest:media-type="text/xml"/>\n';
+
+      // 3. Construction du contenu textuel et insertion des images
+      var bodyXml = '<office:text>\n';
+      bodyXml += '<text:h text:outline-level="1">RECUEIL D\'INTERVENTION ET CONSTATATIONS TERRAIN</text:h>\n';
+      bodyXml += '<text:p text:style-name="Sub">Unité : ' + escapeXml(donneesRecueil.unite) + ' | Rédacteur : ' + escapeXml(donneesRecueil.grade + ' ' + donneesRecueil.nom) + '</text:p>\n';
+      bodyXml += '<text:p></text:p>\n';
+
+      bodyXml += '<text:h text:outline-level="2">1. TRANSPORT &amp; CADRE DE MISSION</text:h>\n';
+      bodyXml += '<text:p><text:span text:style-name="Bold">Arrivée sur les lieux : </text:span>' + escapeXml(donneesRecueil.arriveeTime || 'Non précisé') + '</text:p>\n';
+      bodyXml += '<text:p><text:span text:style-name="Bold">Coordonnées GPS : </text:span>' + escapeXml(donneesRecueil.arriveeGps || 'Non précisé') + '</text:p>\n';
+      bodyXml += '<text:p><text:span text:style-name="Bold">Adresse constatée : </text:span>' + escapeXml(donneesRecueil.adresse || 'Non précisé') + '</text:p>\n';
+      bodyXml += '<text:p><text:span text:style-name="Bold">Saisine : </text:span>' + escapeXml(donneesRecueil.saisine || 'Néant') + '</text:p>\n';
+      bodyXml += '<text:p></text:p>\n';
+
+      bodyXml += '<text:h text:outline-level="2">2. ÉLÉMENTS SUR LES PERSONNES (VICTIMES / TÉMOINS / VOISINS)</text:h>\n';
+      if (donneesRecueil.personnes.length === 0) {
+        bodyXml += '<text:p>Aucune personne répertoriée lors du recueil.</text:p>\n';
+      } else {
+        donneesRecueil.personnes.forEach(function(p, i){
+          bodyXml += '<text:p><text:span text:style-name="Bold">#' + (i+1) + ' [' + escapeXml(p.qualite) + '] </text:span>' + escapeXml(p.nomPrenom || 'Identité non précisée') + ' — Tél : ' + escapeXml(p.telephone || 'Non renseigné') + '</text:p>\n';
+          if (p.declaration) {
+            bodyXml += '<text:p><text:span text:style-name="Italic">Déclarations : </text:span>« ' + escapeXml(p.declaration) + ' »</text:p>\n';
+          }
+        });
+      }
+      bodyXml += '<text:p></text:p>\n';
+
+      bodyXml += '<text:h text:outline-level="2">3. CONSTATATIONS MATÉRIELLES, EFFRACTIONS &amp; TRACES PTS</text:h>\n';
+      if (donneesRecueil.constats.length === 0) {
+        bodyXml += '<text:p>Aucune constatation zonée enregistrée.</text:p>\n';
+      } else {
+        var photoGlobalIdx = 1;
+        donneesRecueil.constats.forEach(function(ct, i){
+          bodyXml += '<text:p><text:span text:style-name="Bold">Zone #' + (i+1) + ' (' + escapeXml(ct.localisation || 'Emplacement non précisé') + ') : </text:span>' + escapeXml(ct.description || 'Néant') + '</text:p>\n';
+
+          if (ct.photos && ct.photos.length > 0) {
+            ct.photos.forEach(function(ph){
+              var imgPath = 'Pictures/cliche_' + photoGlobalIdx + '.jpg';
+              zip.file(imgPath, ph.base64Payload, { base64: true });
+              manifestXml += '  <manifest:file-entry manifest:full-path="' + imgPath + '" manifest:media-type="image/jpeg"/>\n';
+
+              bodyXml += '<text:p><draw:frame draw:name="Img_' + photoGlobalIdx + '" svg:width="12cm" svg:height="8.5cm" text:anchor-type="paragraph">' +
+                '<draw:image xlink:href="' + imgPath + '" xlink:type="simple" xlink:show="embed" xlink:actuate="onLoad"/>' +
+                '</draw:frame></text:p>\n';
+              bodyXml += '<text:p text:style-name="Legende"><text:span text:style-name="Italic">Cliché n° ' + photoGlobalIdx + ' : ' + escapeXml(ph.legende || ct.localisation || 'Sans légende') + '</text:span></text:p>\n';
+              photoGlobalIdx++;
+            });
+          }
+        });
+      }
+      bodyXml += '<text:p></text:p>\n';
+
+      bodyXml += '<text:h text:outline-level="2">4. MESURES PRISES &amp; PRÉSERVATION DES TRACES</text:h>\n';
+      bodyXml += '<text:p>' + escapeXml(donneesRecueil.mesures || 'Néant') + '</text:p>\n';
+      bodyXml += '</office:text>\n';
+
+      // 4. content.xml complet
+      var contentXml = '<?xml version="1.0" encoding="UTF-8"?>\n' +
+        '<office:document-content xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" ' +
+        'xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" ' +
+        'xmlns:draw="urn:oasis:names:tc:opendocument:xmlns:drawing:1.0" ' +
+        'xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0" ' +
+        'xmlns:xlink="http://www.w3.org/1999/xlink" ' +
+        'office:version="1.2">\n' +
+        '<office:automatic-styles>\n' +
+        '  <style:style xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0" style:name="Bold" style:family="text"><style:text-properties fo:font-weight="bold" xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0"/></style:style>\n' +
+        '  <style:style xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0" style:name="Italic" style:family="text"><style:text-properties fo:font-style="italic" xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0"/></style:style>\n' +
+        '  <style:style xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0" style:name="Sub" style:family="paragraph"><style:text-properties fo:font-size="10pt" fo:color="#475569" xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0"/></style:style>\n' +
+        '  <style:style xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0" style:name="Legende" style:family="paragraph"><style:text-properties fo:font-size="9pt" fo:color="#334155" xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0"/></style:style>\n' +
+        '</office:automatic-styles>\n' +
+        '<office:body>\n' + bodyXml + '</office:body>\n' +
+        '</office:document-content>';
+
+      manifestXml += '</manifest:manifest>';
+
+      zip.file('content.xml', contentXml);
+      zip.file('META-INF/manifest.xml', manifestXml);
+
+      // Génération du blob binaire ODT
+      var odtBlob = await zip.generateAsync({ type: 'blob', mimeType: 'application/vnd.oasis.opendocument.text' });
+      var nomFichier = 'Recueil_Intervention_' + new Date().toISOString().slice(0,10) + '.odt';
+      var fichierOdt = new File([odtBlob], nomFichier, { type: 'application/vnd.oasis.opendocument.text' });
+
+      // Partage direct mobile ou téléchargement
+      if (navigator.canShare && navigator.canShare({ files: [fichierOdt] })) {
+        await navigator.share({
+          title: "Recueil d'intervention — " + donneesRecueil.unite,
+          text: "Fiche recueil pour mise en forme du PV sous LibreOffice. Destinataire : " + donneesRecueil.email,
+          files: [fichierOdt]
+        });
+      } else {
+        var url = URL.createObjectURL(odtBlob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = nomFichier;
+        a.click();
+        URL.revokeObjectURL(url);
+        alert('Le fichier .ODT modifiable a été généré et téléchargé.');
+      }
+
+      setTimeout(function() {
+        if (confirm("Transmission effectuée.\n\nSouhaitez-vous PURGER DÉFINITIVEMENT les notes et clichés de ce recueil sur le téléphone ?")) {
+          purgerRecueil();
+        }
+      }, 1200);
+    };
+
+    function escapeXml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;');
+    }
+
+    window.demanderReinitialisation = function() {
+      if (confirm("ATTENTION : Réinitialiser complètement ce recueil d'intervention ?")) {
+        purgerRecueil();
+      }
+    };
+
+    function purgerRecueil() {
+      localStorage.removeItem('gn_recueil_odt_clean');
+      donneesRecueil.personnes = [];
+      donneesRecueil.constats = [];
+      setVal('f-arrivee-time', '');
+      setVal('f-arrivee-gps', '');
+      setVal('f-adresse', '');
+      setVal('f-saisine', '');
+      setVal('f-mesures', '');
+      rendrePersonnes();
+      rendreConstats();
+      sauvegarderEtat();
+      alert('Mémoire locale et clichés purgés.');
+    }
+  </script></body></html>
